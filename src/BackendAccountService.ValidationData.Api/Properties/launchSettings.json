@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "BackendAccountService.Validation.Function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7076",
+      "launchBrowser": false
+    }
+  }
+}

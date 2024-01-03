@@ -1,0 +1,72 @@
+USE [AccountsDb]
+
+
+--Clean out all tables before inserting the Regulators data
+DELETE FROM [dbo].[SelectedSchemes]
+DELETE FROM [dbo].[Enrolments]
+DELETE FROM [dbo].[PersonOrganisationConnections]
+DELETE FROM [dbo].[OrganisationsConnections]
+DELETE FROM [dbo].[LaOrganisations]
+DELETE FROM [dbo].[Organisations]
+DELETE FROM [dbo].[Persons]
+DELETE FROM [dbo].[Users]
+DELETE FROM [dbo].[InterOrganisationRoles]
+
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (1, 'Producer')
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (2, 'Compliance Scheme')
+
+-- [dbo].[Organisations]
+SET IDENTITY_INSERT [dbo].[Organisations] ON;
+
+INSERT INTO [dbo].[Organisations]([Id],[OrganisationTypeId],[CompaniesHouseNumber],[Name],[Town],[Postcode],[ValidatedWithCompaniesHouse],[IsComplianceScheme],[ExternalId]) VALUES (33,1,'SC174113','Wastepack Ltd','London','LN1 1LN',0,1,'9ddfdbf5-c7cb-4c79-bd3a-42f3af940e16');
+INSERT INTO [dbo].[Organisations]([Id],[OrganisationTypeId],[Name],[BuildingNumber],[Street],[Town],[Postcode],[ValidatedWithCompaniesHouse],[IsComplianceScheme],[NationId],[ExternalId],[ProducerTypeId])VALUES(45,2,'Big boi limited','54','yeet','yeet','B41 7JF','0','0','1','a1a8fc16-78ad-4ee8-894e-53fb6c393c7b','4')
+INSERT INTO [dbo].[Organisations]([Id],[OrganisationTypeId],[CompaniesHouseNumber],[Name],[BuildingNumber],[Street],[Locality],[Town],[Postcode],[ValidatedWithCompaniesHouse],[IsComplianceScheme],[NationId],[ExternalId])VALUES(48,1,'03223028','AMAZON UK SERVICES LTD.',1,'Principal Place','Worship Street','London','EC2A 2FA',1,0,1,'b3cb76f8-95f1-4375-bc7f-0029d03700b5')
+INSERT INTO [dbo].[Organisations]([Id],[OrganisationTypeId],[CompaniesHouseNumber],[Name],[BuildingName],[BuildingNumber],[Street],[Locality],[Town],[County],[Postcode],[ValidatedWithCompaniesHouse],[IsComplianceScheme],[NationId],[ExternalId]) VALUES (75,1,'05695937','BEYONDLY GLOBAL LIMITED','Chandler House',7,'Ferry Road Office Park','Riversway','Preston','Lancashire','PR2 2YH',1,1,0,'f96f461c-d87f-424a-80f4-0f6e7c51537f');
+INSERT INTO [dbo].[Organisations]([Id],[OrganisationTypeId],[CompaniesHouseNumber],[Name],[Street],[Locality],[Town],[County],[Postcode],[ValidatedWithCompaniesHouse],[IsComplianceScheme],[NationId],[ExternalId]) VALUES (144,1,'00946107','BIFFA WASTE SERVICES LIMITED','Coronation Road','Cressex','High Wycombe','Bucks','HP12 3TZ',1,1,0,'67d2d08f-edae-4f11-aa91-8f23bf4a2bb3');
+SET IDENTITY_INSERT [dbo].[Organisations] OFF; 
+
+--[dbo].[Users]
+SET IDENTITY_INSERT [dbo].[Users] ON;
+INSERT INTO [dbo].[Users] ([Id],[UserId],[Email]) VALUES (45,'0b81e869-0439-499f-9a22-c49e45b92558','rpdtstuser001@mailinator.com');
+INSERT INTO [dbo].[Users] ([Id],[UserId],[Email]) VALUES (48,'dcd0dfdd-c5c6-44ea-be83-09655a3ed167','rpdtstuser002@mailinator.com');
+SET IDENTITY_INSERT [dbo].[Users] OFF;  
+
+--[dbo].[Persons]
+SET IDENTITY_INSERT [dbo].[Persons] ON;  
+INSERT INTO [dbo].[Persons] ([Id],[FirstName],[LastName],[Email],[Telephone],[UserId],[ExternalId]) VALUES (45,'rpdtst','user001','rpdtstuser001@mailinator.com','01234567890',45,'8e006a5f-fea6-4b12-b7e5-6319f4c48922');
+INSERT INTO [dbo].[Persons] ([Id],[FirstName],[LastName],[Email],[Telephone],[UserId],[ExternalId]) VALUES (48,'rpdtst','user002','rpdtstuser002@mailinator.com','01234567890',48,'207eb4f5-c9da-420c-8a44-33a209b9ae9b');
+SET IDENTITY_INSERT [dbo].[Persons] OFF;  
+
+--[dbo].[PersonOrganisationConnections]
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] ON;  
+INSERT INTO [dbo].[PersonOrganisationConnections]([Id],[OrganisationId],[OrganisationRoleId],[PersonId],[PersonRoleId],[ExternalId]) VALUES (47,33,1,45,1,'549f83d5-03ab-43a2-bf27-9782501eafa3');
+INSERT INTO [dbo].[PersonOrganisationConnections]([Id],[OrganisationId],[OrganisationRoleId],[PersonId],[PersonRoleId],[ExternalId]) VALUES (51,48,1,48,1,'741c9fe6-9a80-4500-817b-f7dfb245c612');
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] OFF; 
+
+--[dbo].[Enrolments]
+SET IDENTITY_INSERT [dbo].[Enrolments] ON
+INSERT INTO [dbo].[Enrolments] ([Id],[ConnectionId],[ServiceRoleId],[EnrolmentStatusId],[ExternalId]) VALUES (45,47,1,2,'4ec0916c-a3cb-4064-9646-0b287d3b2e0e');
+INSERT INTO [dbo].[Enrolments] ([Id],[ConnectionId],[ServiceRoleId],[EnrolmentStatusId],[ExternalId]) VALUES (48,51,1,2,'50a92c25-6527-4c38-ab47-2f4d1f41b4de');
+SET IDENTITY_INSERT [dbo].[Enrolments] OFF
+
+--[dbo].[OrganisationsConnections]
+SET IDENTITY_INSERT [dbo].[OrganisationsConnections] ON;
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (244,48,1,75,2,'406f00d3-e0c8-4802-aa50-56426d117899',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (245,48,1,144,2,'b3b75cf7-a7e7-41df-92a7-df254709760b',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (246,48,1,75,2,'a7485bb9-06c8-47b6-9da8-ba01ac693a75',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (247,48,1,144,2,'1a245ec0-7086-45c2-bd45-566b89e59b4d',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (248,48,1,75,2,'5ab04cc8-6210-4637-a32c-30088825d34f',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (250,48,1,75,2,'10295533-7f3b-44bc-baec-7aedebc4f585',1);
+INSERT INTO [dbo].[OrganisationsConnections]([Id],[FromOrganisationId],[FromOrganisationRoleId],[ToOrganisationId],[ToOrganisationRoleId],[ExternalId],[IsDeleted]) VALUES (251,48,1,144,2,'875046d5-0242-40c1-b041-922c36d265c2',1);
+SET IDENTITY_INSERT [dbo].[OrganisationsConnections] OFF; 
+
+--[dbo].[SelectedSchemes]
+SET IDENTITY_INSERT [dbo].[SelectedSchemes] ON;
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (332,244,8,'3af91ebd-f8f0-499b-9781-9694a142b5a1',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (333,245,3,'961ccc92-1c9f-4a8f-bf78-02c536303ac0',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (334,246,8,'83fad1d3-10ee-4e60-a27e-47728568f3e4',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (335,247,3,'292319e1-1e5d-4c73-b191-d5e33e6728c4',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (336,248,8,'a6cb864e-60bf-4650-83f1-8a2d7e9bdc24',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (338,250,8,'b99ea8a7-f2a8-46bf-a7ed-3c71004a7f2a',1);
+INSERT INTO [dbo].[SelectedSchemes] ([Id],[OrganisationConnectionId],[ComplianceSchemeId],[ExternalId],[IsDeleted]) VALUES (339,251,2,'30ddefd1-dbb2-4e74-9453-6935b7856e72',1);
+SET IDENTITY_INSERT [dbo].[SelectedSchemes] OFF; 

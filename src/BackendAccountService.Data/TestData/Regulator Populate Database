@@ -1,0 +1,54 @@
+USE [AccountsDb]
+
+
+--Clean out all tables before inserting the Regulators data
+DELETE FROM [dbo].[SelectedSchemes]
+DELETE FROM [dbo].[Enrolments]
+DELETE FROM [dbo].[PersonOrganisationConnections]
+DELETE FROM [dbo].[OrganisationsConnections]
+DELETE FROM [dbo].[LaOrganisations]
+DELETE FROM [dbo].[Organisations]
+DELETE FROM [dbo].[Persons]
+DELETE FROM [dbo].[Users]
+DELETE FROM [dbo].[InterOrganisationRoles]
+
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (1, 'Producer')
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (2, 'Compliance Scheme')
+
+SET IDENTITY_INSERT [dbo].[Organisations] ON;
+
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,NationId,IsDeleted) VALUES(6,0,0,'Environment Agency (EA)',53,1,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,NationId,IsDeleted) VALUES(6,0,0,'Northern Ireland Environment Agency (NIEA)',54,2,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,NationId,IsDeleted) VALUES(6,0,0,'Scottish Environment Protection Agency (SEPA)',55,3,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,NationId,IsDeleted) VALUES(6,0,0,'Natural Resources Wales (NRW) also known as Cyfoeth Naturiol Cymru',56,4,0);
+
+SET IDENTITY_INSERT [dbo].[Organisations] OFF; 
+
+
+SET IDENTITY_INSERT [dbo].[Users] ON;  
+
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (1,'5dc5267b-ed00-4551-9129-4abc9944aca0','Komal')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (2,'5dc5267b-ed00-4551-9129-4abc9944aca1','Kyle')
+
+SET IDENTITY_INSERT [dbo].[Users] OFF;  
+
+SET IDENTITY_INSERT [dbo].[Persons] ON;  
+
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 1,'Komal','Polavarapu',1)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 2,'Kyle','Telford',2)
+
+SET IDENTITY_INSERT [dbo].[Persons] OFF;  
+
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] ON;  
+
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,1,1,53,1)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,2,54,2)
+
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] OFF; 
+
+SET IDENTITY_INSERT [dbo].[Enrolments] ON
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (4,3,1,1)
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (4,3,2,2)
+
+SET IDENTITY_INSERT [dbo].[Enrolments] OFF

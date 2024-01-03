@@ -1,0 +1,10 @@
+variables:
+  azureSubscription: 'AZD-EPL-DEV1'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'deveplinfac1401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'deveplwebwa1402'
+  kvName: DEVEPLINFKV1401
+  sqlDBserver: 'devepldbssq1401.database.windows.net'
+  sqlDB: 'EPL1'
+  acr.Subscription: 'AZD-EPL-DEV1'

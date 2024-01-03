@@ -1,0 +1,11 @@
+variables:
+  azureSubscription: 'AZD-RWD-TST1'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'tstrwdinfac1401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'tstrwdwebwa1407'
+  kvName: TSTRWDINFKV1401
+  sqlDBserver: tstrwddbssq1401.database.windows.net
+  sqlDB: 'tst1_accounts'
+  validationApiServiceName: 'tstrwdwebfa1407'
+  validationApiRepository: 'validationdataapiregistry'

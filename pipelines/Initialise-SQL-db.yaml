@@ -1,0 +1,73 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: teamName
+    displayName: 'Select Team Name:    (works only with "development" as target env)'
+    default: 'Team-1_Pi'
+    type: string
+    values:
+      - Team-1_Pi
+      - Team-2_Wastebusters
+      - Team-3_Recyclers
+      - Team-4_QA
+      - Team-5_Phoenix
+      - Team-6_Stig
+      - Team-7_Oscar
+      - Team-8_Pre-TST
+      - Team-9_Ops
+      - Team-Laps
+  - name: envToDeploy
+    displayName: 'Target env to deploy:    (select "development" for Team1-9)'
+    type: string
+    values:
+      - development
+      - tst
+      - preprod
+      - prod
+    default: development
+
+  - name: solutionFolder
+    type: string
+    default: src
+
+  - name: branchName
+    displayName: 'Enter main branch for corresponding migration script (ie: main-20230627.1)'
+    type: string
+    default: ''
+
+pool: DEFRA-COMMON-ubuntu2004-SSV3
+
+variables:
+
+  - ${{ if eq(parameters.envToDeploy, 'development') }}:
+    - template: vars/${{ parameters.teamName }}-${{ parameters.envToDeploy }}.yaml
+  - ${{ if eq(parameters.envToDeploy, 'tst') }}:
+    - ${{ if ne(parameters.teamName, 'Team-Laps') }}:
+      - template: vars/${{ parameters.envToDeploy }}.yaml
+    - ${{ if eq(parameters.teamName, 'Team-Laps') }}:
+      - template: vars/${{ parameters.teamName }}-${{ parameters.envToDeploy }}.yaml
+  - ${{ if eq(parameters.envToDeploy, 'preprod') }}:
+    - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ if eq(parameters.envToDeploy, 'prod') }}:
+    - template: vars/${{ parameters.envToDeploy }}.yaml
+
+resources:
+  repositories:
+    - repository: CommonTemplates
+      name: RWD-CPR-EPR4P-ADO/epr-webapps-code-deploy-templates
+      type: git
+      ref: main
+
+jobs:
+  - job: RunSQLMigrationScript
+    displayName: Executing Migration Script
+    steps:
+      - template: templates/docker-run-sql-migration.yaml@CommonTemplates
+        parameters:
+          azureSubscription: $(azureSubscription)
+          solutionFolder: $(solutionFolder)
+          projectFolder: $(projectFolder)
+          azureContainerRegistryName: $(acr.azureContainerRegistryName)
+          repositoryName: $(acr.repositoryName)
+          branchName: ${{ parameters.branchName }}

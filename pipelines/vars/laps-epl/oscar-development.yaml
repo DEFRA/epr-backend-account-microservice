@@ -1,0 +1,14 @@
+variables:
+  azureSubscription: 'AZD-EPL-DEV1'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'deveplinfac1401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'deveplwebwa1402'
+  resourceGroupName: 'deveplwebrg1401'
+  appSettings: |
+    [
+      {
+        "name": "ASPNETCORE_ENVIRONMENT",
+        "value": "Development"
+      }
+    ]

@@ -1,0 +1,160 @@
+USE [AccountsDb]
+
+DELETE FROM [dbo].[SelectedSchemes]
+DELETE FROM [dbo].[ComplianceSchemes]
+DELETE FROM [dbo].[Enrolments]
+DELETE FROM [dbo].[PersonOrganisationConnections]
+DELETE FROM [dbo].[OrganisationsConnections]
+DELETE FROM [dbo].[LaOrganisations]
+DELETE FROM [dbo].[Organisations]
+DELETE FROM [dbo].[Persons]
+DELETE FROM [dbo].[Users]
+DELETE FROM [dbo].[InterOrganisationRoles]
+
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (1, 'Producer')
+INSERT INTO [dbo].[InterOrganisationRoles] VALUES (2, 'Compliance Scheme')
+
+SET IDENTITY_INSERT [dbo].[Users] ON;  
+
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (1,'5dc5267b-ed00-4551-9129-4abc9944aca0','Komal')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (2,'5dc5267b-ed00-4551-9129-4abc9944aca1','Kyle')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (3,'5dc5267b-ed00-4551-9129-4abc9944aca2','Hassan')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (4,'5dc5267b-ed00-4551-9129-4abc9944aca3','Randall')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (5,'e2027215-6370-4853-9620-2e2adf958887','Owen')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (6,'5dc5267b-ed00-4551-9129-4abc9944aca5','Carl')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (7,'5dc5267b-ed00-4551-9129-4abc9944aca6','Stuart')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (8,'4a100496-02b0-4abe-9c31-17acc5e72e6f','Jack')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (9,'4a100496-02b0-4abe-9c31-17acc5e72e6d','Raghu')
+INSERT INTO [dbo].[Users] (Id,UserId, Email) VALUES (10,'4a100496-02b0-4ab5-9c31-17b9ab562e6d','LaTest')
+
+SET IDENTITY_INSERT [dbo].[Users] OFF;  
+SET IDENTITY_INSERT [dbo].[Persons] ON;  
+
+DELETE FROM [dbo].[Persons]
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 1,'Komal','Polavarapu',1)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 2,'Kyle','Telford',2)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 3,'Hassan','Khademi',3)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 4,'Randall','Quinn',4)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 5,'Owen','Mcgregor',5)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 6,'Carl','Mason',6)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 7,'Stuart','Brown',7)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 8,'Jack','Test',8)
+INSERT INTO [dbo].[Persons] (Email, Telephone, Id,  FirstName, LastName,UserId) VALUES ('test@data.com', '01234567890', 9,'Raghu','Test',9)
+
+
+SET IDENTITY_INSERT [dbo].[Persons] OFF;  
+SET IDENTITY_INSERT [dbo].[Organisations] ON;  
+
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town, Postcode) VALUES(1,0,0, 'Producer 1',1,'London','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town, Postcode) VALUES(1,0,0, 'Producer 2',2,'London','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town, Postcode) VALUES(1,0,0, 'Producer 3',3,'London','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town, Postcode) VALUES(1,0,0, 'Producer 4',4,'London','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town, Postcode) VALUES(1,0,0, 'Producer 5',5,'London','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'BBPA Environmental Ltd',6,'London','9100134','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Biffa Waste Services Ltd',7,'London','946107','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Clarity Environmental Ltd',8,'London','4559478','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Co2 Compliance Ltd',9,'London','SC331930','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Comply Direct Ltd',10,'London','5695937','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Complypak Ltd',11,'London','4164355','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Ecosurety Ltd',12,'London','4713606','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Ecosurety Scotland Limited',13,'London','SC499366','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'ERP UK Ltd',14,'London','5859725','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Kite Environmental Solutions Ltd',15,'London','4592964','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'NIPAK Ltd',16,'London','NI044560','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'NIPAK (Scotland) Ltd',17,'London','SC300070','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Paperpak Ltd',18,'London','7699232','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Properpak Ltd',19,'London','3417947','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Properpak (Scotland) Ltd',20,'London','SC394249','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Recycle Wales Ltd',21,'London','4543366','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Recycle-Pak (Scotland) Ltd',22,'London','SC225789','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Recycling Lives Compliance Services Limited',23,'London','4748329','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'RESC Ltd',24,'London','6355083','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Smart Comply Ltd',25,'London','4015442','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber,Postcode) VALUES(1,1,0, 'Synergy Compliance Ltd',26,'London','4835772','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'TGBN Ltd',27,'London','6929701','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'The Wastepack Group Ltd',28,'London','3985811','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Valpak Ltd',29,'London','7688691','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Valpak (Scotland) Ltd',30,'London','SC245145','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Veolia Environmental Services',31,'London','2215767','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Wastecare Compliance Plc',32,'London','6043169','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Wastepack Ltd',33,'London','SC174113','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode) VALUES(1,1,0, 'Waystreme Limited',34,'London','4168907','LN1 1LN')
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(3,1,0,'Local Authority Test 01',41,'London','4168920','LN1 1LN',1,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(4,1,0,'Local Authority Test 02',42,'London','4168921','LN1 1LN',1,1);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(5,1,0,'Local Authority Test 03',43,'London','4168922','LN1 1LN',1,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(3,1,0,'Local Authority Test 04',44,'Edinburgh','4168930','EH1 3EG',3,1);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(4,1,0,'Local Authority Test 05',45,'Edinburgh','4168931','EH1 3EG',3,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(5,1,0,'Local Authority Test 06',46,'Edinburgh','4168932','EH1 3EG',3,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(3,1,0,'Local Authority Test 07',47,'Cardiff','4168940','CF10 3RB',4,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(4,1,0,'Local Authority Test 08',48,'Cardiff','4168941','CF10 3RB',4,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(5,1,0,'Local Authority Test 09',49,'Cardiff','4168942','CF10 3RB',4,1);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(3,1,0,'Local Authority Test 10',50,'Belfast','4168950','BT15 1FX',2,1);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(4,1,0,'Local Authority Test 11',51,'Belfast','4168951','BT15 1FX',2,0);
+INSERT INTO [dbo].[Organisations] (OrganisationTypeId,IsComplianceScheme,ValidatedWithCompaniesHouse,Name,Id,Town,CompaniesHouseNumber, Postcode, NationId,IsDeleted) VALUES(5,1,0,'Local Authority Test 12',52,'Belfast','4168952','BT15 1FX',2,0);
+
+SET IDENTITY_INSERT [dbo].[Organisations] OFF; 
+SET IDENTITY_INSERT [dbo].[LaOrganisations] ON;
+
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (1,41,'LAT000101',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (2,42,'LAT000102',1,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (3,43,'LAT000103',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (4,44,'LAT000104',1,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (5,45,'LAT000105',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (6,46,'LAT000106',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (7,47,'LAT000107',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (8,48,'LAT000108',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (9,49,'LAT000109',1,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (10,50,'LAT000110',1,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (11,51,'LAT000110',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+INSERT INTO [dbo].[LaOrganisations](Id,OrganisationId,DistrictCode,IsDeleted,CreatedOn,LastUpdatedOn) VALUES (12,52,'LAT000110',0,SYSDATETIMEOFFSET( ),SYSDATETIMEOFFSET( ));
+
+
+SET IDENTITY_INSERT [dbo].[LaOrganisations] OFF;   
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] ON;  
+
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,1,1,1)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,2,1,2)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,3,2,3)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,4,2,4)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,5,3,5)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,6,4,6)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,7,5,7)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,8,1,8)
+INSERT INTO [dbo].[PersonOrganisationConnections](OrganisationRoleId,PersonRoleId,Id,OrganisationId,PersonId) VALUES( 1,2,9,1,9)
+
+SET IDENTITY_INSERT [dbo].[PersonOrganisationConnections] OFF; 
+SET IDENTITY_INSERT [dbo].[OrganisationsConnections] ON
+
+INSERT INTO [dbo].[OrganisationsConnections](FromOrganisationRoleId,ToOrganisationRoleId,FromOrganisationId,ToOrganisationId,Id)  VALUES( 1,2,1,6,1)
+INSERT INTO [dbo].[OrganisationsConnections](FromOrganisationRoleId,ToOrganisationRoleId,FromOrganisationId,ToOrganisationId,Id)  VALUES( 1,2,2,7,2)
+INSERT INTO [dbo].[OrganisationsConnections](FromOrganisationRoleId,ToOrganisationRoleId,FromOrganisationId,ToOrganisationId,Id)  VALUES( 1,2,3,8,3)
+
+SET IDENTITY_INSERT [dbo].[OrganisationsConnections] OFF
+SET IDENTITY_INSERT [dbo].[SelectedSchemes] ON
+
+INSERT INTO [dbo].[SelectedSchemes] (Id, OrganisationConnectionId, ComplianceSchemeId) VALUES ( 1,1,1)
+INSERT INTO [dbo].[SelectedSchemes] (Id, OrganisationConnectionId, ComplianceSchemeId) VALUES ( 2,2,2)
+INSERT INTO [dbo].[SelectedSchemes] (Id, OrganisationConnectionId, ComplianceSchemeId) VALUES ( 3,3,4)
+
+SET IDENTITY_INSERT [dbo].[SelectedSchemes] OFF
+SET IDENTITY_INSERT [dbo].[Enrolments] ON
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,1,1)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,2,2)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,3,3)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,4,4)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,5,5)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,6,6)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,7,7)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,8,8)
+
+INSERT INTO [dbo].[Enrolments] (ServiceRoleId,EnrolmentStatusId, Id, ConnectionId) VALUES (1,3,9,9)
+
+SET IDENTITY_INSERT [dbo].[Enrolments] OFF

@@ -1,0 +1,269 @@
+{
+	"info": {
+		"_postman_id": "84f9968a-ab7d-45e0-9a9f-21bcaa6afc33",
+		"name": "Account Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18024665"
+	},
+	"item": [
+		{
+			"name": "Get user organisations",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Host}}/api/users/user-organisations?userId=5dc5267b-ed00-4551-9129-4abc9944aca0",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"users",
+						"user-organisations"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "5dc5267b-ed00-4551-9129-4abc9944aca0"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Remove compliance scheme",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"SelectedSchemeId\": 1,\n    \"OId\": \"test-post-man-backend\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Host}}/api/compliance-schemes/remove",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"compliance-schemes",
+						"remove"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Compliance Scheme For Producer",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Host}}/api/compliance-schemes/get-for-producer?organisationId=2",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"compliance-schemes",
+						"get-for-producer"
+					],
+					"query": [
+						{
+							"key": "organisationId",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all compliance schemes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Host}}/api/compliance-schemes/",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"compliance-schemes",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add scheme to producer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"complianceSchemeId\": 14,\r\n  \"producerOrganisationId\": 5,\r\n  \"oId\": \"postman\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Host}}/api/compliance-schemes/select",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"compliance-schemes",
+						"select"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update scheme",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"selectedSchemeId\": 4, \r\n  \"complianceSchemeId\": 14,\r\n  \"producerOrganisationId\": 5,\r\n  \"oId\": \"postman\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Host}}/api/compliance-schemes/update",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"compliance-schemes",
+						"update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get regulator organisation Id from nation",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{Host}}/api/regulator-organisation?nation=england",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"regulator-organisation"
+					],
+					"query": [
+						{
+							"key": "nation",
+							"value": "england"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create regulator organisation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Environment Agency\",\r\n  \"nationId\": 2,\r\n  \"serviceId\": \"Regulating\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Host}}/api/regulator-organisation",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"regulator-organisation"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Regulator user invitation",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"invitedUser\": {\r\n    \"email\": \"test@test.com\",\r\n    \"personRoleId\": 0,\r\n    \"serviceRoleId\": 0,\r\n    \"organisationId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\r\n  },\r\n  \"invitingUser\": {\r\n    \"email\": \"abc@example.com\",\r\n    \"userId\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{Host}}/api/regulator-accounts/invite-user",
+					"host": [
+						"{{Host}}"
+					],
+					"path": [
+						"api",
+						"regulator-accounts",
+						"invite-user"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Host",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}

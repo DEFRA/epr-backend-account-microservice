@@ -1,0 +1,69 @@
+trigger: none
+pool: DEFRA-COMMON-ubuntu2004-SSV3
+
+parameters:
+  - name: teamName
+    displayName: 'Select Team Name:'
+    default: 'Team-Laps'
+    type: string
+    values:
+      - Team-Laps
+  - name: env
+    displayName: 'Target Environment to deploy:'
+    default: development
+    type: string
+    values:
+      - development
+      - tst
+  - name: imageTag
+    displayName: Enter Tag for the Image
+    default: ''
+    type: string
+
+variables:
+  - template: ../vars/${{ parameters.teamName }}-${{ parameters.env }}.yaml
+
+stages:
+  - stage: Validate
+    jobs:
+      - deployment: 'DeployAppCode'
+        environment: ${{ parameters.env }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - bash: |
+                    echo "Deploying dockerImage -->"$(acr.repositoryName):${{ parameters.imageTag }} " to env --> "${{ parameters.env }}
+                  displayName: "Show Environment Details"
+
+                # Obtain Docker Password
+                - task: AzureKeyVault@2
+                  displayName: 'Obtain Docker Password'
+                  inputs:
+                    azureSubscription: $(acr.Subscription)
+                    KeyVaultName: $(kvName)
+                    SecretsFilter: 'DockerPassword'
+                    RunAsPreJob: true
+
+                # Copy the image from Dev ACR (release candidate) to Target ACR
+                - task: AzureCLI@2
+                  displayName: 'Copy Image to ${{ parameters.env }}'
+                  condition: ${{ ne(parameters.env, 'development') }}
+                  inputs:
+                    azureSubscription: $(azureSubscription)
+                    scriptType: 'pscore'
+                    scriptLocation: 'inlineScript'
+                    inlineScript: |
+                      az acr login --name $(acr.azureContainerRegistryName)
+                      az acr import --name $(acr.azureContainerRegistryName) --source deveplinfac1401.azurecr.io/$(acr.repositoryName):${{ parameters.imageTag }} --image $(acr.repositoryName):${{ parameters.imageTag }} --username deveplinfac1401 --password $(DockerPassword) --force
+
+                - task: AzureRmWebAppDeployment@4
+                  displayName: 'Deploy code to --> $(serviceName)'
+                  inputs:
+                    ConnectionType: 'AzureRM'
+                    azureSubscription: $(azureSubscription)
+                    appType: 'webAppContainer'
+                    WebAppName: $(serviceName)
+                    DockerNamespace: '$(acr.azureContainerRegistryName).azurecr.io'
+                    DockerRepository: $(acr.repositoryName)
+                    DockerImageTag: ${{ parameters.imageTag }}

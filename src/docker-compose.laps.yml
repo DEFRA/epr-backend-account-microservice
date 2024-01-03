@@ -1,0 +1,33 @@
+version: '3.4'
+services:
+  backendaccountservice.api:
+    environment:
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore=Warning
+    ports:
+      - "5001:8080"
+    networks:
+      - epr-backend
+    volumes:
+      - ${HOME}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${HOME}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  accountsdb_sql:
+    networks:
+      - epr-backend
+
+  accounts_seed:
+    container_name: accounts_db_seed
+    build:
+      context: .
+      dockerfile: ./BackendAccountService.Data.LaTestSeeder/Dockerfile
+    environment:
+      - ConnectionStrings__AccountsDatabase=Server=accountsdb_sql,1433;Initial Catalog=AccountsDb;User Id=sa;Password=Password1!;TrustServerCertificate=True;
+    depends_on:
+      - backendaccountservice.api
+    networks:
+      - epr-backend
+
+networks:
+  epr-backend:
+    external: true

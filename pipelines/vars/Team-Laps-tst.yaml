@@ -1,0 +1,10 @@
+variables:
+  azureSubscription: 'AZD-EPL-TST1'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'tsteplinfac1401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'tsteplwebwa1402'
+  kvName: TSTEPLINFKV1401
+  sqlDBserver: 'tstepldbssq1401.database.windows.net'
+  sqlDB: 'EPL1'
+  acr.Subscription: 'AZD-EPL-TST1'

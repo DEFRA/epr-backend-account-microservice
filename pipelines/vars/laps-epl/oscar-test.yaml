@@ -1,0 +1,14 @@
+variables:
+  azureSubscription: 'AZD-EPL-TST1'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'tsteplinfac1401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'tsteplwebwa1402'
+  resourceGroupName: 'tsteplwebrg1401'
+  appSettings: |
+    [
+      {
+        "name": "ASPNETCORE_ENVIRONMENT",
+        "value": "Development"
+      }
+    ]

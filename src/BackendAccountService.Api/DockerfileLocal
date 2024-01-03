@@ -1,0 +1,39 @@
+﻿# This is for building the docker base on a host machine behind a Corporate proxy or VPN
+# we need to add in the corporate certificate chain
+# e.g. Kainos developers will need the Kainos ZScaler trusted certificate
+FROM defradigital/dotnetcore:dotnet6.0 AS base
+USER root
+
+ARG TRUSTED_CERT
+COPY ${TRUSTED_CERT} /usr/local/share/ca-certificates
+RUN update-ca-certificates
+
+# Installs globalization tools and sets common environment settings
+#FROM base-with-trusted-cert-${ADD_TRUSTED_CERT} AS configured-base
+RUN apk add icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
+
+#Port assignment
+ARG PORT=80
+ENV ASPNETCORE_URLS=http://*:${PORT}
+EXPOSE ${PORT}
+
+FROM defradigital/dotnetcore-development:dotnet6.0 AS build
+USER root
+WORKDIR /src
+COPY ["BackendAccountService.Api/BackendAccountService.Api.csproj", "BackendAccountService.Api/"]
+COPY ["BackendAccountService.Core/BackendAccountService.Core.csproj", "BackendAccountService.Core/"]
+COPY ["BackendAccountService.Data/BackendAccountService.Data.csproj", "BackendAccountService.Data/"]
+RUN dotnet restore "BackendAccountService.Api/BackendAccountService.Api.csproj"
+COPY . .
+WORKDIR "/src/BackendAccountService.Api"
+RUN dotnet build "BackendAccountService.Api.csproj" -c Release /p:AzureBuild=true -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "BackendAccountService.Api.csproj" -c Release /p:AzureBuild=true -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
+USER dotnet
+ENTRYPOINT ["dotnet", "BackendAccountService.Api.dll"]
