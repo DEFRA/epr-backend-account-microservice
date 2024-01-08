@@ -1,4 +1,4 @@
-D:\a\1\s\ado-source\src\BackendAccountService.Api\appsettings.Development.json:CSCAN0092 / CSCAN0043:9
-D:\a\1\s\ado-source\src\BackendAccountService.Data.LaTestSeeder\appsettings.json:CSCAN0092 / CSCAN0043:3
-D:\a\1\s\ado-source\src\docker-compose.laps.yml:CSCAN0092 / CSCAN0043:25
-D:\a\1\s\ado-source\src\docker-compose.yml:CSCAN0092 / CSCAN0043:13
+src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+src/BackendAccountService.Data.LaTestSeeder/appsettings.json:CSCAN0092 / CSCAN0043:3
+src/docker-compose.laps.yml:CSCAN0092 / CSCAN0043:25
+src/docker-compose.yml:CSCAN0092 / CSCAN0043:13
