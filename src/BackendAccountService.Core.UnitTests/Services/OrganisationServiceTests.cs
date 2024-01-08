@@ -22,6 +22,8 @@ public class OrganisationServiceTests
     private readonly Guid orgExternalId = Guid.NewGuid();
     private readonly Guid orgId = new Guid("00000000-0000-0000-0000-000000000010");
     private readonly Guid requestingPersonId = new Guid("00000000-0000-0000-0000-000000000020");
+    private readonly string inviteToken1 = "Some invite  token";
+    private readonly string org5Name = "Test Org 5";
 
     [TestInitialize]
     public void Setup()
@@ -136,6 +138,33 @@ public class OrganisationServiceTests
         organisation.OrganisationNumber.Equals("1000520").Should().BeTrue();
 
     }
+    
+    [TestMethod]
+    public async Task GetOrganisationNameByInviteToken_works()
+    {
+        // Arrange
+        
+        //Act
+        var organisation = await _organisationService.GetOrganisationNameByInviteTokenAsync(inviteToken1);
+
+        //Assert
+        organisation.Should().NotBeNull();
+        organisation.OrganisationName.Should().Be(org5Name);
+
+    }
+    
+    [TestMethod]
+    public async Task GetOrganisationName_by_InvalidInviteToken_returns_null()
+    {
+        // Arrange
+        
+        //Act
+        
+        //Assert
+        Assert.ThrowsException<AggregateException>(() => 
+            _organisationService.GetOrganisationNameByInviteTokenAsync("not"+inviteToken1).Result);
+    }
+    
     private void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
     {
         using var setupContext = new AccountsDbContext(contextOptions);
@@ -239,7 +268,7 @@ public class OrganisationServiceTests
             CompaniesHouseNumber = SingleCompaniesHouseNumber,
             IsComplianceScheme = false,
             ValidatedWithCompaniesHouse = true,
-            Name = "Test org 4",
+            Name = org5Name,
             SubBuildingName = "Sub building 4",
             BuildingName = "Building 4",
             BuildingNumber = "4",
@@ -273,7 +302,8 @@ public class OrganisationServiceTests
         var user2 = new User()
         {
             UserId = new Guid("00000000-0000-0000-0000-000000000002"),
-            Email = "user2@test.com"
+            Email = "user2@test.com",
+            InviteToken = inviteToken1
         };
         setupContext.Users.Add(user2);
         

@@ -18,5 +18,8 @@ namespace BackendAccountService.Core.Services
         Task<PaginatedResponse<OrganisationSearchResult>> GetOrganisationsBySearchTerm(string query, int nationId, int pageSize, int page);
 
         Task<List<OrganisationUserOverviewResponseModel>> GetProducerUsers(Guid organisationExternalId);
+
+        Task<ApprovedPersonOrganisationModel> GetOrganisationNameByInviteTokenAsync(string token);
+
     }
 }

@@ -648,11 +648,18 @@ public class RegulatorServiceTests
         _ = SetUpDelegatedPersonEnrolment(organisation.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         
+        var request = new RemoveApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            ConnectionExternalId = Guid.NewGuid(),
+            OrganisationId = organisation.ExternalId
+        };
+        
        // Act
-        var result = await _regulatorService.RemoveApprovedPerson(Guid.NewGuid(), Guid.NewGuid(), organisation.ExternalId);
+        var result = await _regulatorService.RemoveApprovedPerson(request);
         
         // Assert
-        result.Should().Be((false, "Approved person doesnt belong to organisation"));
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
     }
     
    [TestMethod]
@@ -665,19 +672,52 @@ public class RegulatorServiceTests
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
  
+        var request = new RemoveApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            ConnectionExternalId =connExternalId,
+            OrganisationId = organisation.ExternalId
+        };
+        
         // Act
-        var result = await _regulatorService.RemoveApprovedPerson(Guid.NewGuid(), connExternalId, organisation.ExternalId);
+        var result = await _regulatorService.RemoveApprovedPerson(request);
         
         // Assert
-        result.Should().Be((true, "Success"));
-
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+       
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.SingleOrDefault().ServiceRoleId.Should()
             .Be(ServiceRole.Packaging.BasicUser.Id);
+        organisation.PersonOrganisationConnections.LastOrDefault().PersonRoleId.Should().Be(2);
         
         var approvedUser = organisation.PersonOrganisationConnections.FirstOrDefault();
         approvedUser.IsDeleted.Should().BeTrue();
         approvedUser.Enrolments.FirstOrDefault().IsDeleted.Should().BeTrue();
        
+    }
+    
+    [TestMethod]
+    public async Task RemoveApprovedPerson_When_Valid_Data_Passed_Data_Is_Passed_For_Email_Notification_For_Enrolled_Users()
+    {
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpApprovedPersonEnrolment(organisation.Id);
+        _ = SetUpDelegatedPersonEnrolment(organisation.Id);
+        _ = SetUpAnotherDelegatedPersonEnrolment(organisation.Id);
+        var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var request = new RemoveApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            ConnectionExternalId = connExternalId,
+            OrganisationId = organisation.ExternalId
+        };
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+        
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+        result.Count.Should().Be(2);
     }
     
     private static void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
@@ -1282,7 +1322,7 @@ public class RegulatorServiceTests
             Country = "Country 1",
             NationId = Data.DbConstants.Nation.England,
             ExternalId = Guid.NewGuid(),
-            ReferenceNumber = "Ref Number 1",
+            ReferenceNumber = "Ref Number 1"
         };
         setupContext.Add(organisation1);
 
@@ -1332,22 +1372,62 @@ public class RegulatorServiceTests
         };
         _dbContext.Add(user2);
         
-        var person1 = new Person()
+        var person2 = new Person()
         {
-            FirstName = $"User2 {organisationId}",
+            FirstName = $"User {organisationId}",
             LastName = $"Test2 {organisationId}",
             Email = $"user2{organisationId}@test.com",
             Telephone = "0123456789",
             ExternalId = new Guid("00000000-0000-0000-0000-000000000120"),
-            UserId = 1
+            UserId = 2
         };
-        _dbContext.Add(person1);
+        _dbContext.Add(person2);
         
-        var enrolment1 = new Enrolment
+        var enrolment2 = new Enrolment
         {
             Connection = new PersonOrganisationConnection()
             {
                 PersonId = 2,
+                OrganisationId = organisationId,
+                OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer,
+                PersonRoleId = 1
+            },
+            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled,
+            ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id
+        };
+        
+        _dbContext.Add(enrolment2);
+
+        return person2;
+    }
+    
+    private Person SetUpAnotherDelegatedPersonEnrolment(int organisationId)
+    {
+        var userAnother = new User()
+        {
+            UserId = new Guid("00000000-0000-4000-0000-000000000010"),
+            Email = "userAnother@test.com",
+            Id= 20
+        };
+        _dbContext.Add(userAnother);
+        
+        var personAnother = new Person()
+        {
+            FirstName = "",
+            LastName = $"TestAnother {organisationId}",
+            Email = $"userAnother{organisationId}@test.com",
+            Telephone = "0123456789",
+            ExternalId = new Guid("00000000-0050-0000-0000-000000000120"),
+            UserId = userAnother.Id,
+            Id= 50
+        };
+        _dbContext.Add(personAnother);
+        
+        var enrolmentAnother = new Enrolment
+        {
+            Connection = new PersonOrganisationConnection()
+            {
+                PersonId = personAnother.Id,
                 OrganisationId = organisationId,
                 OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer
             },
@@ -1355,8 +1435,8 @@ public class RegulatorServiceTests
             ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id
         };
         
-        _dbContext.Add(enrolment1);
+        _dbContext.Add(enrolmentAnother);
 
-        return person1;
+        return personAnother;
     }
 }

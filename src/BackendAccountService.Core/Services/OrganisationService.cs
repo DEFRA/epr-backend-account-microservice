@@ -1,7 +1,7 @@
-﻿using BackendAccountService.Core.Models;
+﻿using BackendAccountService.Core.Extensions;
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Models.Responses;
-using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -99,7 +99,7 @@ public class OrganisationService : IOrganisationService
     {
         var organisation = await _accountsDbContext.Organisations
             .FirstOrDefaultAsync(org => org.ExternalId == organisationExternalId);
-
+        
         return OrganisationMappings.GetOrganisationDetailModel(organisation);
     }
 
@@ -130,31 +130,39 @@ public class OrganisationService : IOrganisationService
             .GroupBy(joined => new 
             {
                 OrganisationId = joined.Organisation.ReferenceNumber,
+                CompanyId = joined.Organisation.Id,
                 CompanyHouseNumber = joined.Organisation.CompaniesHouseNumber,
                 joined.Organisation.ExternalId,
                 joined.Organisation.IsComplianceScheme,
-                OrganisationName = joined.Organisation.Name,
+                OrganisationName = joined.Organisation.Name
             })
             .Select(grouped => new OrganisationSearchResult
             {
                 OrganisationId = grouped.Key.OrganisationId,
+                CompanyId = grouped.Key.CompanyId,
                 CompanyHouseNumber = grouped.Key.CompanyHouseNumber,
                 ExternalId = grouped.Key.ExternalId,
                 IsComplianceScheme = grouped.Key.IsComplianceScheme,
-                OrganisationName = grouped.Key.OrganisationName,
+                OrganisationName = grouped.Key.OrganisationName
             })
             .OrderBy(org => org.OrganisationName);
 
-        return await PaginatedResponse<OrganisationSearchResult>.CreateAsync(organisationsQueryable,page, pageSize);
+        var response =  await PaginatedResponse<OrganisationSearchResult>.CreateAsync(organisationsQueryable,page, pageSize);
+        foreach (var item in response.Items)
+        {
+            item.OrganisationType = DetermineOrganisationType(item.IsComplianceScheme, item.CompanyId);
+        }
+        return response;
     }
-
+    
     public async Task<List<OrganisationUserOverviewResponseModel>> GetProducerUsers(Guid organisationExternalId)
     {
         return await _accountsDbContext.Enrolments
             .Include(enrolment => enrolment.Connection)
             .Include(enrolment => enrolment.Connection.Person)
             .AsNoTracking()
-            .WhereEnrolmentStatusIn(Data.DbConstants.EnrolmentStatus.Enrolled, Data.DbConstants.EnrolmentStatus.Approved, Data.DbConstants.EnrolmentStatus.Pending)
+            .WhereEnrolmentStatusIn(Data.DbConstants.EnrolmentStatus.Enrolled,
+                Data.DbConstants.EnrolmentStatus.Approved, Data.DbConstants.EnrolmentStatus.Pending)
             .WhereConnectionPersonRoleIdsIn(Data.DbConstants.PersonRole.Admin, Data.DbConstants.PersonRole.Employee)
             .Where(e => e.Connection.Organisation.ExternalId == organisationExternalId)
             .GroupBy(enrolment => new
@@ -171,6 +179,57 @@ public class OrganisationService : IOrganisationService
                 LastName = groupBy.Key.LastName,
                 Email = groupBy.Key.Email
             })
+            .OrderBy(user => user.FirstName)
             .ToListAsync();
+
+    }
+
+    public async Task<ApprovedPersonOrganisationModel> GetOrganisationNameByInviteTokenAsync(string token)
+    {
+        var user = await _accountsDbContext.Users.Where(p => p.InviteToken == token).FirstOrDefaultAsync();
+        var person = await _accountsDbContext.Persons.Where(p => p.Email == user.Email).FirstOrDefaultAsync();
+        var personOrganisationConnections = await _accountsDbContext.PersonOrganisationConnections
+            .Where(p => p.PersonId == person.Id)
+            .FirstOrDefaultAsync();
+        var organisation = await _accountsDbContext.Organisations
+            .Where(p => p.Id == personOrganisationConnections.OrganisationId)
+            .FirstOrDefaultAsync();
+        
+        //create new model here to store company house number check and service role id
+        var organisationAddress = new ApprovedPersonOrganisationModel
+        {
+            SubBuildingName = organisation.SubBuildingName,
+            BuildingName = organisation.BuildingName,
+            BuildingNumber = organisation.BuildingNumber,
+            Country = organisation.Country,
+            County = organisation.County,
+            DependentLocality = organisation.DependentLocality,
+            Locality = organisation.Locality,
+            Postcode = organisation.Postcode,
+            Street = organisation.Street,
+            Town = organisation.Town,
+            OrganisationName = organisation.Name,
+            ApprovedUserEmail = user.Email
+        };
+
+        //return new model
+        return organisationAddress;
+
+    }
+    private string DetermineOrganisationType(bool isComplianceScheme,int companyId)
+    {
+        if (isComplianceScheme)
+        {
+            return OrganisationSchemeType.ComplianceScheme.ToString();
+        }
+        var checkMatchInOrgConn = _accountsDbContext.OrganisationsConnections
+            .FirstOrDefault(
+                x => !x.IsDeleted &&
+                     x.FromOrganisationId == companyId 
+                     || x.ToOrganisationId == companyId);
+            
+        return checkMatchInOrgConn != null 
+            ? OrganisationSchemeType.InDirectProducer.ToString()
+            : OrganisationSchemeType.DirectProducer.ToString();
     }
 }

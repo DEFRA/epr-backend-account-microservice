@@ -1,4 +1,5 @@
-﻿using BackendAccountService.Api.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -86,5 +87,24 @@ public class OrganisationsController : ApiControllerBase
         }
 
         return await action.Invoke();
+    }
+    
+    [HttpGet]
+    [Route("organisation-by-invite-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrganisationByExternalIdAsync([Required]string token)
+    {
+        var organisation = await _organisationService.GetOrganisationNameByInviteTokenAsync(token);
+        
+        if(organisation != null)
+        {
+            return Ok(organisation);
+        }
+        else
+        {
+            return NoContent();
+        }
     }
 }

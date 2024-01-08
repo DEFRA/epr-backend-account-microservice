@@ -20,6 +20,7 @@ public class AccountsControllerTests
     private Mock<IAccountService> _accountServiceMock = null!;
     private Mock<IOrganisationService> _organisationServiceMock = null!;
     private Mock<IPersonService> _personServiceMock = null!;
+    private Mock<IUserService> _userServiceMock = null!;
     private Mock<IOptions<ApiConfig>> _apiConfigOptionsMock = null!;
 
     private const string ValidServiceRole = "ValidServiceRole";
@@ -31,6 +32,7 @@ public class AccountsControllerTests
         _accountServiceMock = new Mock<IAccountService>();
         _organisationServiceMock = new Mock<IOrganisationService>();
         _personServiceMock = new Mock<IPersonService>();
+        _userServiceMock = new Mock<IUserService>();
 
         _apiConfigOptionsMock = new Mock<IOptions<ApiConfig>>();
 
@@ -41,7 +43,11 @@ public class AccountsControllerTests
                 BaseProblemTypePath = "https://dummytest/"
             });
 
-        _accountsController = new AccountsController(_accountServiceMock.Object, _personServiceMock.Object, _organisationServiceMock.Object, _apiConfigOptionsMock.Object)
+        _accountsController = new AccountsController(_accountServiceMock.Object,
+            _personServiceMock.Object,
+            _organisationServiceMock.Object,
+            _userServiceMock.Object,
+            _apiConfigOptionsMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -200,6 +206,52 @@ public class AccountsControllerTests
         validationProblemDetails?.Errors.Count.Should().Be(1);
         validationProblemDetails?.Errors.FirstOrDefault().Key.Should().Be("ServiceRole");
         validationProblemDetails?.Errors.FirstOrDefault().Value.Should().Contain($"Service role '{InvalidServiceRole}' does not exist");        
+    }
+    
+    [TestMethod]
+    public async Task CreateApprovedUserAccount_with_valid_role_IsOkay()
+    {
+        // arrange
+        var request = new ApprovedUserAccountModel{
+            Organisation = new OrganisationModel(),
+            Person = new PersonModel(),
+            Connection = new ConnectionModel()};
+        _accountServiceMock.Setup(m => m.GetServiceRoleAsync(It.IsAny<string>())).ReturnsAsync(new ServiceRole());
+        _userServiceMock.Setup(m => m.GetApprovedUserUserByEmailAsync(It.IsAny<string>())).ReturnsAsync(new UserModel());
+        _accountServiceMock.Setup(m => m.AddApprovedUserAccountAsync(
+            It.IsAny<ApprovedUserAccountModel>(),
+            It.IsAny<ServiceRole>(),
+            It.IsAny<UserModel>()))
+            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}});
+        
+        // act
+        var result = await _accountsController.CreateApprovedUserAccount(request);
+        
+        //assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+    
+    [TestMethod]
+    public async Task CreateApprovedUserAccount_with_invalid_role_returns_validationProblem()
+    {
+        // arrange
+        var request = new ApprovedUserAccountModel{
+            Organisation = new OrganisationModel(),
+            Person = new PersonModel(),
+            Connection = new ConnectionModel()};
+        _accountServiceMock.Setup(m => m.GetServiceRoleAsync(It.IsAny<string>())).ReturnsAsync((ServiceRole)null);
+        _accountServiceMock.Setup(m => m.AddApprovedUserAccountAsync(
+                It.IsAny<ApprovedUserAccountModel>(),
+                It.IsAny<ServiceRole>(),
+                It.IsAny<UserModel>()))
+            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}});
+        
+        // act
+        var result = await _accountsController.CreateApprovedUserAccount(request);
+        
+        //assert
+        result.Should().BeOfType<BadRequestObjectResult>();
+        (result as BadRequestObjectResult).Value.Should().BeOfType<ValidationProblemDetails>();
     }
 
     private AccountModel GetAccountRecord()

@@ -29,7 +29,7 @@ public class UserService : IUserService
             .Include(user => user.Person)
             .FirstOrDefaultAsync(user => user.Email == email && user.InviteToken == inviteToken);
     }
-
+    
     public async Task<Result<UserOrganisationsListModel>> GetUserOrganisationAsync(Guid userId)
     {
         try
@@ -186,5 +186,21 @@ public class UserService : IUserService
                     .ToList()
             })
             .SingleOrDefaultAsync();
+    }
+    
+    
+    public async Task<UserModel?> GetApprovedUserUserByEmailAsync(string email)
+    {
+        var user =  await _accountsDbContext.Users.Where(p => p.Email == email).FirstOrDefaultAsync();
+        var userModel = new UserModel()
+        {
+            Id = user.Id,
+            UserId = user.UserId,
+            ExternalIdpId = user.ExternalIdpId,
+            ExternalIdpUserId = user.ExternalIdpUserId,
+            Email = user.Email
+        };
+        
+        return userModel;
     }
 }

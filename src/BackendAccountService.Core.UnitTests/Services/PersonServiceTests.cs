@@ -17,6 +17,8 @@ public class PersonServiceTests
     private readonly Guid ExternalId = Guid.NewGuid();
     private readonly Guid NoneExistentUserId = Guid.NewGuid();
     private readonly Guid DeletedUserId = Guid.NewGuid();
+    private readonly string PersonInviteToken = "some other invite token";
+    private readonly string InvitedPersonEmail = "invited@person.com";
 
     [TestInitialize]
     public void Setup()
@@ -81,6 +83,16 @@ public class PersonServiceTests
         person?.TelephoneNumber.Should().Be(expectedPerson?.Telephone);
         person?.CreatedOn.Should().Be(expectedPerson?.CreatedOn);
     }
+    
+    [TestMethod]
+    public async Task GetPersonServiceRoleByInviteTokenAsync_WhenInvalid_ThenReturnNull()
+    {
+        // act
+        var person = await _personService.GetPersonServiceRoleByInviteTokenAsync(PersonInviteToken);
+
+        // assert
+        person.Should().BeNull();
+    }
 
     private void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
     {
@@ -123,6 +135,39 @@ public class PersonServiceTests
             }
         };
         setupContext.Persons.Add(deletedPerson);
+
+        var invitedPersonId = 111;
+        var invitedOrgId = 112;
+        var invitedConnectionId = 113;
+        var invitedPerson = new Person
+        {
+            Id = invitedPersonId,
+            LastName = "InvitedPerson",
+            FirstName = "Tommy",
+            Email = InvitedPersonEmail,
+            Telephone = "07904777777",
+            User = new User
+            {
+                Email = InvitedPersonEmail,
+                UserId = Guid.NewGuid(),
+                ExternalIdpId = "xxxxxx",
+                ExternalIdpUserId = "654321",
+                InviteToken = PersonInviteToken
+            }
+        };
+        setupContext.Persons.Add(invitedPerson);
+
+        var invitedPersonConnection = new PersonOrganisationConnection
+        {
+            PersonId = invitedPersonId,
+            OrganisationId = invitedOrgId,
+            Id = invitedConnectionId
+        };
+        var invitedOrg = new Organisation { Id = invitedOrgId, Name = "some name"};
+        var invitedEnrolment = new Enrolment { ConnectionId = invitedConnectionId }; 
+        setupContext.PersonOrganisationConnections.Add(invitedPersonConnection);
+        setupContext.Organisations.Add(invitedOrg);
+        setupContext.Enrolments.Add(invitedEnrolment);
         
         var externalIdPerson = new Person
         {

@@ -1,12 +1,11 @@
 ﻿using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
-
+using BackendAccountService.Core.Models.Result;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
-using System.Net;
 
 namespace BackendAccountService.Api.UnitTests.Controllers;
 
@@ -98,6 +97,36 @@ public class PersonsControllerTests
             .ReturnsAsync((PersonResponseModel?)null);
 
         var result = await _personsController.GetPersonByExternalIdAsync(externalId) as NoContentResult;
+
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+    }
+    
+    [TestMethod]
+    public async Task GetPersonByInviteTokenAsync_WhenUserDoesNotExist_ReturnsNoContent()
+    {
+        var token = "some invike token";
+
+        _personServiceMock
+            .Setup(service => service.GetPersonServiceRoleByInviteTokenAsync(token))
+            .ReturnsAsync((InviteApprovedUserModel)null);
+
+        var result = await _personsController.GetPersonByInviteTokenAsync(token) as NoContentResult;
+
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+    }
+    
+    [TestMethod]
+    public async Task GetPersonByInviteTokenAsync_WhenUserDoesNotExist_ReturnsOk()
+    {
+        var token = "some invike token";
+
+        _personServiceMock
+            .Setup(service => service.GetPersonServiceRoleByInviteTokenAsync(token))
+            .ReturnsAsync((InviteApprovedUserModel)null);
+
+        var result = await _personsController.GetPersonByInviteTokenAsync(token) as NoContentResult;
 
         result.Should().NotBeNull();
         result?.StatusCode.Should().Be((int)HttpStatusCode.NoContent);

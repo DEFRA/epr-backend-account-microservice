@@ -711,9 +711,15 @@ public class RegulatorControllerTests
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(false);
         
+        var request = new RemoveApprovedUserRequest
+        {
+            OrganisationId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            ConnectionExternalId = Guid.NewGuid()
+        };
        // Act
        var result =
-           await _regulatorsController.RemoveApprovedPerson(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() ) as ObjectResult;
+           await _regulatorsController.RemoveApprovedPerson(request) as ObjectResult;
         
        // Assert
        result.Should().NotBeNull();
@@ -725,7 +731,7 @@ public class RegulatorControllerTests
     {
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(Guid.Empty,It.IsAny<Guid>(), It.IsAny<Guid>()) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();
@@ -737,7 +743,7 @@ public class RegulatorControllerTests
     {
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(It.IsAny<Guid>(), It.IsAny<Guid>(), Guid.Empty) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();
@@ -754,7 +760,7 @@ public class RegulatorControllerTests
         
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(It.IsAny<Guid>(), Guid.Empty, It.IsAny<Guid>()) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();
@@ -765,16 +771,24 @@ public class RegulatorControllerTests
     public async Task When_RemoveApprovedPerson_Is_Called_And_RemoveSucceeds_ShouldReturnNoContent()
     {
         // Arrange
-        _regulatorServiceMock
+        
+      _regulatorServiceMock
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(true);
-        
-        _regulatorServiceMock.Setup(x => x.RemoveApprovedPerson(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>()))
-            .ReturnsAsync((true, string.Empty));
+
+      var request = new RemoveApprovedUserRequest
+      {
+          OrganisationId = Guid.NewGuid(),
+          UserId = Guid.NewGuid(),
+          ConnectionExternalId = Guid.NewGuid()
+      };
+      
+        _regulatorServiceMock.Setup(x => x.RemoveApprovedPerson(request))
+            .ReturnsAsync(new List<AssociatedPersonResponseModel>());
        
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(Guid.NewGuid(), Guid.NewGuid(),Guid.NewGuid()) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(request) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();

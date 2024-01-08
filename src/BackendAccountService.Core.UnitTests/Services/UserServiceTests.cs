@@ -19,6 +19,7 @@ public class UserServiceTests
     private AccountsDbContext _dbContext;
     private UserService _userService;
     private readonly NullLogger<UserService> _nullLogger = new();
+    private const string User1Email = "user1@test.com";
 
     [TestInitialize]
     public void Setup()
@@ -84,7 +85,7 @@ public class UserServiceTests
         var user = new User
         {
             UserId = new Guid("5dc5267b-ed00-4551-9129-4abc9944aca2"),
-            Email = "user1@test.com"
+            Email = User1Email
         };
         var user2 = new User
         {
@@ -239,5 +240,17 @@ public class UserServiceTests
         result.Value.LastName.Should().Be(expectedPerson.LastName);
         result.Value.Email.Should().Be(expectedPerson.Email);
         result.Value.Organisations.Count.Should().Be(1);
+    }
+    
+    [TestMethod]
+    public async Task GetApprovedUserUserByEmail_returns_expected_user()
+    {
+        //Setup
+
+        //Act
+        var result = await _userService.GetApprovedUserUserByEmailAsync(User1Email);
+
+        //Assert
+        result.Should().NotBeNull();
     }
 }

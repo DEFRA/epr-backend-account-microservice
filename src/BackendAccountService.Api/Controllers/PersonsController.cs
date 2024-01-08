@@ -54,4 +54,22 @@ public class PersonsController : ApiControllerBase
             return NoContent();
         }
     }
+    
+    [HttpGet]
+    [Route("person-by-invite-token")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetPersonByInviteTokenAsync([Required]string token)
+    {
+        var person = await _personService.GetPersonServiceRoleByInviteTokenAsync(token);
+        if(person != null)
+        {
+            return Ok(person);
+        }
+        else
+        {
+            return NoContent();
+        }
+    }
 }

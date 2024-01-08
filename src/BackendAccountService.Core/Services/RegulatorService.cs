@@ -1,3 +1,4 @@
+using BackendAccountService.Core.Extensions;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
@@ -504,9 +505,9 @@ public class RegulatorService: IRegulatorService
             .Select(p => new Company
             {
                 OrganisationName = p.Name,
+                CompanyId = p.Id,
                 CompaniesHouseNumber = p.CompaniesHouseNumber,
                 OrganisationId = p.ReferenceNumber,
-                OrganisationTypeId = p.OrganisationTypeId,
                 IsComplianceScheme = p.IsComplianceScheme,
                 RegisteredAddress = new AddressModel
                 {
@@ -518,10 +519,12 @@ public class RegulatorService: IRegulatorService
                 }
             });
         companyDetails.Company = details.FirstOrDefault();
+
+        companyDetails.Company.OrganisationType = DetermineOrganisationType(companyDetails.Company.IsComplianceScheme, companyDetails.Company.CompanyId);
         return companyDetails;
     }
-    
-    public async Task<(bool Succeeded, string ErrorMessage)> RemoveApprovedPerson(Guid userId ,Guid connExternalId, Guid organisationId)
+
+    public async Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(RemoveApprovedUserRequest request)
     {
         try
         {
@@ -531,38 +534,98 @@ public class RegulatorService: IRegulatorService
                .Include(enrolment => enrolment.Connection.Organisation)
                .WhereEnrolmentServiceRoleIn(ServiceRole.Packaging.ApprovedPerson.Id,
                    ServiceRole.Packaging.DelegatedPerson.Id)
-               .Where(e => e.Connection.Organisation.ExternalId == organisationId)
+               .Where(e => e.Connection.Organisation.ExternalId == request.OrganisationId)
                .ToListAsync();
 
-            var approvedPerson = getAllUsers.SingleOrDefault(a => a.Connection.ExternalId == connExternalId);
+            var approvedPerson = getAllUsers.SingleOrDefault(a => a.Connection.ExternalId == request.ConnectionExternalId);
            if (approvedPerson == null)
            {
-               return (false, "Approved person doesnt belong to organisation");
+               return new List<AssociatedPersonResponseModel>();
            }
            
-           //soft delete approved users 
            approvedPerson.IsDeleted = true;
            approvedPerson.Connection.IsDeleted = true;
            approvedPerson.Connection.Person.IsDeleted = true;
-            
-            //demote delegated users to basic users
-            var delegatedPersons = getAllUsers
-                .Where(a => a.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id)
-                .ToList();
+           
+           //demote delegated users to basic users
+           var delegatedPersons = getAllUsers
+               .Where(model => model.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id)
+               .ToList();
+           foreach (var person in delegatedPersons)
+           {
+               person.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
+               person.Connection.PersonRoleId = 2;
+           }
 
-            foreach (var person in delegatedPersons)
-            {
-                person.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
-            }
-        
-            await _accountsDbContext.SaveChangesAsync(userId, organisationId);
-            return (true, "Success");
+           await _accountsDbContext.SaveChangesAsync(request.UserId, request.OrganisationId);
+           
+           //return users who are enrolled/approved.
+           var returnedUsers = GetUserListToSendNotification(getAllUsers);
+           return returnedUsers;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error removing the approved person { connExternalId } from organisation {organisationId}", connExternalId, organisationId);
-             return (false, "Error removing the approved person");
+            _logger.LogError(e,
+                "Error removing the approved person { connExternalId } from organisation {organisationId}",
+                request.ConnectionExternalId,
+                request.OrganisationId);
+             return new List<AssociatedPersonResponseModel>();
         }
+    }
+    private List<AssociatedPersonResponseModel> GetUserListToSendNotification(List<Enrolment> getAllUsers)
+    {
+        var validNotificationUsers = new List<AssociatedPersonResponseModel>();
         
+        var getValidUsers = getAllUsers
+            .GroupBy(enrolment => new
+            {
+                enrolment.Connection.Person.FirstName,
+                enrolment.Connection.Person.LastName,
+                enrolment.Connection.Person.Email,
+                OrganisationName = enrolment.Connection.Organisation.Name,
+                OrganisationId = enrolment.Connection.Organisation.ReferenceNumber,
+                enrolment.ServiceRoleId
+            })
+            .Select(groupBy => new AssociatedPersonResponseModel
+            {
+                FirstName = groupBy.Key.FirstName,
+                LastName = groupBy.Key.LastName,
+                Email = groupBy.Key.Email,
+                CompanyName = groupBy.Key.OrganisationName,
+                OrganisationId = groupBy.Key.OrganisationId.ToString(),
+                ServiceRoleId = groupBy.Key.ServiceRoleId,
+            })
+            .ToList();
+
+        foreach (var user in getValidUsers)
+        {
+            switch (user.ServiceRoleId)
+            {
+                case ServiceRole.Packaging.ApprovedPerson.Id:
+                case ServiceRole.Packaging.BasicUser.Id when !string.IsNullOrEmpty(user.FirstName) && !string.IsNullOrEmpty(user.LastName):
+                {
+                    validNotificationUsers.Add(user);
+                    break;
+                }
+            }
+        }
+        return validNotificationUsers;
+    }
+    
+    private string DetermineOrganisationType(bool isComplianceScheme,int companyId)
+    {
+        if (isComplianceScheme)
+        {
+            return OrganisationSchemeType.ComplianceScheme.ToString();
+        }
+        var checkMatchInOrgConn = _accountsDbContext.OrganisationsConnections
+            .FirstOrDefault(
+                x => !x.IsDeleted &&
+                     x.FromOrganisationId == companyId 
+                     || x.ToOrganisationId == companyId);
+            
+        return checkMatchInOrgConn != null 
+            ? OrganisationSchemeType.InDirectProducer.ToString()
+            : OrganisationSchemeType.DirectProducer.ToString();
     }
 }

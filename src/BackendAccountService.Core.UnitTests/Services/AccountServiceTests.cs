@@ -1,12 +1,13 @@
-namespace BackendAccountService.Core.UnitTests.Services;
 
-using Core.Services;
-using Data.Entities;
-using Data.Infrastructure;
+using BackendAccountService.Core.Services;
+using BackendAccountService.Data.Entities;
+using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Models;
-using OrganisationType = Models.OrganisationType;
+using BackendAccountService.Core.Models;
+using OrganisationType = BackendAccountService.Core.Models.OrganisationType;
+
+namespace BackendAccountService.Core.UnitTests.Services;
 
 [TestClass]
 public class AccountsServiceTests
@@ -65,6 +66,45 @@ public class AccountsServiceTests
         _accountContext.Enrolments
             .FirstOrDefault(enrolment => enrolment.Connection.Organisation.Name == accountToCreate.Organisation.Name)
             .Should().NotBeNull();
+    }
+    
+    [TestMethod]
+    public async Task AddApprovedUserAccount_CanNotProcessNullQuery()
+    {
+        //Setup
+        var street = "some street";
+        var account = new ApprovedUserAccountModel
+        {
+            Connection = new ConnectionModel(),
+            Person = new PersonModel
+            {
+                ContactEmail = "cake@cake.com",
+                FirstName = "Cake",
+                LastName = "Cake",
+                TelephoneNumber = "02123"
+            },
+            Organisation = new OrganisationModel
+            {
+                Name = "cake",
+                Address = new AddressModel
+                {
+                    Street = street
+                }
+            }
+        };
+        
+        //Act
+        var test = async () => await _accountService.AddApprovedUserAccountAsync(
+            account,
+            new ServiceRole(),
+            new UserModel
+            {
+                UserId = Guid.NewGuid(), Email = "testUser@test.com", ExternalIdpUserId = "12345",
+                ExternalIdpId = "oneTwoThree",Id = 1
+            });
+        
+        //Assert
+        await test.Should().ThrowAsync<InvalidOperationException>();
     }
 
     private static void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
@@ -135,7 +175,8 @@ public class AccountsServiceTests
                 UserId = Guid.NewGuid(),
                 Email = "test@test.com",
                 ExternalIdpId = null!,
-                ExternalIdpUserId = null!
+                ExternalIdpUserId = null!,
+                Id = 1
             }
         };
     }

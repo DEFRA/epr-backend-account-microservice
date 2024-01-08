@@ -10,4 +10,5 @@ public interface IUserService
     Task<User?> GetUserByInviteAsync(string email, string inviteToken);
     Task<Result<UserOrganisationsListModel>> GetUserOrganisationAsync(Guid userId);
     Task<Result<PersonWithOrganisationsResponse?>> GetPersonOrganisationsWithEnrolmentsForServiceAsync(Guid userId, string serviceKey);
+    Task<UserModel?> GetApprovedUserUserByEmailAsync(string email);
 }

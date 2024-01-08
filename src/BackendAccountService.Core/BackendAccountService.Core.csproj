@@ -21,4 +21,9 @@
     </SonarQubeSetting>
   </ItemGroup>
   
+  <ItemGroup>
+    <Compile Remove="Models\Responses\RemoveApprovePersonResponseModel.cs" />
+    <Compile Remove="Models\Responses\PersonSummaryModel.cs" />
+  </ItemGroup>
+  
 </Project>

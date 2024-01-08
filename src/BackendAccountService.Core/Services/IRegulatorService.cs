@@ -24,7 +24,7 @@ public interface IRegulatorService
 
     Task<IQueryable<OrganisationUsersResponseModel>> GetUserListForRegulator(Guid organisationId, bool getApprovedUsersOnly = false);
     
-    Task<(bool Succeeded, string ErrorMessage)> RemoveApprovedPerson(Guid userId ,Guid personExternalId, Guid organisationId);
+    Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(RemoveApprovedUserRequest request);
     
     Task<CompanySearchDetailsModel> GetCompanyDetailsById(Guid organisationId);
 }

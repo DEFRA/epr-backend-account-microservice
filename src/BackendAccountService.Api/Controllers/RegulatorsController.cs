@@ -202,26 +202,24 @@ public class RegulatorsController : ApiControllerBase
     }
 
 
-    [HttpDelete]
+    [HttpPost]
     [Route("remove-approved-users")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> RemoveApprovedPerson(Guid userId, Guid connExternalId, Guid organisationId)
+    public async Task<IActionResult> RemoveApprovedPerson(RemoveApprovedUserRequest request)
     {
-        return await ExecuteProtectedAction(userId, organisationId,async () =>
+        return await ExecuteProtectedAction(request.UserId, request.OrganisationId,async () =>
         {
-            if (connExternalId == Guid.Empty )
+            if (request.ConnectionExternalId == Guid.Empty )
             {
                 return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
             }
 
-            var succeeded =  await _regulatorService.RemoveApprovedPerson(userId, connExternalId, organisationId);
-            
-            return succeeded.Succeeded
-                ? Ok(succeeded.Succeeded)
-                : Problem(statusCode: StatusCodes.Status500InternalServerError, type: "failed to remove person");
+            var associatedPerson =  await _regulatorService.RemoveApprovedPerson(request);
+
+            return Ok(associatedPerson);
         });
     }
     private async Task<IActionResult> ExecuteProtectedAction(Guid userId, Guid organisationId, Func<Task<IActionResult>> action) 

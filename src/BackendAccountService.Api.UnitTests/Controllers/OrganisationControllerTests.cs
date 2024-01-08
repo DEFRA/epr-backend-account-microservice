@@ -118,4 +118,38 @@ public class OrganisationControllerTests
         result.Should().NotBeNull();
         result?.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
     }
+    
+    [TestMethod]
+    public async Task GetOrganisationByInviteTokenAsync_returns_nocontent_if_no_org()
+    {
+        var token = "sometokenstring";
+        // Arrange
+        _organisationServiceMock
+            .Setup(service => service.GetOrganisationNameByInviteTokenAsync(token))
+            .ReturnsAsync((ApprovedPersonOrganisationModel)null);
+        
+        // Act
+        var result = await _organisationController.GetOrganisationByExternalIdAsync(token) as NoContentResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+    }
+    
+    [TestMethod]
+    public async Task GetOrganisationByInviteTokenAsync_returns_org_if_found()
+    {
+        var token = "sometokenstring";
+        // Arrange
+        _organisationServiceMock
+            .Setup(service => service.GetOrganisationNameByInviteTokenAsync(token))
+            .ReturnsAsync(new ApprovedPersonOrganisationModel());
+        
+        // Act
+        var result = await _organisationController.GetOrganisationByExternalIdAsync(token) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be((int)HttpStatusCode.OK);
+    }
 }

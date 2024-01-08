@@ -36,7 +36,7 @@ public class OrganisationServiceProducerUsersTests
     [DataRow(Data.DbConstants.PersonRole.Employee, Data.DbConstants.EnrolmentStatus.Pending)]
     public async Task WhenGettingProducerOrganisationUsers_ShouldReturnCorrectData(int personRoleId, int enrolmentStatusId)
     {
-        var organisation = SetUpOrganisation(_accountsDbContext);
+        var organisation = SetUpOrganisation();
         var  person = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
         _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
         
@@ -67,7 +67,7 @@ public class OrganisationServiceProducerUsersTests
     [DataRow(Data.DbConstants.PersonRole.Employee, Data.DbConstants.EnrolmentStatus.OnHold)]
     public async Task WhenGettingProducerOrganisationWithNoValidUsers_ShouldReturnNoData(int personRoleId, int enrolmentStatusId)
     {
-        var organisation = SetUpOrganisation(_accountsDbContext);
+        var organisation = SetUpOrganisation();
         _ = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
         _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
         
@@ -76,7 +76,46 @@ public class OrganisationServiceProducerUsersTests
         results.Count.Should().Be(0);
     }
 
-    private Organisation SetUpOrganisation(AccountsDbContext setupContext)
+    [TestMethod]
+    public async Task WhenGettingProducerUsers_ShouldReturnListAlphabeticallySortedByFirstName()
+    {
+        var personRoleId = Data.DbConstants.PersonRole.Admin;
+        var enrolmentStatusId = Data.DbConstants.EnrolmentStatus.Approved;
+        
+        var organisation = SetUpOrganisation();
+        var person1 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person1.FirstName = "Albert";
+        
+        var person2 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person2.FirstName = "Katie";
+        
+        var person3 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person3.FirstName = "Adam";
+        
+        var person4 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person4.FirstName = "Zahra";
+        
+        var person5 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person5.FirstName = "Katie";
+        
+        var person6 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        person6.FirstName = "Fiona";
+        
+        _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
+
+        var results = await _organisationService.GetProducerUsers(organisation.ExternalId);
+
+        results.Count.Should().Be(6);
+
+        results[0].FirstName.Should().Be("Adam");
+        results[1].FirstName.Should().Be("Albert");
+        results[2].FirstName.Should().Be("Fiona");
+        results[3].FirstName.Should().Be("Katie");
+        results[4].FirstName.Should().Be("Katie");
+        results[5].FirstName.Should().Be("Zahra");
+    }
+    
+    private Organisation SetUpOrganisation()
     {
         var organisation1 = new Organisation
         {
@@ -100,7 +139,7 @@ public class OrganisationServiceProducerUsersTests
             ExternalId = Guid.NewGuid(),
             ReferenceNumber = "Ref Number 1",
         };
-        setupContext.Add(organisation1);
+        _accountsDbContext.Add(organisation1);
 
         return organisation1;
     }
@@ -109,7 +148,7 @@ public class OrganisationServiceProducerUsersTests
     {
         var user1 = new User()
         {
-            UserId = new Guid("00000000-0000-0000-0000-000000000001"),
+            UserId = Guid.NewGuid(),
             Email = "user1@test.com"
         };
         _accountsDbContext.Add(user1);
@@ -120,8 +159,8 @@ public class OrganisationServiceProducerUsersTests
             LastName = $"Test {organisationId}",
             Email = $"user{organisationId}@test.com",
             Telephone = "0123456789",
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000020"),
-            UserId = 1
+            ExternalId = Guid.NewGuid(),
+            UserId = user1.Id
         };
         _accountsDbContext.Add(person1);
         
@@ -129,7 +168,7 @@ public class OrganisationServiceProducerUsersTests
         {
             Connection = new PersonOrganisationConnection()
             {
-                PersonId = 1,
+                PersonId = person1.Id,
                 OrganisationId = organisationId,
                 PersonRoleId = personRoleId, //Data.DbConstants.PersonRole.Admin,
                 OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer
