@@ -3,6 +3,7 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using static BackendAccountService.Data.DbConstants.ServiceRole;
 
 namespace BackendAccountService.Core.UnitTests.Services;
 
@@ -37,7 +38,7 @@ public class OrganisationServiceProducerUsersTests
     public async Task WhenGettingProducerOrganisationUsers_ShouldReturnCorrectData(int personRoleId, int enrolmentStatusId)
     {
         var organisation = SetUpOrganisation();
-        var  person = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.BasicUser.Id);
         _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
         
         var results = await _organisationService.GetProducerUsers(organisation.ExternalId);
@@ -49,6 +50,18 @@ public class OrganisationServiceProducerUsersTests
         actual.LastName.Should().Be(person.LastName);
         actual.Email.Should().Be(person.Email);
         actual.PersonExternalId.ToString().Should().Be(person.ExternalId.ToString());
+    }
+    
+    [TestMethod]
+    public async Task WhenGettingProducerOrganisationUsers_ShouldNotReturnApprovedPerson()
+    {
+        var organisation = SetUpOrganisation();
+        SetUpEnrolment(organisation.Id, Data.DbConstants.PersonRole.Admin, Data.DbConstants.EnrolmentStatus.Approved);
+        _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
+        
+        var results = await _organisationService.GetProducerUsers(organisation.ExternalId);
+
+        results.Should().BeEmpty();
     }
     
     [TestMethod]
@@ -83,22 +96,22 @@ public class OrganisationServiceProducerUsersTests
         var enrolmentStatusId = Data.DbConstants.EnrolmentStatus.Approved;
         
         var organisation = SetUpOrganisation();
-        var person1 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person1 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.DelegatedPerson.Id);
         person1.FirstName = "Albert";
         
-        var person2 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person2 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.BasicUser.Id);
         person2.FirstName = "Katie";
         
-        var person3 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person3 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.DelegatedPerson.Id);
         person3.FirstName = "Adam";
         
-        var person4 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person4 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.BasicUser.Id);
         person4.FirstName = "Zahra";
         
-        var person5 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person5 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.DelegatedPerson.Id);
         person5.FirstName = "Katie";
         
-        var person6 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId);
+        var person6 = SetUpEnrolment(organisation.Id, personRoleId, enrolmentStatusId, Packaging.BasicUser.Id);
         person6.FirstName = "Fiona";
         
         _accountsDbContext.SaveChanges(Guid.Empty, Guid.Empty);
@@ -144,7 +157,7 @@ public class OrganisationServiceProducerUsersTests
         return organisation1;
     }
 
-    private Person SetUpEnrolment(int organisationId, int personRoleId, int enrolmentStatusId)
+    private Person SetUpEnrolment(int organisationId, int personRoleId, int enrolmentStatusId, int serviceRoleId = Packaging.ApprovedPerson.Id)
     {
         var user1 = new User()
         {
@@ -174,7 +187,7 @@ public class OrganisationServiceProducerUsersTests
                 OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer
             },
             EnrolmentStatusId = enrolmentStatusId, //Data.DbConstants.EnrolmentStatus.Approved,
-            ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Id
+            ServiceRoleId = serviceRoleId
         };
         
         _accountsDbContext.Add(enrolment1);

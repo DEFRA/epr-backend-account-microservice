@@ -165,6 +165,7 @@ public class OrganisationService : IOrganisationService
                 Data.DbConstants.EnrolmentStatus.Approved, Data.DbConstants.EnrolmentStatus.Pending)
             .WhereConnectionPersonRoleIdsIn(Data.DbConstants.PersonRole.Admin, Data.DbConstants.PersonRole.Employee)
             .Where(e => e.Connection.Organisation.ExternalId == organisationExternalId)
+            .Where(e => e.ServiceRoleId != Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Id)
             .GroupBy(enrolment => new
             {
                 enrolment.Connection.Person.ExternalId,
