@@ -12,17 +12,20 @@ public class RegulatorsController : ApiControllerBase
 {
     private readonly IRegulatorService _regulatorService;
     private readonly IOrganisationService _organisationService;
+    private readonly IValidationService _validationService;
     private readonly ILogger<RegulatorsController> _logger;
 
     public RegulatorsController(
         IRegulatorService regulatorService,
         IOrganisationService organisationService,
+        IValidationService validationService,
         ILogger<RegulatorsController> logger,
         IOptions<ApiConfig> baseApiConfigOptions)
         : base(baseApiConfigOptions)
     {
         _regulatorService = regulatorService;
         _organisationService = organisationService;
+        _validationService = validationService;
         _logger = logger;
     }
 
@@ -222,6 +225,37 @@ public class RegulatorsController : ApiControllerBase
             return Ok(associatedPerson);
         });
     }
+    
+    [HttpPost]
+    [Route("add-remove-approved-users")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status304NotModified)]
+    public async Task<IActionResult> AddRemoveApprovedUser(AddRemoveApprovedUserRequest request)
+    {
+        return await ExecuteProtectedAction(request.AddingOrRemovingUserId, request.OrganisationId,async () =>
+        {
+            if (string.IsNullOrWhiteSpace(request.AddingOrRemovingUserEmail)
+                || string.IsNullOrWhiteSpace(request.InvitedPersonEmail))
+            {
+                return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
+            }
+            
+            var isUserInvited = await _validationService.IsUserInvitedAsync(request.InvitedPersonEmail);
+
+            if (isUserInvited)
+            {
+                var userAlreadyInvitedError = $"User '{request.InvitedPersonEmail}' is already invited";
+                ModelState.AddModelError(nameof(request.InvitedPersonEmail), userAlreadyInvitedError);
+                return BadRequest(userAlreadyInvitedError);
+            }
+
+            var response = await _regulatorService.AddRemoveApprovedPerson(request);
+            return Ok(response);
+        });
+    }
+    
     private async Task<IActionResult> ExecuteProtectedAction(Guid userId, Guid organisationId, Func<Task<IActionResult>> action) 
     {
         if (userId == Guid.Empty || organisationId == Guid.Empty)

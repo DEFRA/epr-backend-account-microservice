@@ -19,8 +19,10 @@ public class RegulatorControllerTests
     private readonly Mock<IRegulatorService> _regulatorServiceMock = new();
     private readonly Mock<IOptions<ApiConfig>> _apiConfigOptionsMock = new();
     private readonly Mock<IOrganisationService> _organisationServiceMock = new();
+    private readonly Mock<IValidationService> _validationService = new();
     private readonly NullLogger<RegulatorsController> _nullLogger = new();
     private readonly IFixture _fixture = new Fixture().Customize(new AutoMoqCustomization());
+    
     private readonly Guid _userId = Guid.NewGuid();
     private readonly Guid _organisationId = Guid.NewGuid();
     private const int FirstPage = 1;
@@ -42,8 +44,12 @@ public class RegulatorControllerTests
                 BaseProblemTypePath = "https://dummytest/"
             });
 
-        _regulatorsController = new RegulatorsController(_regulatorServiceMock.Object, _organisationServiceMock.Object,
-            _nullLogger, _apiConfigOptionsMock.Object)
+        _regulatorsController = new RegulatorsController(
+            _regulatorServiceMock.Object, 
+            _organisationServiceMock.Object,
+            _validationService.Object,
+            _nullLogger, 
+            _apiConfigOptionsMock.Object)
         {
             ControllerContext = new ControllerContext
             {
@@ -794,5 +800,107 @@ public class RegulatorControllerTests
         result.Should().NotBeNull();
         result?.StatusCode.Should().Be((int)HttpStatusCode.OK);
         Assert.IsInstanceOfType(result, typeof(OkObjectResult));
+    }
+    
+    [TestMethod]
+    [DynamicData(nameof(AddRemoveApprovedUserInvalidInputTestData))]
+    public async Task When_AddRemoveApprovedUser_Is_Called_And_InvalidInput_ShouldReturnBadRequest(
+        Guid addingOrRemovingUserId, Guid organisationId)
+    {
+        // Arrange
+        _regulatorServiceMock
+            .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .Returns(true);
+
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisationId,
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            AddingOrRemovingUserId = addingOrRemovingUserId, 
+            AddingOrRemovingUserEmail = "test1@email.com", 
+            InvitedPersonEmail = "test2@email.com"
+        };
+      
+        // Act
+        var result =
+            await _regulatorsController.AddRemoveApprovedUser(request) as ObjectResult;
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+    }
+    
+    [TestMethod]
+    public async Task When_AddRemoveApprovedUser_Is_Called_And_UserIsAlreadyInvited_ShouldReturnBadRequest()
+    {
+        var invitedUserEmail = "test2@email.com";
+        // Arrange
+        _regulatorServiceMock
+            .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .Returns(true);
+
+        _validationService
+            .Setup(x => x.IsUserInvitedAsync(invitedUserEmail))
+            .ReturnsAsync(true);
+
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            AddingOrRemovingUserId = Guid.NewGuid(), 
+            AddingOrRemovingUserEmail = "test1@email.com", 
+            InvitedPersonEmail = invitedUserEmail
+        };
+      
+        // Act
+        var result =
+            await _regulatorsController.AddRemoveApprovedUser(request) as ObjectResult;
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+    }
+    
+    [TestMethod]
+    public async Task When_AddRemoveApprovedUser_Is_Called_And_DataIsCreatedCorrectly_ShouldReturnOk()
+    {
+        // Arrange
+        _regulatorServiceMock
+            .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .Returns(true);
+
+        _validationService
+            .Setup(x => x.IsUserInvitedAsync(It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        _regulatorServiceMock
+            .Setup(x => x.AddRemoveApprovedPerson(It.IsAny<AddRemoveApprovedUserRequest>()))
+            .ReturnsAsync(new AddRemoveApprovedPersonResponseModel());
+
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            AddingOrRemovingUserId = Guid.NewGuid(), 
+            AddingOrRemovingUserEmail = "test1@email.com", 
+            InvitedPersonEmail = "test2@email.com"
+        };
+      
+        // Act
+        var result =
+            await _regulatorsController.AddRemoveApprovedUser(request) as ObjectResult;
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be((int)HttpStatusCode.OK);
+    }
+
+    public static IEnumerable<object[]> AddRemoveApprovedUserInvalidInputTestData
+    {
+        get
+        {
+            yield return new object[] { Guid.NewGuid(), Guid.Empty };
+            yield return new object[] { Guid.Empty, Guid.NewGuid() };
+        }
     }
 }

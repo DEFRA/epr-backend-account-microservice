@@ -8,6 +8,7 @@ using BackendAccountService.Data.Entities.Conversions;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
 using EnrolmentStatus = BackendAccountService.Data.DbConstants.EnrolmentStatus;
@@ -62,21 +63,24 @@ public class RegulatorServiceTests
     private const string InvalidEnrolmentStatusMessage = "unsupported enrolment status";
     private const string ApprovedUser2ProducerEmail = "producer.user4@test.com";
     private Mock<ILogger<RegulatorService>> _logger = null;
-
+    private Mock<ITokenService> _tokenService;
+    
     [TestInitialize]
     public void Setup()
     {
         var contextOptions = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseInMemoryDatabase("AccountsServiceTests")
+            .UseInMemoryDatabase(nameof(RegulatorServiceTests))
             .ConfigureWarnings(builder => builder.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
-
-        SetUpDatabase(contextOptions);
+        _dbContext = new AccountsDbContext(contextOptions);
+        
+        SetUpDatabase(_dbContext);
 
         _logger = new Mock<ILogger<RegulatorService>>();
-        _dbContext = new AccountsDbContext(contextOptions);
+        _tokenService = new Mock<ITokenService>();
+        
         _organisationService = new OrganisationService(_dbContext);
-        _regulatorService = new RegulatorService(_dbContext, _organisationService, _logger.Object);
+        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object);
         
     }
     
@@ -640,12 +644,12 @@ public class RegulatorServiceTests
     }
 
     [TestMethod]
-    public async Task RemoveApprovedPerson_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
+    public async Task RemoveApprovedPerson_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_NoAssociatedPersons()
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
-        _ = SetUpApprovedPersonEnrolment(organisation.Id);
-        _ = SetUpDelegatedPersonEnrolment(organisation.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         
         var request = new RemoveApprovedUserRequest
@@ -659,7 +663,7 @@ public class RegulatorServiceTests
         var result = await _regulatorService.RemoveApprovedPerson(request);
         
         // Assert
-        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+        result.Count.Should().Be(0);
     }
     
    [TestMethod]
@@ -667,8 +671,8 @@ public class RegulatorServiceTests
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
-        _ = SetUpApprovedPersonEnrolment(organisation.Id);
-        _ = SetUpDelegatedPersonEnrolment(organisation.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
  
@@ -700,9 +704,9 @@ public class RegulatorServiceTests
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
-        _ = SetUpApprovedPersonEnrolment(organisation.Id);
-        _ = SetUpDelegatedPersonEnrolment(organisation.Id);
-        _ = SetUpAnotherDelegatedPersonEnrolment(organisation.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
 
@@ -720,14 +724,269 @@ public class RegulatorServiceTests
         result.Count.Should().Be(2);
     }
     
-    private static void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdDoesNotBelongToOrganisation_AddRemoveApprovedPerson_ReturnNoTokenAndDemotedUsers()
     {
-        using var setupContext = new AccountsDbContext(contextOptions);
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         
-        // Critical to avoid tests affecting one another, and previous runs holding old data
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = "test1@test.com",
+            RemovedConnectionExternalId = Guid.NewGuid()
+        };
+        
+        // Act
+        var result = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        result.InviteToken.Should().BeNullOrWhiteSpace();
+        result.DemotedBasicUsers.Count.Should().Be(0);
+        result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
+        result.OrganisationName.Should().Be(organisation.Name);
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdDoesNotBelongToOrganisation_AddRemoveApprovedPerson_ShouldNotChangeOrgDelegatedAndApprovedUsers()
+    {
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        var approvedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id).Id;
+        var delegatedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id).Id;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = "test1@test.com",
+            RemovedConnectionExternalId = Guid.NewGuid()
+        };
+        
+        // Act
+        _ = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        var approvedPerson = _dbContext.Persons.Single(x => x.Id == approvedPersonId);
+        approvedPerson.IsDeleted.Should().BeFalse();
+        
+        var delegatedPersonEnrolment = _dbContext.Enrolments
+            .Include(x => x.Connection)
+            .Include(x => x.Connection.Person)
+            .Single(x => x.Connection.Person.Id == delegatedPersonId);
+
+        delegatedPersonEnrolment.ServiceRoleId.Should().Be(ServiceRole.Packaging.DelegatedPerson.Id);
+        delegatedPersonEnrolment.IsDeleted.Should().BeFalse();
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdIsNotProvided_AddRemoveApprovedPerson_ShouldNotRemoveApprovedUser()
+    {
+        var token = "SomeToken";
+        // Arrange
+        _tokenService
+            .Setup(x => x.GenerateInviteToken())
+            .Returns(token);
+        
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        
+        var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = $"test+{Guid.NewGuid()}@test.com",
+            AddingOrRemovingUserEmail = regulatorPerson.Email,
+            AddingOrRemovingUserId = regulatorPerson.ExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        result.InviteToken.Should().Be(token);
+        result.DemotedBasicUsers.Count.Should().Be(0);
+        result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
+        result.OrganisationName.Should().Be(organisation.Name);
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldReturnTokenAndDemotedBasicUsers()
+    {
+        var token = "SomeToken";
+        // Arrange
+        _tokenService
+            .Setup(x => x.GenerateInviteToken())
+            .Returns(token);
+        
+        var organisation = SetUpOrganisation(_dbContext);
+        var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        
+        var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = $"test+{Guid.NewGuid()}@test.com",
+            AddingOrRemovingUserEmail = regulatorPerson.Email,
+            AddingOrRemovingUserId = regulatorPerson.ExternalId,
+            RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        result.InviteToken.Should().Be(token);
+        result.DemotedBasicUsers.Count.Should().Be(2);
+        result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
+        result.OrganisationName.Should().Be(organisation.Name);
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldCreateNewlyInviteeAccount()
+    {
+        var token = "SomeToken";
+        // Arrange
+        _tokenService
+            .Setup(x => x.GenerateInviteToken())
+            .Returns(token);
+        
+        var organisation = SetUpOrganisation(_dbContext);
+        var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        
+        var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = $"test+{Guid.NewGuid()}@test.com",
+            AddingOrRemovingUserEmail = regulatorPerson.Email,
+            AddingOrRemovingUserId = regulatorPerson.ExternalId,
+            RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
+        };
+        
+        // Act
+        await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        var newlyInvitedUser = GetEnrolmentQuery()
+            .Single(x => x.Connection.Person.Email == request.InvitedPersonEmail);
+
+        newlyInvitedUser.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
+        newlyInvitedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldDemoteDelegatedUsersToBasic()
+    {
+        var token = "SomeToken";
+        // Arrange
+        _tokenService
+            .Setup(x => x.GenerateInviteToken())
+            .Returns(token);
+        
+        var organisation = SetUpOrganisation(_dbContext);
+        var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        var existingDelegatedPerson1 = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        var existingDelegatedPerson2 = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        
+        var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = $"test+{Guid.NewGuid()}@test.com",
+            AddingOrRemovingUserEmail = regulatorPerson.Email,
+            AddingOrRemovingUserId = regulatorPerson.ExternalId,
+            RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        var delegatedPersonEnrolment1 = GetEnrolmentQuery()
+            .Single(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
+        
+        delegatedPersonEnrolment1.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
+        delegatedPersonEnrolment1.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
+        
+        var delegatedPersonEnrolment2 = GetEnrolmentQuery()
+            .Single(x => x.Connection.Person.Id == existingDelegatedPerson2.Id);
+        
+        delegatedPersonEnrolment2.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
+        delegatedPersonEnrolment2.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
+        
+        result.DemotedBasicUsers.Count.Should().Be(2);
+        result.DemotedBasicUsers.Should().Contain(x => x.Email == delegatedPersonEnrolment1.Connection.Person.Email);
+        result.DemotedBasicUsers.Should().Contain(x => x.Email == delegatedPersonEnrolment2.Connection.Person.Email);
+    }
+    
+    [TestMethod]
+    public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldDeleteGivenApprovedUser()
+    {
+        var token = "SomeToken";
+        // Arrange
+        _tokenService
+            .Setup(x => x.GenerateInviteToken())
+            .Returns(token);
+        
+        var organisation = SetUpOrganisation(_dbContext);
+        var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        
+        var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = organisation.ExternalId,
+            InvitedPersonEmail = $"test+{Guid.NewGuid()}@test.com",
+            AddingOrRemovingUserEmail = regulatorPerson.Email,
+            AddingOrRemovingUserId = regulatorPerson.ExternalId,
+            RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
+        };
+        
+        // Act
+        _ = await _regulatorService.AddRemoveApprovedPerson(request);
+        
+        // Assert
+        var deletedApprovedUserEnrolment = GetEnrolmentQuery()
+            .Single(x => x.Id == approvedPersonEnrolment.Id);
+
+        deletedApprovedUserEnrolment.IsDeleted.Should().BeFalse();
+        deletedApprovedUserEnrolment.Connection.Person.IsDeleted.Should().BeFalse();
+        deletedApprovedUserEnrolment.Connection.IsDeleted.Should().BeFalse();
+    }
+
+    private IIncludableQueryable<Enrolment, Person> GetEnrolmentQuery()
+    {
+        return _dbContext
+            .Enrolments
+            .Include(x => x.Connection)
+            .Include(x => x.Connection.Person);
+    }
+    
+    private static void SetUpDatabase(AccountsDbContext setupContext)
+    {
         setupContext.Database.EnsureDeleted();
         setupContext.Database.EnsureCreated();
-
+        
         var multiOrgPerson = new Person
         {
             FirstName = "Multi Org",
@@ -1304,8 +1563,8 @@ public class RegulatorServiceTests
     {
         var organisation1 = new Organisation
         {
-            OrganisationTypeId = Data.DbConstants.OrganisationType.CompaniesHouseCompany,
-            ProducerTypeId = Data.DbConstants.ProducerType.SoleTrader,
+            OrganisationTypeId = OrganisationType.CompaniesHouseCompany,
+            ProducerTypeId = ProducerType.SoleTrader,
             CompaniesHouseNumber = "Test org 1 Company house number",
             IsComplianceScheme = false,
             ValidatedWithCompaniesHouse = true,
@@ -1320,20 +1579,20 @@ public class RegulatorServiceTests
             County = "County 1",
             Postcode = "BT44 5QW",
             Country = "Country 1",
-            NationId = Data.DbConstants.Nation.England,
+            NationId = Nation.England,
             ExternalId = Guid.NewGuid(),
-            ReferenceNumber = "Ref Number 1"
+            ReferenceNumber = $"RefNumber{Guid.NewGuid()}"
         };
         setupContext.Add(organisation1);
 
         return organisation1;
     }
-    private Person SetUpApprovedPersonEnrolment(int organisationId)
+    private Person SetUpPersonEnrolment(int organisationId, int serviceRoleId)
     {
         var user1 = new User()
         {
-            UserId = new Guid("00000000-0000-0000-0000-000000000001"),
-            Email = "user1@test.com"
+            UserId = Guid.NewGuid(),
+            Email = $"user1+{Guid.NewGuid()}@test.com"
         };
         _dbContext.Add(user1);
         
@@ -1343,8 +1602,8 @@ public class RegulatorServiceTests
             LastName = $"Test {organisationId}",
             Email = $"user{organisationId}@test.com",
             Telephone = "0123456789",
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000020"),
-            UserId = 1
+            ExternalId = Guid.NewGuid(),
+            UserId = user1.Id
         };
         _dbContext.Add(person1);
         
@@ -1352,91 +1611,15 @@ public class RegulatorServiceTests
         {
             Connection = new PersonOrganisationConnection()
             {
-                PersonId = 1,
+                PersonId = person1.Id,
                 OrganisationId = organisationId,
-                OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer,
-                ExternalId = new Guid("70000000-0000-0000-0000-000007000001"),
+                OrganisationRoleId = OrganisationRole.Employer,
+                ExternalId = Guid.NewGuid()
             },
-            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Approved,
-            ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Id
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            ServiceRoleId = serviceRoleId
         };
         _dbContext.Add(enrolment1);
         return person1;
-    }
-    private Person SetUpDelegatedPersonEnrolment(int organisationId)
-    {
-        var user2 = new User()
-        {
-            UserId = new Guid("00000000-0000-0000-0000-000000000010"),
-            Email = "user2@test.com"
-        };
-        _dbContext.Add(user2);
-        
-        var person2 = new Person()
-        {
-            FirstName = $"User {organisationId}",
-            LastName = $"Test2 {organisationId}",
-            Email = $"user2{organisationId}@test.com",
-            Telephone = "0123456789",
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000120"),
-            UserId = 2
-        };
-        _dbContext.Add(person2);
-        
-        var enrolment2 = new Enrolment
-        {
-            Connection = new PersonOrganisationConnection()
-            {
-                PersonId = 2,
-                OrganisationId = organisationId,
-                OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer,
-                PersonRoleId = 1
-            },
-            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled,
-            ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id
-        };
-        
-        _dbContext.Add(enrolment2);
-
-        return person2;
-    }
-    
-    private Person SetUpAnotherDelegatedPersonEnrolment(int organisationId)
-    {
-        var userAnother = new User()
-        {
-            UserId = new Guid("00000000-0000-4000-0000-000000000010"),
-            Email = "userAnother@test.com",
-            Id= 20
-        };
-        _dbContext.Add(userAnother);
-        
-        var personAnother = new Person()
-        {
-            FirstName = "",
-            LastName = $"TestAnother {organisationId}",
-            Email = $"userAnother{organisationId}@test.com",
-            Telephone = "0123456789",
-            ExternalId = new Guid("00000000-0050-0000-0000-000000000120"),
-            UserId = userAnother.Id,
-            Id= 50
-        };
-        _dbContext.Add(personAnother);
-        
-        var enrolmentAnother = new Enrolment
-        {
-            Connection = new PersonOrganisationConnection()
-            {
-                PersonId = personAnother.Id,
-                OrganisationId = organisationId,
-                OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer
-            },
-            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled,
-            ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id
-        };
-        
-        _dbContext.Add(enrolmentAnother);
-
-        return personAnother;
     }
 }

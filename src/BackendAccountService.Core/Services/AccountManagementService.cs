@@ -27,7 +27,11 @@ public class AccountManagementService : IAccountManagementService
         _logger.LogInformation("Generating invite token");
         var inviteToken = _tokenService.GenerateInviteToken();
 
-        var newEnrolment = GetEnrolment(request, inviteToken);
+        var organisation = await _accountsDbContext
+            .Organisations
+            .SingleAsync(x => x.ExternalId == request.InvitedUser.OrganisationId);
+
+        var newEnrolment = CreateEnrolmentForInvitee(request, organisation.Id, inviteToken);
 
         await _accountsDbContext.AddAsync(newEnrolment);
 
@@ -107,7 +111,7 @@ public class AccountManagementService : IAccountManagementService
         return inviteToken;
     }
 
-    private Enrolment GetEnrolment(AddInviteUserRequest request, string token)
+    public static Enrolment CreateEnrolmentForInvitee(AddInviteUserRequest request, int organisationDatabaseId, string token)
     {
         return new Enrolment
         {
@@ -116,7 +120,7 @@ public class AccountManagementService : IAccountManagementService
             IsDeleted = false,
             Connection = new PersonOrganisationConnection
             {
-                Organisation = _accountsDbContext.Organisations.Single(x => x.ExternalId == request.InvitedUser.OrganisationId),
+                OrganisationId = organisationDatabaseId,
                 OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer,
                 PersonRoleId = request.InvitedUser.PersonRoleId,
                 IsDeleted = false,

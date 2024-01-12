@@ -26,5 +26,7 @@ public interface IRegulatorService
     
     Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(RemoveApprovedUserRequest request);
     
+    Task<AddRemoveApprovedPersonResponseModel> AddRemoveApprovedPerson(AddRemoveApprovedUserRequest request);
+    
     Task<CompanySearchDetailsModel> GetCompanyDetailsById(Guid organisationId);
 }

@@ -19,15 +19,18 @@ public class RegulatorService: IRegulatorService
 {
     private readonly AccountsDbContext _accountsDbContext;
     private readonly IOrganisationService _organisationService;
+    private readonly ITokenService _tokenService;
     private const string RegulatingService = "Regulating";
     private readonly ILogger<RegulatorService> _logger;
 
     public RegulatorService(AccountsDbContext accountsDbContext, 
-                            IOrganisationService organisationService , 
+                            IOrganisationService organisationService,
+                            ITokenService tokenService,
                             ILogger<RegulatorService> logger)
     {
         _accountsDbContext = accountsDbContext;
         _organisationService = organisationService;
+        _tokenService = tokenService;
         _logger = logger;
     }
 
@@ -526,45 +529,28 @@ public class RegulatorService: IRegulatorService
 
     public async Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(RemoveApprovedUserRequest request)
     {
+        var transaction = await _accountsDbContext.Database.BeginTransactionAsync();
         try
         {
-           var getAllUsers = await _accountsDbContext.Enrolments
-               .Include(enrolment => enrolment.Connection)
-               .Include(enrolment => enrolment.Connection.Person)
-               .Include(enrolment => enrolment.Connection.Organisation)
-               .WhereEnrolmentServiceRoleIn(ServiceRole.Packaging.ApprovedPerson.Id,
-                   ServiceRole.Packaging.DelegatedPerson.Id)
-               .Where(e => e.Connection.Organisation.ExternalId == request.OrganisationId)
-               .ToListAsync();
-
-            var approvedPerson = getAllUsers.SingleOrDefault(a => a.Connection.ExternalId == request.ConnectionExternalId);
+            var allEnrolments = await GetAllEnrolments(request.OrganisationId);
+            var approvedPerson = MarkApprovedPersonAsRemoved(allEnrolments, request.ConnectionExternalId);
            if (approvedPerson == null)
            {
                return new List<AssociatedPersonResponseModel>();
            }
            
-           approvedPerson.IsDeleted = true;
-           approvedPerson.Connection.IsDeleted = true;
-           approvedPerson.Connection.Person.IsDeleted = true;
-           
-           //demote delegated users to basic users
-           var delegatedPersons = getAllUsers
-               .Where(model => model.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id)
-               .ToList();
-           foreach (var person in delegatedPersons)
-           {
-               person.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
-               person.Connection.PersonRoleId = 2;
-           }
+           DemoteDelegatedUsersToBasic(allEnrolments);
 
            await _accountsDbContext.SaveChangesAsync(request.UserId, request.OrganisationId);
            
            //return users who are enrolled/approved.
-           var returnedUsers = GetUserListToSendNotification(getAllUsers);
+           var returnedUsers = GetUserListToSendNotification(allEnrolments);
+           await transaction.CommitAsync();
            return returnedUsers;
         }
         catch (Exception e)
         {
+            await transaction.RollbackAsync();
             _logger.LogError(e,
                 "Error removing the approved person { connExternalId } from organisation {organisationId}",
                 request.ConnectionExternalId,
@@ -572,6 +558,108 @@ public class RegulatorService: IRegulatorService
              return new List<AssociatedPersonResponseModel>();
         }
     }
+
+    public async Task<AddRemoveApprovedPersonResponseModel> AddRemoveApprovedPerson(AddRemoveApprovedUserRequest request)
+    {
+        var transaction = await _accountsDbContext.Database.BeginTransactionAsync();
+        
+        try
+        {
+            var allEnrolments = await GetAllEnrolments(request.OrganisationId);
+            var organisation = allEnrolments.First().Connection.Organisation;
+            var response = new AddRemoveApprovedPersonResponseModel
+            {
+                OrganisationReferenceNumber = organisation.ReferenceNumber,
+                OrganisationName = organisation.Name
+            };
+            
+            if (request.RemovedConnectionExternalId.HasValue 
+                && request.RemovedConnectionExternalId != Guid.Empty)
+            {
+                var approvedPerson = MarkApprovedPersonAsRemoved(allEnrolments, request.RemovedConnectionExternalId.Value);
+                if (approvedPerson == null)
+                {
+                    return response;
+                }
+                
+                DemoteDelegatedUsersToBasic(allEnrolments);
+                response.DemotedBasicUsers = GetUserListToSendNotification(allEnrolments);
+            }
+
+            var addInviteUserRequest = new AddInviteUserRequest
+            {
+                InvitedUser = new()
+                {
+                    Email = request.InvitedPersonEmail,
+                    OrganisationId = request.OrganisationId,
+                    PersonRoleId = (int)PersonRole.Employee,
+                    ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id
+                },
+                InvitingUser = new()
+                {
+                    Email = request.AddingOrRemovingUserEmail,
+                    UserId = request.AddingOrRemovingUserId
+                }
+            };
+            response.InviteToken = _tokenService.GenerateInviteToken();
+
+            var newEnrolment = AccountManagementService.CreateEnrolmentForInvitee(addInviteUserRequest,
+                organisation.Id, response.InviteToken);
+
+            await _accountsDbContext.AddAsync(newEnrolment);
+            
+            await _accountsDbContext.SaveChangesAsync(request.AddingOrRemovingUserId, request.OrganisationId);
+            await transaction.CommitAsync();
+            return response;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, $"Error occurred when trying to add / remove approved person. OrganisationId: {request.OrganisationId}, {request.AddingOrRemovingUserEmail}");
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+    
+    private async Task<List<Enrolment>> GetAllEnrolments(Guid organisationId)
+    {
+        return await _accountsDbContext.Enrolments
+            .Include(enrolment => enrolment.Connection)
+            .Include(enrolment => enrolment.Connection.Organisation)
+            .Include(enrolment => enrolment.Connection.Person)
+            .WhereEnrolmentServiceRoleIn(ServiceRole.Packaging.ApprovedPerson.Id,
+                ServiceRole.Packaging.DelegatedPerson.Id)
+            .Where(e => e.Connection.Organisation.ExternalId == organisationId)
+            .ToListAsync();
+    }
+
+    private void DemoteDelegatedUsersToBasic(List<Enrolment> enrolments)
+    {
+        var delegatedPersonEnrolments = enrolments
+            .Where(model => model.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id)
+            .ToList();
+        
+        foreach (var person in delegatedPersonEnrolments)
+        {
+            person.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
+            person.Connection.PersonRoleId = (int)PersonRole.Employee;
+        }
+    }
+
+    private Enrolment? MarkApprovedPersonAsRemoved(List<Enrolment> getAllUserEnrolments, Guid connectionExternalIdToRemove)
+    {
+        var enrolment = getAllUserEnrolments.SingleOrDefault(a => a.Connection.ExternalId == connectionExternalIdToRemove);
+        if (enrolment == null)
+        {
+            return null;
+        }
+           
+        enrolment.IsDeleted = true;
+        enrolment.Connection.IsDeleted = true;
+        enrolment.Connection.Person.IsDeleted = true;
+
+        return enrolment;
+    }
+    
     private List<AssociatedPersonResponseModel> GetUserListToSendNotification(List<Enrolment> getAllUsers)
     {
         var validNotificationUsers = new List<AssociatedPersonResponseModel>();
