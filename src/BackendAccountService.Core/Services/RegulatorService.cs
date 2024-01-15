@@ -566,7 +566,12 @@ public class RegulatorService: IRegulatorService
         try
         {
             var allEnrolments = await GetAllEnrolments(request.OrganisationId);
-            var organisation = allEnrolments.First().Connection.Organisation;
+            
+            var organisation = await _accountsDbContext
+                .Organisations
+                .Select(x => new { x.Id, x.Name, x.ExternalId, x.ReferenceNumber })
+                .SingleOrDefaultAsync(x => x.ExternalId == request.OrganisationId);
+
             var response = new AddRemoveApprovedPersonResponseModel
             {
                 OrganisationReferenceNumber = organisation.ReferenceNumber,
