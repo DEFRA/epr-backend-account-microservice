@@ -1,4 +1,3 @@
-using BackendAccountService.Core.Extensions;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
@@ -527,36 +526,94 @@ public class RegulatorService: IRegulatorService
         return companyDetails;
     }
 
-    public async Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(RemoveApprovedUserRequest request)
+    public async Task<List<AssociatedPersonResponseModel>> RemoveApprovedPerson(ApprovedUserRequest request)
     {
         var transaction = await _accountsDbContext.Database.BeginTransactionAsync();
         try
         {
+            var validNotificationUsers = new List<AssociatedPersonResponseModel>();
+            var userEmailList = new List<Guid>();
+            
             var allEnrolments = await GetAllEnrolments(request.OrganisationId);
-            var approvedPerson = MarkApprovedPersonAsRemoved(allEnrolments, request.ConnectionExternalId);
-           if (approvedPerson == null)
-           {
-               return new List<AssociatedPersonResponseModel>();
-           }
-           
-           DemoteDelegatedUsersToBasic(allEnrolments);
 
-           await _accountsDbContext.SaveChangesAsync(request.UserId, request.OrganisationId);
-           
-           //return users who are enrolled/approved.
-           var returnedUsers = GetUserListToSendNotification(allEnrolments);
-           await transaction.CommitAsync();
-           return returnedUsers;
+            if (request.RemovedConnectionExternalId != Guid.Empty)
+            {
+                var enrolment = MarkApprovedPersonAsRemoved(allEnrolments, request.RemovedConnectionExternalId, validNotificationUsers);
+                userEmailList.Add(enrolment.Connection.ExternalId);
+            }
+            
+            // promote a delegated user as approved
+            if (request.PromotedPersonExternalId != Guid.Empty)
+            {
+                await AddExistingUserAsApprovedUser(request, validNotificationUsers, userEmailList);
+            }
+
+            DemoteDelegatedUsersToBasic(allEnrolments, validNotificationUsers, userEmailList);
+ 
+            await _accountsDbContext.SaveChangesAsync(request.UserId, request.OrganisationId);
+            
+            await transaction.CommitAsync();
+            
+            return validNotificationUsers;
         }
         catch (Exception e)
         {
             await transaction.RollbackAsync();
             _logger.LogError(e,
                 "Error removing the approved person { connExternalId } from organisation {organisationId}",
-                request.ConnectionExternalId,
+                request.RemovedConnectionExternalId,
                 request.OrganisationId);
              return new List<AssociatedPersonResponseModel>();
         }
+    }
+
+    private async Task AddExistingUserAsApprovedUser(
+                ApprovedUserRequest request,
+                List<AssociatedPersonResponseModel> validNotificationUsers, 
+                List<Guid>? usersAdded)
+    {
+        try
+        {
+            // get connection Id from the PromotedPersonExternalId
+            var connection = _accountsDbContext.PersonOrganisationConnections
+                .Include(conn => conn.Organisation)
+                // Ensure that connection belongs to the organisation that user is authorised to
+                .Where(conn => conn.Organisation.ExternalId == request.OrganisationId)
+                // Ensure that connection belongs to the organisation that user is authorised to
+                .Include(p => p.Person)
+                .SingleOrDefault(pp => pp.Person.ExternalId == request.PromotedPersonExternalId);
+        
+            // add new enrolment
+             
+            var newEnrolment = new Enrolment
+            {
+                ConnectionId = connection.Id,
+                ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+                EnrolmentStatusId = EnrolmentStatus.Nominated
+            };
+
+            await _accountsDbContext.Enrolments.AddAsync(newEnrolment);
+
+            //Add to email List
+            validNotificationUsers.Add(new AssociatedPersonResponseModel
+            {
+                FirstName = connection.Person.FirstName,
+                LastName = connection.Person.LastName,
+                Email = connection.Person.Email,
+                OrganisationId = connection.Organisation.Id.ToString(),
+                CompanyName = connection.Organisation.Name,
+                ServiceRoleId = newEnrolment.ServiceRoleId,
+                EmailNotificationType = EmailNotificationType.PromotedApprovedUser
+            });
+            usersAdded.Add(connection.ExternalId);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error promoting the approved person { connExternalId } from organisation {organisationId}",
+                request.PromotedPersonExternalId,
+                request.OrganisationId);
+        }
+        
     }
 
     public async Task<AddRemoveApprovedPersonResponseModel> AddRemoveApprovedPerson(AddRemoveApprovedUserRequest request)
@@ -565,6 +622,7 @@ public class RegulatorService: IRegulatorService
         
         try
         {
+            var validNotificationUsers = new List<AssociatedPersonResponseModel>();
             var allEnrolments = await GetAllEnrolments(request.OrganisationId);
             
             var organisation = await _accountsDbContext
@@ -581,14 +639,14 @@ public class RegulatorService: IRegulatorService
             if (request.RemovedConnectionExternalId.HasValue 
                 && request.RemovedConnectionExternalId != Guid.Empty)
             {
-                var approvedPerson = MarkApprovedPersonAsRemoved(allEnrolments, request.RemovedConnectionExternalId.Value);
+                var approvedPerson = MarkApprovedPersonAsRemoved(allEnrolments, request.RemovedConnectionExternalId.Value, validNotificationUsers);
                 if (approvedPerson == null)
                 {
                     return response;
                 }
                 
-                DemoteDelegatedUsersToBasic(allEnrolments);
-                response.DemotedBasicUsers = GetUserListToSendNotification(allEnrolments);
+                DemoteDelegatedUsersToBasic(allEnrolments, validNotificationUsers, null);
+                response.AssociatedPersonList = validNotificationUsers;
             }
 
             var addInviteUserRequest = new AddInviteUserRequest
@@ -637,20 +695,41 @@ public class RegulatorService: IRegulatorService
             .ToListAsync();
     }
 
-    private void DemoteDelegatedUsersToBasic(List<Enrolment> enrolments)
+    private void DemoteDelegatedUsersToBasic(
+        List<Enrolment> enrolments, 
+        List<AssociatedPersonResponseModel> validNotificationUsers, 
+        List<Guid>? userEmailList)
     {
         var delegatedPersonEnrolments = enrolments
             .Where(model => model.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id)
             .ToList();
         
-        foreach (var person in delegatedPersonEnrolments)
+        foreach (var enrolment in delegatedPersonEnrolments )
         {
-            person.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
-            person.Connection.PersonRoleId = (int)PersonRole.Employee;
+            enrolment.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
+            enrolment.Connection.PersonRoleId = (int)PersonRole.Employee;
+            
+            //dont send emails if the user has not enrolled
+            var notAddedInEmailList = true;
+            if (userEmailList != null)
+            {
+                notAddedInEmailList = !userEmailList.Contains(enrolment.Connection.ExternalId);
+            }
+            
+            if ( notAddedInEmailList
+                 && !string.IsNullOrEmpty(enrolment.Connection.Person.FirstName) 
+                 && !string.IsNullOrEmpty(enrolment.Connection.Person.LastName))
+            {
+                EmailRecipientForRemoval(validNotificationUsers, enrolment, EmailNotificationType.DemotedDelegatedUsed);
+            }
         }
+        
     }
 
-    private Enrolment? MarkApprovedPersonAsRemoved(List<Enrolment> getAllUserEnrolments, Guid connectionExternalIdToRemove)
+    private Enrolment? MarkApprovedPersonAsRemoved(
+        List<Enrolment> getAllUserEnrolments,
+        Guid connectionExternalIdToRemove, 
+        List<AssociatedPersonResponseModel> validNotificationUsers)
     {
         var enrolment = getAllUserEnrolments.SingleOrDefault(a => a.Connection.ExternalId == connectionExternalIdToRemove);
         if (enrolment == null)
@@ -662,49 +741,27 @@ public class RegulatorService: IRegulatorService
         enrolment.Connection.IsDeleted = true;
         enrolment.Connection.Person.IsDeleted = true;
 
+        EmailRecipientForRemoval(validNotificationUsers, enrolment, EmailNotificationType.RemovedApprovedUser);
         return enrolment;
     }
-    
-    private List<AssociatedPersonResponseModel> GetUserListToSendNotification(List<Enrolment> getAllUsers)
-    {
-        var validNotificationUsers = new List<AssociatedPersonResponseModel>();
-        
-        var getValidUsers = getAllUsers
-            .GroupBy(enrolment => new
-            {
-                enrolment.Connection.Person.FirstName,
-                enrolment.Connection.Person.LastName,
-                enrolment.Connection.Person.Email,
-                OrganisationName = enrolment.Connection.Organisation.Name,
-                OrganisationId = enrolment.Connection.Organisation.ReferenceNumber,
-                enrolment.ServiceRoleId
-            })
-            .Select(groupBy => new AssociatedPersonResponseModel
-            {
-                FirstName = groupBy.Key.FirstName,
-                LastName = groupBy.Key.LastName,
-                Email = groupBy.Key.Email,
-                CompanyName = groupBy.Key.OrganisationName,
-                OrganisationId = groupBy.Key.OrganisationId.ToString(),
-                ServiceRoleId = groupBy.Key.ServiceRoleId,
-            })
-            .ToList();
 
-        foreach (var user in getValidUsers)
+    private void EmailRecipientForRemoval(
+        List<AssociatedPersonResponseModel> validNotificationUsers,
+        Enrolment enrolment, 
+        EmailNotificationType notificationType)
+    {
+        validNotificationUsers.Add(new AssociatedPersonResponseModel
         {
-            switch (user.ServiceRoleId)
-            {
-                case ServiceRole.Packaging.ApprovedPerson.Id:
-                case ServiceRole.Packaging.BasicUser.Id when !string.IsNullOrEmpty(user.FirstName) && !string.IsNullOrEmpty(user.LastName):
-                {
-                    validNotificationUsers.Add(user);
-                    break;
-                }
-            }
-        }
-        return validNotificationUsers;
+            FirstName = enrolment.Connection.Person.FirstName,
+            LastName = enrolment.Connection.Person.LastName,
+            Email = enrolment.Connection.Person.Email,
+            OrganisationId = enrolment.Connection.Organisation.Id.ToString(),
+            CompanyName = enrolment.Connection.Organisation.Name,
+            ServiceRoleId = enrolment.ServiceRoleId,
+            EmailNotificationType = notificationType
+        });
     }
-    
+
     private string DetermineOrganisationType(bool isComplianceScheme,int companyId)
     {
         if (isComplianceScheme)

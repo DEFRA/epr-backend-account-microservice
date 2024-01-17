@@ -8,7 +8,5 @@ public class AssociatedPersonResponseModel
     public string CompanyName { get; set; }
     public int ServiceRoleId { get; set; }
      
+    public EmailNotificationType EmailNotificationType { get; set; }
 }
-
-
-

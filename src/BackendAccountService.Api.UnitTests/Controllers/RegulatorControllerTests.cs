@@ -710,18 +710,19 @@ public class RegulatorControllerTests
     }
     
     [TestMethod]
-    public async Task When_RemoveApprovedPerson_Is_Called_And_User_Is_Not_Regulator_Then_Return_403_Forbidden()
+    public async Task When_RemoveApprovedPerson_WithoutPromotingAnotherAP_Is_Called_And_User_Is_Not_Regulator_Then_Return_403_Forbidden()
     {
         // Arrange
         _regulatorServiceMock
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(false);
         
-        var request = new RemoveApprovedUserRequest
+        var request = new ApprovedUserRequest
         {
             OrganisationId = Guid.NewGuid(),
             UserId = Guid.NewGuid(),
-            ConnectionExternalId = Guid.NewGuid()
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            PromotedPersonExternalId = Guid.Empty
         };
        // Act
        var result =
@@ -733,11 +734,23 @@ public class RegulatorControllerTests
     }
 
     [TestMethod]
-    public async Task When_RemoveApprovedPerson_Is_Called_And_User_Id_Is_Null_Then_Return_400_Bad_Request()
+    public async Task When_RemoveApprovedPerson_WithoutPromotingAnotherAP_Is_Called_And_OrganisationId_Is_Null_Then_Return_400_Bad_Request()
     {
+        // Arrange
+        _regulatorServiceMock
+            .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .Returns(false);
+        
+        var request = new ApprovedUserRequest
+        {
+            OrganisationId = Guid.Empty,
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            PromotedPersonExternalId = Guid.Empty
+        };
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(request) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();
@@ -745,28 +758,51 @@ public class RegulatorControllerTests
     }
     
     [TestMethod]
-    public async Task When_RemoveApprovedPerson_Is_Called_And_OrganisationId_Is_Null_Then_Return_400_Bad_Request()
-    {
-        // Act
-        var result =
-            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
-        
-        // Assert
-        result.Should().NotBeNull();
-        result?.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
-    }
-    
-    [TestMethod]
-    public async Task When_RemoveApprovedPerson_Is_Called_And_ConnExternalId_Is_Null_Then_Return_400_Bad_Request()
+    public async Task When_RemoveApprovedPerson_Is_Called_And_Both_RemovedConnectionExternalId_And_PromotePersonExternalId_Is_Null_Then_Return_400_Bad_Request()
     {
         // Arrange
         _regulatorServiceMock
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(true);
         
+        var request = new ApprovedUserRequest
+        {
+            OrganisationId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.Empty,
+            PromotedPersonExternalId = Guid.Empty
+        };
         // Act
         var result =
-            await _regulatorsController.RemoveApprovedPerson(new RemoveApprovedUserRequest()) as ObjectResult;
+            await _regulatorsController.RemoveApprovedPerson(request) as ObjectResult;
+        
+        // Assert
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+    }
+    
+    [TestMethod]
+    public async Task When_RemoveApprovedPerson_Is_Called_And_Both_RemovedConnectionExternalId_And_PromotedPersonExternalId_Is_Null_Then_Return_400_Bad_Request()
+    {
+        // Arrange
+        _regulatorServiceMock
+            .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
+            .Returns(true);
+
+      var request = new ApprovedUserRequest
+      {
+          OrganisationId = Guid.NewGuid(),
+          UserId = Guid.NewGuid(),
+          RemovedConnectionExternalId = Guid.Empty,
+          PromotedPersonExternalId = Guid.Empty
+      };
+      
+        _regulatorServiceMock.Setup(x => x.RemoveApprovedPerson(request))
+            .ReturnsAsync(new List<AssociatedPersonResponseModel>());
+       
+        // Act
+        var result =
+            await _regulatorsController.RemoveApprovedPerson(request) as ObjectResult;
         
         // Assert
         result.Should().NotBeNull();
@@ -774,7 +810,7 @@ public class RegulatorControllerTests
     }
 
     [TestMethod]
-    public async Task When_RemoveApprovedPerson_Is_Called_And_RemoveSucceeds_ShouldReturnNoContent()
+    public async Task When_RemoveApprovedPerson_Is_Called_With_Both_RemovedConnectionExternalId_And_PromotedPersonExternalId_And_RemoveSucceeds_ShouldReturnNoContent()
     {
         // Arrange
         
@@ -782,12 +818,13 @@ public class RegulatorControllerTests
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(true);
 
-      var request = new RemoveApprovedUserRequest
-      {
-          OrganisationId = Guid.NewGuid(),
-          UserId = Guid.NewGuid(),
-          ConnectionExternalId = Guid.NewGuid()
-      };
+        var request = new ApprovedUserRequest
+        {
+            OrganisationId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            PromotedPersonExternalId = Guid.NewGuid()
+        };
       
         _regulatorServiceMock.Setup(x => x.RemoveApprovedPerson(request))
             .ReturnsAsync(new List<AssociatedPersonResponseModel>());

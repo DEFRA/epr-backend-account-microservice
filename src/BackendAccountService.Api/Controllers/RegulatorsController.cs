@@ -211,11 +211,11 @@ public class RegulatorsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> RemoveApprovedPerson(RemoveApprovedUserRequest request)
+    public async Task<IActionResult> RemoveApprovedPerson(ApprovedUserRequest request)
     {
         return await ExecuteProtectedAction(request.UserId, request.OrganisationId,async () =>
         {
-            if (request.ConnectionExternalId == Guid.Empty )
+            if (request.RemovedConnectionExternalId == Guid.Empty && request.PromotedPersonExternalId == Guid.Empty )
             {
                 return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
             }

@@ -62,7 +62,7 @@ public class RegulatorServiceTests
     private const string InvalidEnrolmentMessage = "enrolment not found";
     private const string InvalidEnrolmentStatusMessage = "unsupported enrolment status";
     private const string ApprovedUser2ProducerEmail = "producer.user4@test.com";
-    private Mock<ILogger<RegulatorService>> _logger = null;
+    private Mock<ILogger<RegulatorService>> _logger;
     private Mock<ITokenService> _tokenService;
     
     [TestInitialize]
@@ -118,7 +118,7 @@ public class RegulatorServiceTests
         result.Items.Any(o => o.OrganisationName.Equals(DeletedEnrolmentOrgName)).Should().BeFalse();
         result.Items.Any(o => o.OrganisationName.Equals(ApprovedPersonApprovedOrgName)).Should().BeFalse();
         result.Items.Any(o => o.OrganisationName.Equals(BasicUserOrgName)).Should().BeFalse();
-        result.Items.Count().Should().Be(4);
+        result.Items.Count.Should().Be(4);
         result.TotalItems.Should().Be(4);
     }
 
@@ -159,7 +159,7 @@ public class RegulatorServiceTests
        
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(0);
+        result.Items.Count.Should().Be(0);
         result.TotalItems.Should().Be(4);
         result.CurrentPage.Should().Be(10);
     }
@@ -173,7 +173,7 @@ public class RegulatorServiceTests
        
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(2);
+        result.Items.Count.Should().Be(2);
         result.TotalItems.Should().Be(4);
     }
     
@@ -186,7 +186,7 @@ public class RegulatorServiceTests
        
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(2);
+        result.Items.Count.Should().Be(2);
         result.TotalItems.Should().Be(3);
     }
     
@@ -199,7 +199,7 @@ public class RegulatorServiceTests
        
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(1);
+        result.Items.Count.Should().Be(1);
         result.TotalItems.Should().Be(2);
     }
     
@@ -212,7 +212,7 @@ public class RegulatorServiceTests
        
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(1);
+        result.Items.Count.Should().Be(1);
         result.TotalItems.Should().Be(1);
     }
 
@@ -226,7 +226,7 @@ public class RegulatorServiceTests
 
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
-        result.Items.Count().Should().Be(2);
+        result.Items.Count.Should().Be(2);
         result.TotalItems.Should().Be(3);
     }
 
@@ -529,8 +529,8 @@ public class RegulatorServiceTests
 
         Assert.IsNotNull(user);
         Assert.AreSame(user.Email, ApprovedUser2ProducerEmail);
-        _dbContext.Users.Any(user => user.UserId == ApprovedUserId2).Should().BeFalse();
-        _dbContext.Users.Any(user => user.UserId == RegulatorUserId).Should().BeTrue();
+        _dbContext.Users.Any(user1 => user1.UserId == ApprovedUserId2).Should().BeFalse();
+        _dbContext.Users.Any(user1 => user1.UserId == RegulatorUserId).Should().BeTrue();
     }
 
     [TestMethod]
@@ -643,8 +643,9 @@ public class RegulatorServiceTests
             u.ExternalId.Equals(BasicUserExternalId2));
     }
 
+ /* Remove only */
     [TestMethod]
-    public async Task RemoveApprovedPerson_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_NoAssociatedPersons()
+    public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
@@ -652,22 +653,23 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         
-        var request = new RemoveApprovedUserRequest
+        var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
-            ConnectionExternalId = Guid.NewGuid(),
-            OrganisationId = organisation.ExternalId
+            RemovedConnectionExternalId = Guid.NewGuid(),
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = Guid.Empty
         };
         
        // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
         
         // Assert
-        result.Count.Should().Be(0);
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
     }
     
    [TestMethod]
-    public async Task RemoveApprovedPerson_When_Valid_Data_Passed_ApprovedUser_Should_Be_Deleted_And_DelegatedPerson_Should_Be_Demoted()
+    public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Valid_Data_Passed_ApprovedUser_Should_Be_Deleted_And_DelegatedPerson_Should_Be_Demoted()
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
@@ -676,10 +678,10 @@ public class RegulatorServiceTests
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
  
-        var request = new RemoveApprovedUserRequest
+        var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
-            ConnectionExternalId =connExternalId,
+            RemovedConnectionExternalId =connExternalId,
             OrganisationId = organisation.ExternalId
         };
         
@@ -688,6 +690,8 @@ public class RegulatorServiceTests
         
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+        result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
+        result.LastOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
        
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.SingleOrDefault().ServiceRoleId.Should()
             .Be(ServiceRole.Packaging.BasicUser.Id);
@@ -700,21 +704,22 @@ public class RegulatorServiceTests
     }
     
     [TestMethod]
-    public async Task RemoveApprovedPerson_When_Valid_Data_Passed_Data_Is_Passed_For_Email_Notification_For_Enrolled_Users()
+    public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Valid_Data_Passed_Data_Is_Passed_For_Email_Notification_For_Enrolled_Users()
     {
         // Arrange
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpDelegatedPersonWithoutFirstNameEnrolment(organisation.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
 
-        var request = new RemoveApprovedUserRequest
+        var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
-            ConnectionExternalId = connExternalId,
-            OrganisationId = organisation.ExternalId
+            RemovedConnectionExternalId = connExternalId,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = Guid.Empty
         };
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
@@ -722,6 +727,138 @@ public class RegulatorServiceTests
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
         result.Count.Should().Be(2);
+        result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
+        result.LastOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
+    }
+    
+    /* Promote only */
+    [TestMethod]
+    public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
+    {
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        
+        var request = new ApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.Empty,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = Guid.NewGuid()
+        };
+        
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+        
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+    }
+
+    [TestMethod]
+    public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser()
+    {
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
+        var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+ 
+        var request = new ApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.Empty,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = personExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+        
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+
+        result.Count.Should().Be(1);
+        result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.PromotedApprovedUser);
+        result.FirstOrDefault().ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        organisation.PersonOrganisationConnections.FirstOrDefault().Enrolments.Count.Should().Be(2);
+        organisation.PersonOrganisationConnections.FirstOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
+            .Be(EnrolmentStatus.Nominated);
+    }
+    
+    [TestMethod]
+    public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser_And_Delegated_Users_Demoted()
+    {
+        // Arrange
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
+        var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+ 
+        var request = new ApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = Guid.Empty,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = personExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+        
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+
+        result.Count.Should().Be(2);
+        result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.PromotedApprovedUser);
+        result.LastOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
+        result.FirstOrDefault().ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        result.LastOrDefault().ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count.Should().Be(2);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
+            .Be(EnrolmentStatus.Nominated);
+    }
+    
+    /* Remove and Promote */
+    [TestMethod]
+    public async Task RemoveApprovedPerson_RemoveApAndPromoteExistingUser_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser()
+    {
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
+        
+        var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
+        
+        var request = new ApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = connExternalId,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = personExternalId
+        };
+        
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+        
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+
+        result.Count.Should().Be(3);
+        result[0].EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
+        result[0].ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        result[1].EmailNotificationType.Should().Be(EmailNotificationType.PromotedApprovedUser);
+        result[1].ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        result[2].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
+        result[2].ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
+       
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count.Should().Be(2);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
+            .Be(EnrolmentStatus.Nominated);
     }
     
     [TestMethod]
@@ -745,7 +882,7 @@ public class RegulatorServiceTests
         
         // Assert
         result.InviteToken.Should().BeNullOrWhiteSpace();
-        result.DemotedBasicUsers.Count.Should().Be(0);
+        result.AssociatedPersonList.Count.Should().Be(0);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
@@ -811,7 +948,7 @@ public class RegulatorServiceTests
         
         // Assert
         result.InviteToken.Should().Be(token);
-        result.DemotedBasicUsers.Count.Should().Be(0);
+        result.AssociatedPersonList.Count.Should().Be(0);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
@@ -847,7 +984,7 @@ public class RegulatorServiceTests
         
         // Assert
         result.InviteToken.Should().Be(token);
-        result.DemotedBasicUsers.Count.Should().Be(2);
+        result.AssociatedPersonList.Count.Should().Be(3);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
@@ -919,6 +1056,12 @@ public class RegulatorServiceTests
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
         
         // Assert
+        var approvedUser = GetEnrolmentQuery()
+            .Single(x => x.Id == approvedPersonEnrolment.Id);
+        
+        approvedUser.Connection.PersonRoleId.Should().Be(PersonRole.Admin);
+        approvedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+       
         var delegatedPersonEnrolment1 = GetEnrolmentQuery()
             .Single(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
         
@@ -931,9 +1074,14 @@ public class RegulatorServiceTests
         delegatedPersonEnrolment2.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment2.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
         
-        result.DemotedBasicUsers.Count.Should().Be(2);
-        result.DemotedBasicUsers.Should().Contain(x => x.Email == delegatedPersonEnrolment1.Connection.Person.Email);
-        result.DemotedBasicUsers.Should().Contain(x => x.Email == delegatedPersonEnrolment2.Connection.Person.Email);
+        result.AssociatedPersonList.Count.Should().Be(3);
+        result.AssociatedPersonList.Should().Contain(x => x.Email == delegatedPersonEnrolment1.Connection.Person.Email);
+        result.AssociatedPersonList.Should().Contain(x => x.Email == delegatedPersonEnrolment2.Connection.Person.Email);
+        result.AssociatedPersonList.Should().Contain(x => x.Email == approvedPersonEnrolment.Email);
+        
+        result.AssociatedPersonList[0].EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
+        result.AssociatedPersonList[1].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
+        result.AssociatedPersonList[2].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
     }
     
     [TestMethod]
@@ -1381,7 +1529,7 @@ public class RegulatorServiceTests
         
         setupContext.Enrolments.Add(approvedSoleTraderUserEnrolment1);
 
-        var ApprovedPersonApprovedEnrolment1 = new Enrolment
+        var approvedPersonApprovedEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Approved,
             ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
@@ -1411,7 +1559,7 @@ public class RegulatorServiceTests
             },
             DelegatedPersonEnrolment = null
         };
-        setupContext.Enrolments.Add(ApprovedPersonApprovedEnrolment1);
+        setupContext.Enrolments.Add(approvedPersonApprovedEnrolment1);
         
         var delegatedPersonApprovedEnrolment1 = new Enrolment
         {
@@ -1621,5 +1769,44 @@ public class RegulatorServiceTests
         };
         _dbContext.Add(enrolment1);
         return person1;
+    }
+    private Person SetUpDelegatedPersonWithoutFirstNameEnrolment(int organisationId)
+    {
+        var userAnother = new User()
+        {
+            UserId = new Guid("00000000-0000-4000-0000-000000000010"),
+            Email = "userAnother@test.com",
+            Id= 20
+        };
+        _dbContext.Add(userAnother);
+        
+        var personAnother = new Person()
+        {
+            FirstName = "",
+            LastName = $"TestAnother {organisationId}",
+            Email = $"userAnother{organisationId}@test.com",
+            Telephone = "0123456789",
+            ExternalId = new Guid("00000000-0050-0000-0000-000000000120"),
+            UserId = userAnother.Id,
+            Id= 50
+        };
+        _dbContext.Add(personAnother);
+        
+        var enrolmentAnother = new Enrolment
+        {
+            Connection = new PersonOrganisationConnection()
+            {
+                PersonId = personAnother.Id,
+                OrganisationId = organisationId,
+                OrganisationRoleId = OrganisationRole.Employer,
+                ExternalId = Guid.NewGuid()
+            },
+            EnrolmentStatusId = EnrolmentStatus.Enrolled,
+            ServiceRoleId = ServiceRole.Packaging.DelegatedPerson.Id
+        };
+        
+        _dbContext.Add(enrolmentAnother);
+
+        return personAnother;
     }
 }
