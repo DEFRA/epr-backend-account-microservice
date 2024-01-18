@@ -12,7 +12,7 @@ namespace BackendAccountService.ValidationData.Api.UnitTests.Services;
 [TestClass]
 public class OrganisationDataServiceTests
 {
-    private AccountsDbContext _accountContext= null!;
+    private AccountsDbContext _accountContext = null!;
     private OrganisationDataService _organisationService = null!;
 
     [TestInitialize]
@@ -33,34 +33,101 @@ public class OrganisationDataServiceTests
     [TestMethod]
     public async Task GetOrganisationByExternalId_NoOrganisationExists_ThenReturnNull()
     {
-        //Setup
+        // Arrange
         var expectedOrganisation = Guid.Empty;
 
-        //Act
+        // Act
         var result = await _organisationService.GetOrganisationByExternalId(expectedOrganisation);
 
-        //Assert
-
+        // Assert
         result.Should().BeNull();
     }
 
     [TestMethod]
     public async Task GetOrganisationByExternalId_IsNotComplianceScheme_ThenReturnOrgWithEmptyMembers()
     {
-        //Setup
+        // Arrange
         var expectedOrganisation = _accountContext.Organisations.First();
 
-        //Act
+        // Act
         var result = await _organisationService.GetOrganisationByExternalId(expectedOrganisation.ExternalId);
 
-        //Assert
-
+        // Assert
         result.Should().BeOfType(typeof(OrganisationResponse));
         result.IsComplianceScheme.Should().Be(expectedOrganisation.IsComplianceScheme);
         result.ReferenceNumber.Should().Be(expectedOrganisation.ReferenceNumber);
     }
 
-    private void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
+    [TestMethod]
+    public async Task GetOrganisationWithMembers_HasMembers_ThenReturnOrgWithMembers()
+    {
+        // Arrange
+        var complianceSchemeId = new Guid("22222222-0000-0000-0000-000000000000");
+        var expectedComplianceSchemeOrganisation = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "CS1234");
+        var expectedMember = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "3000000");
+
+        // Act
+        var result = await _organisationService.GetOrganisationMembersByComplianceSchemeId(
+            expectedComplianceSchemeOrganisation.ExternalId,
+            complianceSchemeId);
+
+        // Assert
+        result.Should().BeOfType(typeof(OrganisationMembersResponse));
+        result.MemberOrganisations.Should().NotBeEmpty();
+        result.MemberOrganisations.First().Should().Be(expectedMember.ReferenceNumber);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationWithMembers_HasNoMembers_ThenReturnEmpty()
+    {
+        // Arrange
+        var complianceSchemeId = new Guid("22222222-0000-0000-0000-000000000001");
+        var expectedComplianceSchemeOrganisation = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "CS1234");
+
+        // Act
+        var result = await _organisationService.GetOrganisationMembersByComplianceSchemeId(
+            expectedComplianceSchemeOrganisation.ExternalId,
+            complianceSchemeId);
+
+        // Assert
+        result.Should().BeOfType(typeof(OrganisationMembersResponse));
+        result.MemberOrganisations.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationWithMembers_ComplianceSchemeNull_ThenReturnNull()
+    {
+        // Arrange
+        var expectedOrganisation = _accountContext.Organisations.First().ExternalId;
+        Guid? expectedComplianceScheme = null;
+
+        // Act
+        var result = await _organisationService.GetOrganisationMembersByComplianceSchemeId(
+            expectedOrganisation,
+            expectedComplianceScheme);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationWithMembers_ComplianceSchemeDoesNotExist_ThenReturnNull()
+    {
+        // Arrange
+        Guid? complianceSchemeId = new Guid("12345678-1234-1234-1234-123456789123");
+        var expectedComplianceSchemeOrganisation = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "CS1234");
+
+        // Act
+        var result = await _organisationService.GetOrganisationMembersByComplianceSchemeId(
+            expectedComplianceSchemeOrganisation.ExternalId,
+            complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+
+    private static void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
     {
         using var setupContext = new AccountsDbContext(contextOptions);
 
@@ -164,7 +231,7 @@ public class OrganisationDataServiceTests
         var selectedScheme2 = new SelectedScheme
         {
             OrganisationConnection = organisationConnection2,
-            ComplianceScheme  = complianceScheme1,
+            ComplianceScheme = complianceScheme1,
             ExternalId = new Guid("44444444-0000-0000-0000-000000000001")
         };
         setupContext.SelectedSchemes.Add(selectedScheme2);

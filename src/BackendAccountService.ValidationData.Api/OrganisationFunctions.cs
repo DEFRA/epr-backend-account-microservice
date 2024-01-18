@@ -11,21 +11,21 @@ using System.Threading.Tasks;
 
 namespace BackendAccountService.ValidationData.Api;
 
-public class GetOrganisationValidationFunction
+public class OrganisationFunctions
 {
     private readonly IOrganisationDataService _organisationService;
-    private readonly ILogger<GetOrganisationValidationFunction> _logger;
+    private readonly ILogger<OrganisationFunctions> _logger;
 
-    public GetOrganisationValidationFunction(
+    public OrganisationFunctions(
         IOrganisationDataService organisationService,
-        ILogger<GetOrganisationValidationFunction> logger)
+        ILogger<OrganisationFunctions> logger)
     {
         _organisationService = organisationService;
         _logger = logger;
     }
 
-    [FunctionName("GetOrganisationValidationFunction")]
-    public async Task<IActionResult> RunAsync(
+    [FunctionName("GetOrganisation")]
+    public async Task<IActionResult> GetOrganisationAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
             nameof(HttpMethod.Get),
@@ -44,6 +44,42 @@ public class GetOrganisationValidationFunction
             if (result is null)
             {
                 return Problem("Organisation not found", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            return new OkObjectResult(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("{ExceptionMessage}", ex.Message);
+            return Problem("Unhandled exception", ex.GetType().Name,ex.Message);
+        }
+        finally
+        {
+            _logger.LogExit();
+        }
+    }
+
+    [FunctionName("GetOrganisationMembers")]
+    public async Task<IActionResult> GetOrganisationMembersAsync(
+        [HttpTrigger(
+            AuthorizationLevel.Anonymous,
+            nameof(HttpMethod.Get),
+            Route = "organisation/{organisationId:guid}/members/{complianceSchemeId:guid}")]
+        HttpRequest req,
+        Guid organisationId,
+        Guid complianceSchemeId)
+    {
+        _logger.LogEnter();
+
+        try
+        {
+            var result =
+                await _organisationService.GetOrganisationMembersByComplianceSchemeId(
+                    organisationId, complianceSchemeId);
+
+            if (result is null)
+            {
+                return Problem("Compliance scheme details not found", statusCode: StatusCodes.Status404NotFound);
             }
 
             return new OkObjectResult(result);
