@@ -113,25 +113,29 @@ public static class ComplainceSchemeTestHelper
         {
             Name = "Compliance Scheme 1",
             CompaniesHouseNumber = csOrg1.CompaniesHouseNumber,
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000021")
+            ExternalId = new Guid("00000000-0000-0000-0000-000000000021"),
+            NationId = 1
         };
         var complianceScheme2 = new ComplianceScheme
         {
             Name = "Compliance Scheme 2",
             CompaniesHouseNumber = csOrg1.CompaniesHouseNumber,
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000022")
+            ExternalId = new Guid("00000000-0000-0000-0000-000000000022"),
+            NationId = 1
         };
         var complianceScheme3 = new ComplianceScheme
         {
             Name = "Compliance Scheme 3",
             CompaniesHouseNumber = csOrg2.CompaniesHouseNumber,
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000023")
+            ExternalId = new Guid("00000000-0000-0000-0000-000000000023"),
+            NationId = 1
         };
         var complianceScheme4 = new ComplianceScheme
         {
             Name = "Compliance Scheme 4",
             CompaniesHouseNumber = "333333",
-            ExternalId = new Guid("00000000-0000-0000-0000-000000000024")
+            ExternalId = new Guid("00000000-0000-0000-0000-000000000024"),
+            NationId = 1
         };
         setupContext.ComplianceSchemes.Add(complianceScheme1);
         setupContext.ComplianceSchemes.Add(complianceScheme2);

@@ -13,4 +13,6 @@ public class OrganisationDetailModel
     public string OrganisationNumber { get; set; }
 
     public string ProducerType { get; set; }
+
+    public int? NationId { get; set; }
 }

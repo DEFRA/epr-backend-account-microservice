@@ -135,7 +135,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .ComplianceSchemes
             .Where(cs => csOperatorCompaniesHouseNumbers.Contains(cs.CompaniesHouseNumber))
             .AsNoTracking()
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn))
+            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
             .ToListAsync();
 
         return complianceSchemes;
@@ -456,7 +456,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .AsNoTracking()
             .Where(x => x.CompaniesHouseNumber == organisation.CompaniesHouseNumber)
             .AsNoTracking()
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn))
+            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn,cs.NationId))
             .ToListAsync();
 
         return complianceSchemes;

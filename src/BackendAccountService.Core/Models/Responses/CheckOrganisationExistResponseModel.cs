@@ -5,5 +5,7 @@
         public DateTimeOffset CreatedOn { get; set; }
 
         public Guid ExternalId { get; set; }
+
+        public string OrganisationName { get; set; }
     }
 }

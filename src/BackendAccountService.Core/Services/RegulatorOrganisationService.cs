@@ -65,6 +65,7 @@ namespace BackendAccountService.Core.Services
                 { 
                     CreatedOn = org.CreatedOn,
                     ExternalId = org.ExternalId,
+                    OrganisationName = org.Name
                 })
                 .FirstOrDefaultAsync();
 

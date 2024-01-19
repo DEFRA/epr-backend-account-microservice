@@ -498,7 +498,7 @@ public class ComplianceSchemeServiceTests
         var expectedResult = _dbContext
             .ComplianceSchemes
             .Where(cs => csOrgsCompaniesHouseNumbers.Contains(cs.CompaniesHouseNumber))
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn))
+            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
             .ToList();
 
         //Act
@@ -517,7 +517,7 @@ public class ComplianceSchemeServiceTests
         var expectedResult = _dbContext
             .ComplianceSchemes
             .Where(x => x.CompaniesHouseNumber == organisation.CompaniesHouseNumber)
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn))
+            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
             .ToList();
 
         //Act

@@ -120,7 +120,8 @@ public class UserService : IUserService
                     : "Producer",
                 OrganisationType = personOrganisationConnection.Organisation.OrganisationType.Name,
                 ProducerType = personOrganisationConnection.Organisation.ProducerType?.Name,
-                OrganisationNumber = personOrganisationConnection.Organisation.ReferenceNumber
+                OrganisationNumber = personOrganisationConnection.Organisation.ReferenceNumber,
+                NationId = personOrganisationConnection.Organisation.NationId
             });
         }
         return organisations;
