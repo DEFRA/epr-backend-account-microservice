@@ -96,6 +96,7 @@ public class AccountManagementService : IAccountManagementService
             throw new ValidationException($"Invited user '{invitedUser.Email}' doesn't belong to the same organisation.");
         }
 
+        invitedUserOrganisationConnection.PersonRoleId = invitedUser.PersonRoleId;
         var enrolment = new Enrolment
         {
             ServiceRoleId = invitedUser.ServiceRoleId,
