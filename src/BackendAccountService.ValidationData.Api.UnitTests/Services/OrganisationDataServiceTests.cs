@@ -126,6 +126,40 @@ public class OrganisationDataServiceTests
         result.Should().BeNull();
     }
 
+    [TestMethod]
+    public async Task GetExistingOrganisationsByReferenceNumber_OrgExists_ThenReturnReferenceNumbers()
+    {
+        // Arrange
+        var expectedReferenceNumber = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "3000000").ReferenceNumber;
+
+        // Act
+        var result = await _organisationService.GetExistingOrganisationsByReferenceNumber(
+            new List<string> { expectedReferenceNumber });
+
+        // Assert
+        result.Should().BeOfType(typeof(OrganisationsResponse));
+        result.ReferenceNumbers.Should().NotBeEmpty();
+        result.ReferenceNumbers.First().Should().Be(expectedReferenceNumber);
+    }
+
+    [TestMethod]
+    public async Task GetExistingOrganisationsByReferenceNumber_OrgNotExist_ThenOrgNotInReturnedList()
+    {
+        // Arrange
+        var expectedReferenceNumber = _accountContext.Organisations.FirstOrDefault(x => x.ReferenceNumber == "3000000").ReferenceNumber;
+        const string invalidReferenceNumber = "ThisIsInvalidRef";
+
+        // Act
+        var result = await _organisationService.GetExistingOrganisationsByReferenceNumber(
+            new List<string> { expectedReferenceNumber, invalidReferenceNumber });
+
+        // Assert
+        result.Should().BeOfType(typeof(OrganisationsResponse));
+        result.ReferenceNumbers.Should().NotBeEmpty();
+        result.ReferenceNumbers.Count().Should().Be(1);
+        result.ReferenceNumbers.First().Should().Be(expectedReferenceNumber);
+    }
+
 
     private static void SetUpDatabase(DbContextOptions<AccountsDbContext> contextOptions)
     {

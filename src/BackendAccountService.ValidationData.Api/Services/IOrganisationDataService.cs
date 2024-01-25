@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using BackendAccountService.ValidationData.Api.Models;
 
@@ -10,4 +11,6 @@ public interface IOrganisationDataService
 
     Task<OrganisationMembersResponse> GetOrganisationMembersByComplianceSchemeId(Guid organisationExternalId,
         Guid? complianceSchemeId);
+
+    Task<OrganisationsResponse> GetExistingOrganisationsByReferenceNumber(IEnumerable<string> referenceNumbers);
 }

@@ -51,6 +51,20 @@ public class OrganisationDataService : IOrganisationDataService
         };
     }
 
+    public async Task<OrganisationsResponse> GetExistingOrganisationsByReferenceNumber(IEnumerable<string> referenceNumbers)
+    {
+        var organisations = await _accountsDbContext.Organisations
+            .AsNoTracking()
+            .Where(organisation => referenceNumbers.Contains(organisation.ReferenceNumber))
+            .Select(org => org.ReferenceNumber.ToString())
+            .ToListAsync();
+
+        return new OrganisationsResponse
+        {
+            ReferenceNumbers = organisations
+        };
+    }
+
     private async Task<List<string>> GetMembers(Guid organisationExternalId, Guid? complianceSchemeId)
     {
         var complianceScheme = _accountsDbContext.ComplianceSchemes
