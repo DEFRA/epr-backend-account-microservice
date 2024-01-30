@@ -192,6 +192,27 @@ public class AccountManagementServiceTests
         user.UserId.Should().Be(new Guid("00000000-0000-0000-0000-000000000002"));
     }
 
+
+    [TestMethod]
+    public async Task When_User_Is_Enrolled_With_Valid_Data_And_Already_Exists_Return_True()
+    {
+        // Arrange
+        AccountManagementTestHelper.SetupDatabaseForEnrolReInvitedUser(_accountContext);
+        var invitedUser = _accountContext.Users.Single(x => x.Id == UserIdToEnroll);
+        
+
+        // Act
+        var success = await _sut.EnrolReInvitedUserAsync(invitedUser);
+
+        // Assert
+        success.Should().BeTrue();
+
+        var user = _accountContext.Users.Include(x => x.Person).Single(x => x.Id == UserIdToEnroll);
+        user.InviteToken.Should().BeNull();
+        user.Person.FirstName.Should().Be("FirstName");
+        user.Person.LastName.Should().Be("LastName");
+    }
+
     [TestMethod]
     public async Task When_User_Is_ReInvited_With_Valid_Data_Then_New_Invite_Token_Is_Generated()
     {
@@ -224,23 +245,20 @@ public class AccountManagementServiceTests
     {
         //Arrange
         AccountManagementTestHelper.SetupDatabaseForInvitingUser(_accountContext);
-        
         var initialInviteRequest = CreateInviteUserRequest();
         var initialInviteToken = await _sut.CreateInviteeAccountAsync(initialInviteRequest);
-        
         var invitedPerson = _accountContext.Persons.Single(x => x.Email == initialInviteRequest.InvitedUser.Email);
         var isUserEnrolmentDeleted = await _enrolmentsService.DeleteEnrolmentsForPersonAsync(
-            invitedPerson.User.UserId.Value, 
-            invitedPerson.ExternalId, 
-            invitedPerson.OrganisationConnections.Single().Organisation.ExternalId, 
+            invitedPerson.User.UserId.Value,
+            invitedPerson.ExternalId,
+            invitedPerson.OrganisationConnections.Single().Organisation.ExternalId,
             1);
         initialInviteRequest.InvitedUser.PersonRoleId = PersonRole.Admin;
         //Act
         var reInviteToken =
             await _sut.ReInviteUserAsync(initialInviteRequest.InvitedUser, initialInviteRequest.InvitingUser);
-        
+
         //Assert
-       
         invitedPerson.OrganisationConnections.First().PersonRoleId.Should().Be(PersonRole.Admin);
         initialInviteToken.Should().NotBeNull().And.NotBeEmpty();
         isUserEnrolmentDeleted.Should().BeTrue();
@@ -253,25 +271,21 @@ public class AccountManagementServiceTests
     {
         //Arrange
         AccountManagementTestHelper.SetupDatabaseForInvitingUser(_accountContext);
-        
         var initialInviteRequest = CreateInviteUserRequest();
         initialInviteRequest.InvitedUser.PersonRoleId = PersonRole.Admin;
-        
         var initialInviteToken = await _sut.CreateInviteeAccountAsync(initialInviteRequest);
-        
         var invitedPerson = _accountContext.Persons.Single(x => x.Email == initialInviteRequest.InvitedUser.Email);
         var isUserEnrolmentDeleted = await _enrolmentsService.DeleteEnrolmentsForPersonAsync(
-            invitedPerson.User.UserId.Value, 
-            invitedPerson.ExternalId, 
-            invitedPerson.OrganisationConnections.Single().Organisation.ExternalId, 
+            invitedPerson.User.UserId.Value,
+            invitedPerson.ExternalId,
+            invitedPerson.OrganisationConnections.Single().Organisation.ExternalId,
             1);
         initialInviteRequest.InvitedUser.PersonRoleId = PersonRole.Employee;
         //Act
         var reInviteToken =
             await _sut.ReInviteUserAsync(initialInviteRequest.InvitedUser, initialInviteRequest.InvitingUser);
-        
+
         //Assert
-       
         invitedPerson.OrganisationConnections.First().PersonRoleId.Should().Be(PersonRole.Employee);
         initialInviteToken.Should().NotBeNull().And.NotBeEmpty();
         isUserEnrolmentDeleted.Should().BeTrue();

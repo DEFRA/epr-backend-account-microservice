@@ -13,7 +13,9 @@ public class AccountManagementService : IAccountManagementService
     private readonly ILogger<AccountManagementService> _logger;
     private readonly AccountsDbContext _accountsDbContext;
 
-    public AccountManagementService(ITokenService tokenService, ILogger<AccountManagementService> logger,
+    public AccountManagementService(
+        ITokenService tokenService,
+        ILogger<AccountManagementService> logger,
         AccountsDbContext accountsDbContext)
     {
         _tokenService = tokenService;
@@ -23,7 +25,6 @@ public class AccountManagementService : IAccountManagementService
 
     public async Task<string> CreateInviteeAccountAsync(AddInviteUserRequest request)
     {
-
         _logger.LogInformation("Generating invite token");
         var inviteToken = _tokenService.GenerateInviteToken();
 
@@ -38,7 +39,29 @@ public class AccountManagementService : IAccountManagementService
         await _accountsDbContext.SaveChangesAsync(request.InvitingUser.UserId, request.InvitedUser.OrganisationId);
 
         return inviteToken;
+    }
 
+    public async Task<bool> EnrolReInvitedUserAsync(User user)
+    {
+        var enrolments = await _accountsDbContext
+            .Enrolments
+            .Include(x => x.ServiceRole)
+            .Include(x => x.Connection.Organisation)
+            .Where(enrolment =>
+                enrolment.EnrolmentStatusId == Data.DbConstants.EnrolmentStatus.Invited
+                && enrolment.Connection.Person.Id == user.Person.Id)
+            .ToListAsync();
+
+        if (!enrolments.Any())
+        {
+            return false;
+        }
+
+        user.InviteToken = null;
+        enrolments.ForEach(x => x.EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled);
+
+        await _accountsDbContext.SaveChangesAsync(user.UserId.Value, enrolments.First().Connection.Organisation.ExternalId);
+        return true;
     }
 
     public async Task<bool> EnrolInvitedUserAsync(User user, EnrolInvitedUserRequest request)
@@ -88,8 +111,7 @@ public class AccountManagementService : IAccountManagementService
             x.Person.User.UserId == invitingUser.UserId).Organisation.ExternalId;
 
         var invitedUserOrganisationConnection = _accountsDbContext.PersonOrganisationConnections.FirstOrDefault(x =>
-            x.Person.User.UserId == invited.UserId &&
-            x.Organisation.ExternalId == invitedUser.OrganisationId);
+            x.Person.User.UserId == invited.UserId && x.Organisation.ExternalId == invitedUser.OrganisationId);
 
         if (invitedUserOrganisationConnection is null)
         {

@@ -66,6 +66,38 @@ public static class AccountManagementTestHelper
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
 
+    public static void SetupDatabaseForEnrolReInvitedUser(AccountsDbContext setupContext)
+    {
+        var enrolment = new Enrolment()
+        {
+            ServiceRoleId = 2,
+            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Invited,
+            Connection = new PersonOrganisationConnection()
+            {
+                Organisation = new Organisation()
+                {
+                    Name = "Org 2"
+                },
+                Person = new Person()
+                {
+                    Email = string.Empty,
+                    FirstName = "FirstName",
+                    LastName = "LastName",
+                    Telephone = String.Empty,
+                    User = new User()
+                    {
+                        Id = UserIdToEnroll,
+                        UserId = Guid.Empty,
+                        Email = "invitee2@test.com",
+                        InviteToken = "_inviteToken_"
+                    }
+                }
+            }
+        };
+        
+        setupContext.Enrolments.Add(enrolment);
+        setupContext.SaveChanges(Guid.Empty, Guid.Empty);
+    }
     public static void SetupDatabaseForInvitingUser(AccountsDbContext setupContext)
     {
         var enrolment = new Enrolment

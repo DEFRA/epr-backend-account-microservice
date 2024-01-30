@@ -367,4 +367,32 @@ public class AccountsManagementControllerTests
         result.Should().NotBeNull();
         result.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
     }
+    
+    [TestMethod]
+    public async Task When_Enrolments_For_ReInvited_User_Is_Successful_Return_NoContent()
+    {
+        // Arrange
+        var request = new EnrolInvitedUserRequest();
+        var user = new User();
+        user.Person = new Person()
+        {
+            FirstName = "firstName",
+            LastName = "lastName"
+        };
+        
+        _userServiceMock.Setup(x =>
+                x.GetUserByInviteAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(user);
+        _accountManagementServiceMock.Setup(x =>
+                x.EnrolReInvitedUserAsync(It.IsAny<User>()))
+            .ReturnsAsync(true);
+        
+        // Act
+        var result = await _accountsManagementController.EnrolInvitedUser(request) as NoContentResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+        _accountManagementServiceMock.Verify(x => x.EnrolReInvitedUserAsync(It.IsAny<User>()), Times.Once);
+    }
 }
