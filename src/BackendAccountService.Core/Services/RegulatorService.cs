@@ -1,3 +1,4 @@
+using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
@@ -19,8 +20,13 @@ public class RegulatorService: IRegulatorService
     private readonly AccountsDbContext _accountsDbContext;
     private readonly IOrganisationService _organisationService;
     private readonly ITokenService _tokenService;
-    private const string RegulatingService = "Regulating";
     private readonly ILogger<RegulatorService> _logger;
+    private const string RegulatingService = "Regulating";
+    private const string EnrolmentNotFoundMessage = "Enrolment not found";
+    private const string UnsupportedEnrolmentStatusMessage = "Unsupported enrolment status";
+    private const string RegulatorCommentsMissingMessage = "Regulator comments missing";
+    private const string CannotTransferComplianceSchemeMessage = "Cannot transfer compliance scheme";
+    private const string InvalidNationMessage = "Invalid Nation";
 
     public RegulatorService(AccountsDbContext accountsDbContext, 
                             IOrganisationService organisationService,
@@ -57,11 +63,11 @@ public class RegulatorService: IRegulatorService
             }).OrderByDescending(x=>x.Enrolments.HasApprovedPending).ThenBy(x=>x.LastUpdate).ThenBy(x=>x.OrganisationName)
             .AsQueryable();
 
-        if (applicationType.Equals("ApprovedPerson", StringComparison.CurrentCultureIgnoreCase))
+        if (applicationType.Equals(ServiceRoles.ApprovedPerson, StringComparison.CurrentCultureIgnoreCase))
         {
             enrolments = enrolments.Where(e => e.Enrolments.HasApprovedPending).AsQueryable();
         }
-        else if (applicationType.Equals("DelegatedPerson", StringComparison.CurrentCultureIgnoreCase))
+        else if (applicationType.Equals(ServiceRoles.DelegatedPerson, StringComparison.CurrentCultureIgnoreCase))
         {
             enrolments = enrolments.Where(e => e.Enrolments.HasDelegatePending).AsQueryable();
         }
@@ -83,7 +89,7 @@ public class RegulatorService: IRegulatorService
 
         if (enrolment == null)
         {
-            return (false, "enrolment not found");
+            return (false, EnrolmentNotFoundMessage);
         }
 
         var enrolmentstatusName =  _accountsDbContext.EnrolmentStatuses.Single(status =>
@@ -91,7 +97,7 @@ public class RegulatorService: IRegulatorService
 
         if (enrolmentstatusName.Id != EnrolmentStatus.Approved && enrolmentstatusName.Id != EnrolmentStatus.Rejected)
         {
-            return (false, "unsupported enrolment status");
+            return (false, UnsupportedEnrolmentStatusMessage);
         }
         if (enrolmentstatusName.Id.Equals(EnrolmentStatus.Approved))
         {
@@ -102,7 +108,7 @@ public class RegulatorService: IRegulatorService
 
         if (regulatorComment == null)
         {
-            return (false, "regulator comments missing");
+            return (false, RegulatorCommentsMissingMessage);
         }
 
         enrolment.EnrolmentStatusId = EnrolmentStatus.Rejected;
@@ -388,14 +394,14 @@ public class RegulatorService: IRegulatorService
 
         if (organisation.IsComplianceScheme)
         {
-            return (false, "Cannot transfer compliance scheme");
+            return (false, CannotTransferComplianceSchemeMessage);
         }
         
         var transferNation = _accountsDbContext.Nations.AsNoTracking().SingleOrDefault(nation => nation.Id == request.TransferNationId);
 
         if (transferNation == null)
         {
-            return (false, "Invalid Nation");
+            return (false, InvalidNationMessage);
         }
         
         var enrolmentId = _accountsDbContext.Enrolments.AsNoTracking().Single(e =>

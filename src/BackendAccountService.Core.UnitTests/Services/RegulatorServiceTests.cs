@@ -59,8 +59,8 @@ public class RegulatorServiceTests
     private const string TransferComment = "Organisation under incorrect nation";
     private const string ApprovedStatus = "Approved";
     private const string RejectedStatus = "Rejected";
-    private const string InvalidEnrolmentMessage = "enrolment not found";
-    private const string InvalidEnrolmentStatusMessage = "unsupported enrolment status";
+    private const string InvalidEnrolmentMessage = "Enrolment not found";
+    private const string InvalidEnrolmentStatusMessage = "Unsupported enrolment status";
     private const string ApprovedUser2ProducerEmail = "producer.user4@test.com";
     private Mock<ILogger<RegulatorService>> _logger;
     private Mock<ITokenService> _tokenService;

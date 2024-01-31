@@ -119,16 +119,7 @@ public class AccountsManagementController : ApiControllerBase
             return Problem("Invite not found", statusCode: (int)HttpStatusCode.BadRequest);
         }
 
-        bool success;
-        
-        if (user.Person is { FirstName: { }, LastName: { } })
-        {
-            success = await _accountManagementService.EnrolReInvitedUserAsync(user);
-        }
-        else
-        {
-            success = await _accountManagementService.EnrolInvitedUserAsync(user, request);
-        }
+        var success = await _accountManagementService.EnrolInvitedUserAsync(user, request);
 
         if (!success)
         {

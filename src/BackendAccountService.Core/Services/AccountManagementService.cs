@@ -14,7 +14,7 @@ public class AccountManagementService : IAccountManagementService
     private readonly AccountsDbContext _accountsDbContext;
 
     public AccountManagementService(
-        ITokenService tokenService,
+        ITokenService tokenService, 
         ILogger<AccountManagementService> logger,
         AccountsDbContext accountsDbContext)
     {
@@ -39,29 +39,7 @@ public class AccountManagementService : IAccountManagementService
         await _accountsDbContext.SaveChangesAsync(request.InvitingUser.UserId, request.InvitedUser.OrganisationId);
 
         return inviteToken;
-    }
 
-    public async Task<bool> EnrolReInvitedUserAsync(User user)
-    {
-        var enrolments = await _accountsDbContext
-            .Enrolments
-            .Include(x => x.ServiceRole)
-            .Include(x => x.Connection.Organisation)
-            .Where(enrolment =>
-                enrolment.EnrolmentStatusId == Data.DbConstants.EnrolmentStatus.Invited
-                && enrolment.Connection.Person.Id == user.Person.Id)
-            .ToListAsync();
-
-        if (!enrolments.Any())
-        {
-            return false;
-        }
-
-        user.InviteToken = null;
-        enrolments.ForEach(x => x.EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled);
-
-        await _accountsDbContext.SaveChangesAsync(user.UserId.Value, enrolments.First().Connection.Organisation.ExternalId);
-        return true;
     }
 
     public async Task<bool> EnrolInvitedUserAsync(User user, EnrolInvitedUserRequest request)
