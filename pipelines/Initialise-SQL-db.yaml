@@ -70,7 +70,10 @@ jobs:
     displayName: Executing Migration Script
     ${{ if contains(parameters.branchName, 'RELEASE') }}:
       variables:
-        - template: vars/image-tags/${{ parameters.envToDeploy }}.yaml@ReleaseTags
+        # Release tags reference
+        - template: pipelines/image-tags/${{ parameters.envToDeploy }}.yaml@ReleaseTags
+        - ${{ if eq(parameters.envToDeploy, 'development') }}:
+          - template: pipelines/image-tags/${{ parameters.teamName }}-${{ parameters.envToDeploy }}.yaml@ReleaseTags
     steps:
       - template: templates/docker-run-sql-migration.yaml@CommonTemplates
         parameters:
