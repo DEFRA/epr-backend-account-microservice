@@ -7,5 +7,5 @@ variables:
   kvName: PRDRWDINFKV1401
   sqlDBserver: prdrwddbssq1401.database.windows.net
   sqlDB: 'prd1_accounts'
-  validationApiServiceName: 'prdrwdwebfa5407'
+  validationApiServiceName: 'prdrwdwebfa1407'
   validationApiRepository: 'validationdataapiregistry'
