@@ -60,6 +60,6 @@ extends:
     acrRepositoryName: $(validationApiRepository)
     branchName: ${{ replace(replace(variables['Build.SourceBranch'], 'refs/heads/', ''), '/', '_') }}
     runNugetTasks: ${{ variables.runNugetTasks }}
-    buildMigrationScript: true
+    buildMigrationScript: false
     serviceName: $(validationApiServiceName)
     sonarqubeInstance: ${{ parameters.sonarqubeInstance }}
