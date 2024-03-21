@@ -30,6 +30,7 @@ public class StartUp : FunctionsStartup
             var serviceProvider = services.BuildServiceProvider();
             var accountDatabaseOptions = serviceProvider.GetRequiredService<IOptions<AccountsDatabaseConfig>>().Value;
             services.AddScoped<IOrganisationDataService, OrganisationDataService>();
+            services.AddScoped<ICompanyDetailsDataService, CompanyDetailsDataService>();
             services.AddDbContext<AccountsDbContext>(options =>
                 options.UseSqlServer(accountDatabaseOptions.ConnectionString));
         }

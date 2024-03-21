@@ -6,11 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!-- SonarCloud does not recognise file-scoped namespaces in current version. -->
-    <NoWarn>S3903</NoWarn>
-  </PropertyGroup>
-
   <Target Name="GenerateSqlScript" AfterTargets="AfterBuild" Condition="$(AzureBuild) != true">
     <Exec Condition="$(Configuration) == Release" Command="dotnet ef migrations script --no-build --context BackendAccountService.Data.Infrastructure.AccountsDbContext --configuration Release --idempotent --output Scripts/migrations.sql" />
   </Target>

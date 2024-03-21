@@ -10,11 +10,6 @@
         <SonarQubeExclude>true</SonarQubeExclude>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <!-- SonarCloud does not recognise file-scoped namespaces in current version. -->
-        <NoWarn>S3903</NoWarn>
-    </PropertyGroup>
-
     <ItemGroup>
       <ProjectReference Include="..\BackendAccountService.Data\BackendAccountService.Data.csproj" />
     </ItemGroup>
