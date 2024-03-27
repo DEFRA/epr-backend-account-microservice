@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using System;
+using System.Text;
+using System.Text.Json;
 
 namespace BackendAccountService.ValidationData.Api.UnitTests;
 
@@ -47,10 +50,12 @@ public class CompanyDetailsFunctionsTests
         // Arrange
         var expectedOrganisation = "123456";
         var requestMock = new Mock<HttpRequest>();
-        var CompanyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
 
-        var organisations = new List<CompanyDetailResponse>();
-        organisations.Add(CompanyDetails);
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
 
         var organisationsResult = new CompanyDetailsResponse
         {
@@ -128,11 +133,12 @@ public class CompanyDetailsFunctionsTests
     {
         // Arrange
         var expectedOrganisation = "123456";
-        var requestMock = new Mock<HttpRequest>();
-        var CompanyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
 
-        var organisations = new List<CompanyDetailResponse>();
-        organisations.Add(CompanyDetails);
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
 
         var organisationsResult = new CompanyDetailsResponse
         {
@@ -196,4 +202,197 @@ public class CompanyDetailsFunctionsTests
         _loggerMock.VerifyLog(logger => logger.LogError(exceptionErrorMessage));
     }
 
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsync_CatchesAndLogsException_WhenThrown()
+    {
+        // Arrange
+        const string exceptionErrorMessage = "Error attempting to fetch organisation";
+        var requestMock = new Mock<HttpRequest>();
+
+        var referenceNumbers = new OrganisationsResponse()
+        {
+            ReferenceNumbers = new List<string> { "123456", "789123" }
+        };
+
+        requestMock.Setup(req => req.Method).Returns("POST");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock
+           .Setup(service => service
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
+                   )).ThrowsAsync(new Exception(exceptionErrorMessage));
+
+        var problem = new ProblemDetails
+        {
+            Detail = exceptionErrorMessage,
+            Status = 500,
+            Title = "Unhandled exception",
+            Type = "Exception"
+        };
+
+        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
+        var requestBodyStream = new MemoryStream(requestBodyBytes);
+        requestMock.Setup(req => req.Body).Returns(requestBodyStream);
+
+        // Act
+        var result = await _systemUnderTest.GetAllProducersCompanyDetailsAsync(requestMock.Object);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        result.Should().BeEquivalentTo(new ObjectResult(problem)
+        {
+            StatusCode = 500,
+            Value = problem
+        });
+
+        _loggerMock.VerifyLog(logger => logger.LogError(exceptionErrorMessage));
+    }
+
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsync_RequestBodyAndReferenceNumbersAreNotNull_ReturnsOk()
+    {
+        // Arrange
+        var requestMock = new Mock<HttpRequest>();
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
+
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = organisations
+        };
+
+        var referenceNumbers = new OrganisationsResponse()
+        {
+            ReferenceNumbers = new List<string> { "123456", "789123" }
+        };
+
+        requestMock.Setup(req => req.Method).Returns("POST");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock
+           .Setup(service => service
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
+                   )).ReturnsAsync(organisationsResult);
+
+        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
+        var requestBodyStream = new MemoryStream(requestBodyBytes);
+        requestMock.Setup(req => req.Body).Returns(requestBodyStream);
+
+        // Act
+        var result = await _systemUnderTest.GetAllProducersCompanyDetailsAsync(requestMock.Object);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        result.Should().BeEquivalentTo(new OkObjectResult(organisationsResult));
+    }
+
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsync_NoExceptionThrown_WhenValidPayload()
+    {
+        // Arrange
+        var requestMock = new Mock<HttpRequest>();
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
+
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = organisations
+        };
+
+        var referenceNumbers = new OrganisationsResponse()
+        {
+            ReferenceNumbers = new List<string> { "123456", "789123" }
+        };
+
+        requestMock.Setup(req => req.Method).Returns("POST");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock
+           .Setup(service => service
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
+                   )).ReturnsAsync(organisationsResult);
+
+        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
+        var requestBodyStream = new MemoryStream(requestBodyBytes);
+        requestMock.Setup(req => req.Body).Returns(requestBodyStream);
+
+        // Act / Assert
+        await _systemUnderTest
+            .Invoking(x => x
+             .GetAllProducersCompanyDetailsAsync(requestMock.Object))
+            .Should()
+            .NotThrowAsync();
+
+    }
+
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsync_ReferenceNumbersIsNull_ReturnsBadRequest()
+    {
+        // Arrange
+        const string exceptionErrorMessage = "Invalid ReferenceNumbers property in request body";
+        var requestMock = new Mock<HttpRequest>();
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
+
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = organisations
+        };
+
+        var referenceNumbers = new OrganisationsResponse()
+        {
+            ReferenceNumbers = null
+        };
+
+        requestMock.Setup(req => req.Method).Returns("POST");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock
+           .Setup(service => service
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
+                   )).ReturnsAsync(organisationsResult);
+
+        var problem = new ProblemDetails
+        {
+            Status = 400,
+            Title = exceptionErrorMessage
+        };
+
+        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
+        var requestBodyStream = new MemoryStream(requestBodyBytes);
+        requestMock.Setup(req => req.Body).Returns(requestBodyStream);
+
+        // Act
+        var result = await _systemUnderTest
+            .GetAllProducersCompanyDetailsAsync(
+                requestMock.Object);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        result.Should().BeEquivalentTo(new ObjectResult(problem)
+        {
+            StatusCode = 400,
+            Value = problem
+        });
+    }
 }
