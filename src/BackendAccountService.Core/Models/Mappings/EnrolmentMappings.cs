@@ -98,7 +98,12 @@ namespace BackendAccountService.Core.Models.Mappings
                         IsComplianceScheme = account.Organisation.IsComplianceScheme,
                         NationId = NationMappings.GetNationId(account.Organisation.Nation)
                     }
-                }
+                },
+                ApprovedPersonEnrolment = new ApprovedPersonEnrolment
+                {
+                    NomineeDeclaration = account.DeclarationFullName,
+                    NomineeDeclarationTime = (DateTimeOffset)account.DeclarationTimeStamp
+                }                
             };
         }
     }

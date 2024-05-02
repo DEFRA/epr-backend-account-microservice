@@ -15,6 +15,8 @@ public class AccountsDbContext : DbContext
 
     public DbSet<EnrolmentStatus> EnrolmentStatuses { get; set; } = null!;
 
+    public DbSet<ApprovedPersonEnrolment> ApprovedPersonEnrolments { get; set; } = null!;
+
     public DbSet<DelegatedPersonEnrolment> DelegatedPersonEnrolments { get; set; } = null!;
 
     public DbSet<InterOrganisationRole> InterOrganisationRoles { get; set; } = null!;
@@ -92,6 +94,13 @@ public class AccountsDbContext : DbContext
                 .HasForeignKey<DelegatedPersonEnrolment>(enrolment => enrolment.EnrolmentId);
         });
 
+        modelBuilder.Entity<ApprovedPersonEnrolment>(entity =>
+        {
+            entity.HasOne(a => a.Enrolment)
+            .WithOne(enrolment => enrolment.ApprovedPersonEnrolment)
+            .HasForeignKey<ApprovedPersonEnrolment>(e => e.EnrolmentId);
+        });
+
         modelBuilder.Entity<OrganisationsConnection>(entity =>
         {
             entity.HasOne(connection => connection.FromOrganisation)
@@ -151,8 +160,12 @@ public class AccountsDbContext : DbContext
             entity.HasOne(e => e.DelegatedPersonEnrolment)
                 .WithOne(d => d.Enrolment)
                 .HasForeignKey<DelegatedPersonEnrolment>(d => d.EnrolmentId);
-        });
 
+            entity.HasOne(e => e.ApprovedPersonEnrolment)
+                .WithOne(a => a.Enrolment)
+                .HasForeignKey<ApprovedPersonEnrolment>(a => a.EnrolmentId);
+        });
+                
         modelBuilder.Entity<RegulatorComment>(entity =>
         {
             entity.HasOne<Person>(e => e.Person)

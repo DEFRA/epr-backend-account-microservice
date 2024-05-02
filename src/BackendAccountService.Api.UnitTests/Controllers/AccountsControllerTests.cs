@@ -222,7 +222,11 @@ public class AccountsControllerTests
             It.IsAny<ApprovedUserAccountModel>(),
             It.IsAny<ServiceRole>(),
             It.IsAny<UserModel>()))
-            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}});
+            .ReturnsAsync(new Enrolment
+            {
+                Connection = new PersonOrganisationConnection { Organisation = new Organisation() },
+                ApprovedPersonEnrolment = new ApprovedPersonEnrolment()
+            });
         
         // act
         var result = await _accountsController.CreateApprovedUserAccount(request);
@@ -244,7 +248,7 @@ public class AccountsControllerTests
                 It.IsAny<ApprovedUserAccountModel>(),
                 It.IsAny<ServiceRole>(),
                 It.IsAny<UserModel>()))
-            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}});
+            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}, ApprovedPersonEnrolment = new ApprovedPersonEnrolment() });
         
         // act
         var result = await _accountsController.CreateApprovedUserAccount(request);

@@ -23,6 +23,8 @@ public class Enrolment : DataEntity
     public ICollection<RegulatorComment> RegulatorComments { get; set; }
 
     public DelegatedPersonEnrolment? DelegatedPersonEnrolment { get; set; } = null!;
+
+    public ApprovedPersonEnrolment? ApprovedPersonEnrolment { get; set; } = null;
     
     public bool IsDeleted { get; set; }
 }

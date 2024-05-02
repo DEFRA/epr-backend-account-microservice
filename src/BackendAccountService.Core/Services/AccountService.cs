@@ -52,6 +52,15 @@ public class AccountService : IAccountService
         approvedUserEnrolment.EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Pending;
         _accountsDbContext.Update(approvedUserEnrolment);
 
+        //ApprovedPersonEnrolment
+        var approvedPersonEnrolment = new ApprovedPersonEnrolment
+        {
+            NomineeDeclaration = account.DeclarationFullName,
+            NomineeDeclarationTime = (DateTimeOffset)account.DeclarationTimeStamp,
+            EnrolmentId = approvedUserEnrolment.Id
+        };
+        await _accountsDbContext.AddAsync(approvedPersonEnrolment);
+
         //connection
         approvedPersonOrganisationConnection.JobTitle = account.Connection.JobTitle;
         approvedPersonOrganisationConnection.OrganisationRoleId = Data.DbConstants.OrganisationRole.Employer;

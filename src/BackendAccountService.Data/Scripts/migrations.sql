@@ -3459,4 +3459,37 @@ GO
 
 COMMIT;
 GO
+BEGIN TRANSACTION;
+GO
 
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240405160955_Add_Approved_Person_Enrolment_Table')
+BEGIN
+    CREATE TABLE [ApprovedPersonEnrolments] (
+        [Id] int NOT NULL IDENTITY,
+        [EnrolmentId] int NOT NULL,
+        [NomineeDeclaration] nvarchar(450) NULL,
+        [NomineeDeclarationTime] datetimeoffset NOT NULL,
+        [CreatedOn] datetimeoffset NOT NULL DEFAULT (SYSDATETIMEOFFSET()),
+        [LastUpdatedOn] datetimeoffset NOT NULL DEFAULT (SYSDATETIMEOFFSET()),
+        [IsDeleted] bit NOT NULL DEFAULT CAST(0 AS bit),
+        CONSTRAINT [PK_ApprovedPersonEnrolments] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_ApprovedPersonEnrolments_Enrolments_EnrolmentId] FOREIGN KEY ([EnrolmentId]) REFERENCES [Enrolments] ([Id])
+    );
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240405160955_Add_Approved_Person_Enrolment_Table')
+BEGIN
+    CREATE UNIQUE INDEX [IX_ApprovedPersonEnrolments_EnrolmentId] ON [ApprovedPersonEnrolments] ([EnrolmentId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240405160955_Add_Approved_Person_Enrolment_Table')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240405160955_Add_Approved_Person_Enrolment_Table', N'6.0.15');
+END;
+GO
+
+COMMIT;
+GO

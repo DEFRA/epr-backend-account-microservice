@@ -1,5 +1,6 @@
 ﻿using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Mappings;
+using FluentAssertions.Extensions;
 
 namespace BackendAccountService.Core.UnitTests.Mappings;
 
@@ -11,6 +12,8 @@ public class EnrolmentMappingsTests
     {
         // arrange
         var street = "some street";
+        var declarationName = "Firstname Lastname";
+        var declarationTime = DateTime.Now;
         var account = new ApprovedUserAccountModel
         {
             Connection = new ConnectionModel(),
@@ -21,7 +24,9 @@ public class EnrolmentMappingsTests
                 {
                     Street = street
                 }
-            }
+            },
+            DeclarationFullName = declarationName,
+            DeclarationTimeStamp = declarationTime,
         };
         var serviceRoleId = 2;
         var user = new UserModel();
@@ -32,5 +37,7 @@ public class EnrolmentMappingsTests
         // assert
         enrolment.ServiceRoleId.Should().Be(serviceRoleId);
         enrolment.Connection.Organisation.Street.Should().Be(street);
+        enrolment.ApprovedPersonEnrolment.NomineeDeclaration.Should().Be(declarationName);
+        enrolment.ApprovedPersonEnrolment.NomineeDeclarationTime.Should().Be(declarationTime);
     }
 }

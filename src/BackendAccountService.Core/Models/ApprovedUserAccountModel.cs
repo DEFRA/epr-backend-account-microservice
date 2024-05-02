@@ -15,5 +15,8 @@ public class ApprovedUserAccountModel
         
         [Required]
         public Guid UserId { get; set; }
-        
+
+        public string? DeclarationFullName { get; set; }
+
+        public DateTime? DeclarationTimeStamp { get; set; }
 }
