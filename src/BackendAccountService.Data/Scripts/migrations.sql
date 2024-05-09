@@ -3459,6 +3459,26 @@ GO
 
 COMMIT;
 GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240404163942_Add_Organisations_ReferenceNumber_Index')
+BEGIN
+    EXEC(N'CREATE INDEX [IX_Organisations_ReferenceNumber] ON [Organisations] ([ReferenceNumber]) WHERE [IsDeleted] = CAST(0 AS bit)');
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240404163942_Add_Organisations_ReferenceNumber_Index')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240404163942_Add_Organisations_ReferenceNumber_Index', N'6.0.15');
+END;
+GO
+
+COMMIT
+GO
+
 BEGIN TRANSACTION;
 GO
 

@@ -24,21 +24,31 @@ public class CompanyDetailsDataService : ICompanyDetailsDataService
         var organisations = await _accountsDbContext.Organisations
             .AsNoTracking()
             .Where(organisation => organisation.ReferenceNumber == referenceNumber)
+            .Select(org => new CompanyDetailResponse
+            {
+                ReferenceNumber = org.ReferenceNumber,
+                CompaniesHouseNumber = org.CompaniesHouseNumber
+            })
             .ToListAsync();
 
-        if (organisations is null || !organisations.Any())
-        {
-            return null;
-        }
-
-        return GenerateCompanyDetailsResponse(organisations);
+        return organisations is null || !organisations.Any()
+            ? null
+            : new CompanyDetailsResponse
+            {
+                Organisations = organisations
+            };
     }
 
     public async Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(string referenceNumber, Guid? complianceSchemeId)
     {
-        var complianceScheme = _accountsDbContext.ComplianceSchemes
+        var complianceScheme = await _accountsDbContext.ComplianceSchemes
             .AsNoTracking()
-            .FirstOrDefault(complianceScheme => complianceScheme.ExternalId == complianceSchemeId);
+            .Where(complianceScheme => complianceScheme.ExternalId == complianceSchemeId)
+            .Select(complianceScheme => new
+            {
+                complianceScheme.Id,
+            })
+            .FirstOrDefaultAsync();
 
         if (complianceScheme is null)
         {
@@ -53,8 +63,8 @@ public class CompanyDetailsDataService : ICompanyDetailsDataService
                 selectedScheme.OrganisationConnection.FromOrganisation.ReferenceNumber == referenceNumber &&
                 selectedScheme.OrganisationConnection.ToOrganisationRoleId == Data.DbConstants.InterOrganisationRole.ComplianceScheme
             )
-            .Select(member => new
-            {
+            .Select(member => new CompanyDetailResponse
+            { 
                 ReferenceNumber = member.OrganisationConnection.FromOrganisation.ReferenceNumber.ToString(),
                 CompaniesHouseNumber = member.OrganisationConnection.FromOrganisation.CompaniesHouseNumber != null
                 ? member.OrganisationConnection.FromOrganisation.CompaniesHouseNumber.ToString()
@@ -62,51 +72,31 @@ public class CompanyDetailsDataService : ICompanyDetailsDataService
             })
             .ToListAsync();
 
-        if (selectedSchemes is null || !selectedSchemes.Any())
-        {
-            return null;
-        }
-
-        List<Organisation> organisations = new List<Organisation>();
-        foreach (var scheme in selectedSchemes)
-        {
-            organisations.Add(new Organisation { ReferenceNumber = scheme.ReferenceNumber, CompaniesHouseNumber = scheme.CompaniesHouseNumber });
-        }
-
-        return GenerateCompanyDetailsResponse(organisations);
+        return selectedSchemes is null || !selectedSchemes.Any()
+          ? null
+          : new CompanyDetailsResponse
+          {
+              Organisations = selectedSchemes
+          };
     }
 
     public async Task<CompanyDetailsResponse> GetAllProducersCompanyDetails(IEnumerable<string> referenceNumbers)
     {
-
         var organisations = await _accountsDbContext.Organisations
             .AsNoTracking()
             .Where(organisation => referenceNumbers.Contains(organisation.ReferenceNumber) && !organisation.IsComplianceScheme && (organisation.OrganisationTypeId == 1 || organisation.OrganisationTypeId == 2))
+            .Select(org => new CompanyDetailResponse
+            {
+                ReferenceNumber = org.ReferenceNumber,
+                CompaniesHouseNumber = org.CompaniesHouseNumber
+            })
             .ToListAsync();
 
-        if (organisations is null || !organisations.Any())
-        {
-            return null;
-        }
-
-        return GenerateCompanyDetailsResponse(organisations);
-    }
-
-    private CompanyDetailsResponse GenerateCompanyDetailsResponse(List<Organisation> organisations)
-    {
-        var result = new List<CompanyDetailResponse>();
-
-        foreach (var org in organisations)
-        {
-            result.Add(new CompanyDetailResponse { ReferenceNumber = org.ReferenceNumber, CompaniesHouseNumber = org.CompaniesHouseNumber });
-
-        }
-
-        var organisationsResult = new CompanyDetailsResponse
-        {
-            Organisations = result
-        };
-
-        return organisationsResult;
+        return organisations is null || !organisations.Any()
+            ? null
+            : new CompanyDetailsResponse
+            {
+                Organisations = organisations
+            };
     }
 }

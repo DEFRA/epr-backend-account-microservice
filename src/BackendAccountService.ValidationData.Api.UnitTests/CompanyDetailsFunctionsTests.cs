@@ -295,6 +295,49 @@ public class CompanyDetailsFunctionsTests
     }
 
     [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsync_RequestBodyAndReferenceNumbersAreNotNull_CompanyDetailsResultIsNull_ReturnsProblem()
+    {
+        // Arrange
+        var requestMock = new Mock<HttpRequest>();
+
+        var problem = new ProblemDetails
+        {
+            Status = 404,
+            Title = "Organisations not found"
+        };
+
+        var referenceNumbers = new OrganisationsResponse()
+        {
+            ReferenceNumbers = new List<string> { "123456", "789123" }
+        };
+
+        requestMock.Setup(req => req.Method).Returns("POST");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock
+           .Setup(service => service
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
+                   )).ReturnsAsync(default(CompanyDetailsResponse));
+
+        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
+        var requestBodyStream = new MemoryStream(requestBodyBytes);
+        requestMock.Setup(req => req.Body).Returns(requestBodyStream);
+
+        // Act
+        var result = await _systemUnderTest.GetAllProducersCompanyDetailsAsync(requestMock.Object);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+
+        result.Should().BeEquivalentTo(new ObjectResult(problem)
+        {
+            StatusCode = 404
+        });
+    }
+
+    [TestMethod]
     public async Task GetAllProducersCompanyDetailsAsync_NoExceptionThrown_WhenValidPayload()
     {
         // Arrange
@@ -336,7 +379,6 @@ public class CompanyDetailsFunctionsTests
              .GetAllProducersCompanyDetailsAsync(requestMock.Object))
             .Should()
             .NotThrowAsync();
-
     }
 
     [TestMethod]

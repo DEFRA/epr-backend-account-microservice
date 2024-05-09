@@ -14,7 +14,6 @@ namespace BackendAccountService.ValidationData.Api.UnitTests.Services;
 public class CompanyDetailsDataServiceTests
 {
     private AccountsDbContext _accountContext = null!;
-    private OrganisationDataService _organisationService = null!;
     private CompanyDetailsDataService _companyDetailsService = null!;
     private List<CompanyDetailResponse> _companyDetailsResponseList = null!;
 
@@ -29,11 +28,9 @@ public class CompanyDetailsDataServiceTests
         SetUpDatabase(contextOptions);
 
         _accountContext = new AccountsDbContext(contextOptions);
-        _organisationService = new OrganisationDataService(_accountContext);
         _companyDetailsService = new CompanyDetailsDataService(_accountContext);
         _companyDetailsResponseList = new List<CompanyDetailResponse>();
     }
-
 
     [TestMethod]
     public async Task GetCompanyDetailsByOrganisationReferenceNumber_NoOrganisationExists_ThenReturnNull()
@@ -132,11 +129,24 @@ public class CompanyDetailsDataServiceTests
     }
 
     [TestMethod]
+    public async Task GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId_DoesNotExist_ThenReturnNull()
+    {
+        // Arrange
+        var expectedOrganisation = "3000000";
+        var complianceSchemeId = Guid.Empty;
+
+        // Act
+        var result = await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(expectedOrganisation, complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
     public async Task GetAllProducersCompanyDetails_NoOrganisationExists_ThenReturnNull()
     {
         // Arrange
-        List<string> expectedOrganisation = new List<string>() {};
-
+        var expectedOrganisation = new List<string>() {};
 
         // Act
         var result = await _companyDetailsService.GetAllProducersCompanyDetails(expectedOrganisation);
@@ -149,7 +159,7 @@ public class CompanyDetailsDataServiceTests
     public async Task GetAllProducersCompanyDetails_HasMembers_ThenReturnOrgWithMembers()
     {
         // Arrange
-        List<string> expectedOrganisation = new List<string>() { "123456", "123466" };
+        var expectedOrganisation = new List<string>() { "123456", "123466" };
 
         var organisations = await _accountContext.Organisations
            .AsNoTracking()
@@ -276,7 +286,6 @@ public class CompanyDetailsDataServiceTests
         };
         setupContext.ComplianceSchemes.Add(complianceScheme1);
         setupContext.ComplianceSchemes.Add(complianceScheme2);
-
 
         var member2 = new Organisation
         {

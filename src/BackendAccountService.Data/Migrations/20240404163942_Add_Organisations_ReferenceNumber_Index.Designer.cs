@@ -4,6 +4,7 @@ using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackendAccountService.Data.Migrations
 {
     [DbContext(typeof(AccountsDbContext))]
-    partial class AccountsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240404163942_Add_Organisations_ReferenceNumber_Index")]
+    partial class Add_Organisations_ReferenceNumber_Index
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,47 +26,6 @@ namespace BackendAccountService.Data.Migrations
 
             modelBuilder.HasSequence<int>("OrganisationReferenceNumber")
                 .StartsAt(100001L);
-
-            modelBuilder.Entity("BackendAccountService.Data.Entities.ApprovedPersonEnrolment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTimeOffset>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
-
-                    b.Property<int>("EnrolmentId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTimeOffset>("LastUpdatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
-
-                    b.Property<string>("NomineeDeclaration")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTimeOffset>("NomineeDeclarationTime")
-                        .HasColumnType("datetimeoffset");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnrolmentId")
-                        .IsUnique();
-
-                    b.ToTable("ApprovedPersonEnrolments");
-                });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.AuditLog", b =>
                 {
@@ -2436,17 +2397,6 @@ namespace BackendAccountService.Data.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("BackendAccountService.Data.Entities.ApprovedPersonEnrolment", b =>
-                {
-                    b.HasOne("BackendAccountService.Data.Entities.Enrolment", "Enrolment")
-                        .WithOne("ApprovedPersonEnrolment")
-                        .HasForeignKey("BackendAccountService.Data.Entities.ApprovedPersonEnrolment", "EnrolmentId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Enrolment");
-                });
-
             modelBuilder.Entity("BackendAccountService.Data.Entities.ComplianceScheme", b =>
                 {
                     b.HasOne("BackendAccountService.Data.Entities.Nation", "Nation")
@@ -2758,8 +2708,6 @@ namespace BackendAccountService.Data.Migrations
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.Enrolment", b =>
                 {
-                    b.Navigation("ApprovedPersonEnrolment");
-
                     b.Navigation("DelegatedPersonEnrolment");
 
                     b.Navigation("RegulatorComments");

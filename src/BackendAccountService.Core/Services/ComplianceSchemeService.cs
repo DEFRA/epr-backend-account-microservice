@@ -625,7 +625,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
         await _accountsDbContext.OrganisationsConnections.AddAsync(organisationConnection);
         return organisationConnection;
     }
-    
+
     private async Task<SelectedScheme> GetSelectedSchemeForOrganisation(Guid organisationId)
     {
         return await _accountsDbContext.SelectedSchemes
@@ -634,8 +634,8 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .Include(cs => cs.ComplianceScheme)
             .AsNoTracking()
             .SingleOrDefaultAsync(selectedScheme =>
-                (selectedScheme.OrganisationConnection.FromOrganisation.ExternalId == organisationId
-                 || selectedScheme.OrganisationConnection.ToOrganisation.ExternalId == organisationId)
-                && !selectedScheme.IsDeleted && !selectedScheme.OrganisationConnection.IsDeleted);
-    }    
+                selectedScheme.OrganisationConnection.FromOrganisation.ExternalId == organisationId &&
+                selectedScheme.OrganisationConnection.FromOrganisationRoleId == InterOrganisationRole.Producer &&
+                selectedScheme.OrganisationConnection.ToOrganisationRoleId == InterOrganisationRole.ComplianceScheme);
+    }
 }

@@ -245,6 +245,13 @@ public class AccountsDbContext : DbContext
             })
             .HasFilter($"[OrganisationTypeId] <> {DbConstants.OrganisationType.Regulators} AND [IsDeleted] = CAST(0 AS bit)")
             .HasDatabaseName("IX_Name_ReferenceNumber_NationId");
+
+        modelBuilder.Entity<Organisation>()
+            .HasIndex(organisation => new
+            {
+                organisation.ReferenceNumber
+            })
+            .HasFilter($"[IsDeleted] = CAST(0 AS bit)");
     }
 
     private static void SetDefaultValues(ModelBuilder modelBuilder)

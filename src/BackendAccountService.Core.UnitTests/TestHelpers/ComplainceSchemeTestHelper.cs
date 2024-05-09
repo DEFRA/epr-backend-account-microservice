@@ -82,7 +82,7 @@ public static class ComplainceSchemeTestHelper
             FromOrganisation = prodOrg1,
             FromOrganisationRoleId = 1,
             ToOrganisation = csOrg2,
-            ToOrganisationRoleId = 1,
+            ToOrganisationRoleId = 2,
             ExternalId = new Guid("00000000-0000-0000-0000-000000000013")
         };
         var OrgConnection4 = new OrganisationsConnection
@@ -90,7 +90,7 @@ public static class ComplainceSchemeTestHelper
             FromOrganisation = prodOrg2,
             FromOrganisationRoleId = 1,
             ToOrganisation = csOrg2,
-            ToOrganisationRoleId = 1,
+            ToOrganisationRoleId = 2,
             ExternalId = new Guid("00000000-0000-0000-0000-000000000013")
         };
         

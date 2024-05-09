@@ -20,20 +20,15 @@ public class OrganisationDataService : IOrganisationDataService
 
     public async Task<OrganisationResponse> GetOrganisationByExternalId(Guid organisationExternalId)
     {
-        var organisation = _accountsDbContext.Organisations
+        return await _accountsDbContext.Organisations
             .AsNoTracking()
-            .FirstOrDefault(org => org.ExternalId == organisationExternalId);
-
-        if (organisation is null)
-        {
-            return null;
-        }
-
-        return new OrganisationResponse
-        {
-            ReferenceNumber = organisation.ReferenceNumber,
-            IsComplianceScheme = organisation.IsComplianceScheme
-        };
+            .Where(org => org.ExternalId == organisationExternalId)
+            .Select(org => new OrganisationResponse
+            {
+                ReferenceNumber = org.ReferenceNumber,
+                IsComplianceScheme = org.IsComplianceScheme
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<OrganisationMembersResponse> GetOrganisationMembersByComplianceSchemeId(Guid organisationExternalId, Guid? complianceSchemeId)
@@ -67,9 +62,14 @@ public class OrganisationDataService : IOrganisationDataService
 
     private async Task<List<string>> GetMembers(Guid organisationExternalId, Guid? complianceSchemeId)
     {
-        var complianceScheme = _accountsDbContext.ComplianceSchemes
-            .AsNoTracking()
-            .FirstOrDefault(complianceScheme => complianceScheme.ExternalId == complianceSchemeId);
+       var complianceScheme = await _accountsDbContext.ComplianceSchemes
+           .AsNoTracking()
+           .Where(complianceScheme => complianceScheme.ExternalId == complianceSchemeId)
+           .Select(complianceScheme => new
+           {
+               complianceScheme.Id,
+           })
+           .FirstOrDefaultAsync();
 
         if (complianceScheme is null)
         {
