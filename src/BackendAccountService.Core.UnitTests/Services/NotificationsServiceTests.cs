@@ -6,6 +6,9 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Service = BackendAccountService.Data.Entities.Service;
+using ServiceRole = BackendAccountService.Data.Entities.ServiceRole;
 
 namespace BackendAccountService.Core.UnitTests.Services;
 
@@ -113,7 +116,19 @@ public class NotificationsServiceTests
         {
             ExternalId = Guid.NewGuid(),
             ServiceRoleId = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id,
-			EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Nominated,
+            ServiceRole = new ServiceRole()
+            {
+                //Id = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Id,
+                Key = Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Key,
+                Name = "Delegated Person",
+                Service = new Service() 
+                { 
+                    Key = "Packaging",
+                    Name = "EPR Packaging"
+                }
+
+            },
+            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Nominated,
             Connection = new PersonOrganisationConnection
             {
                 ExternalId = Guid.NewGuid(),

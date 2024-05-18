@@ -3,6 +3,7 @@ using BackendAccountService.Core.Models.Exceptions;
 using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Data.DbConstants;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
@@ -360,6 +361,73 @@ public class RoleManagementService : IRoleManagementService
         return (true, string.Empty);
     }
 
+    public async Task<(bool Succeeded, string ErrorMessage)> AcceptNominationForApprovedPerson(
+       Guid enrolmentId,
+       Guid userId,
+       Guid organisationId,
+       string serviceKey,
+       AcceptNominationForApprovedPersonRequest acceptNominationRequest)
+    {
+        if (serviceKey != "Packaging")
+        {
+            return (false, $"Unsupported service '{serviceKey}'");
+        }
+
+        var enrolment = await _accountsDbContext.Enrolments
+            .Where(enrolment => enrolment.ExternalId == enrolmentId)
+            .Where(enrolment => enrolment.Connection.Organisation.ExternalId == organisationId)
+            .Where(enrolment => enrolment.Connection.Person.User.UserId == userId)
+            .Where(enrolment => enrolment.ServiceRole.Service.Key == serviceKey)
+            .Where(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key)
+            .Where(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
+            .Include(enrolment => enrolment.Connection.Person)
+            .Include(enrolment => enrolment.ApprovedPersonEnrolment)
+            .FirstOrDefaultAsync();
+
+        if (enrolment == null)
+        {
+            return (false, "There is no matching enrolment");
+        }
+
+        enrolment.EnrolmentStatusId = DbConstants.EnrolmentStatus.Pending;
+        enrolment.Connection.Person.Telephone = acceptNominationRequest.Telephone;
+        enrolment.Connection.JobTitle = acceptNominationRequest.JobTitle;
+        if (enrolment.ApprovedPersonEnrolment == null)
+        {
+            var approvedPersonEnrolment = new ApprovedPersonEnrolment
+            {
+                NomineeDeclaration = acceptNominationRequest.DeclarationFullName,
+                NomineeDeclarationTime = (DateTimeOffset)acceptNominationRequest.DeclarationTimeStamp,
+                EnrolmentId = enrolment.Id
+            };
+            await _accountsDbContext.AddAsync(approvedPersonEnrolment);
+        }
+        else
+        {
+            enrolment.ApprovedPersonEnrolment.NomineeDeclaration = acceptNominationRequest.DeclarationFullName;
+            enrolment.ApprovedPersonEnrolment.NomineeDeclarationTime = (DateTimeOffset)acceptNominationRequest.DeclarationTimeStamp;
+        }        
+
+        var connection = await GetConnectionWithEnrolments(enrolment.Connection.ExternalId, organisationId, serviceKey);
+
+        if (connection.PersonRole.Name != PersonRole.Admin.ToString())
+        {
+            var adminRole = await _accountsDbContext.PersonInOrganisationRoles.SingleOrDefaultAsync(pr => pr.Name == PersonRole.Admin.ToString());
+            connection.PersonRole = adminRole;
+        }
+
+        var activeEnrolments = ExtractActiveEnrolments(connection, serviceKey);
+
+        foreach (var basicUserEnrolment in activeEnrolments.Where(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.BasicUser.Key))
+        {
+            _accountsDbContext.Remove(basicUserEnrolment);
+        }
+
+        await _accountsDbContext.SaveChangesAsync(userId, organisationId);
+
+        return (true, string.Empty);
+    }
+
     private async Task<PersonOrganisationConnection?> GetConnectionWithEnrolments(Guid connectionId, Guid organisationId, string serviceKey)
     {
         return await _accountsDbContext.PersonOrganisationConnections
@@ -375,6 +443,7 @@ public class RoleManagementService : IRoleManagementService
             .Include(connection => connection.Enrolments)
                 .ThenInclude(enrolment => enrolment.EnrolmentStatus)
             .Include(connection => connection.Person.User)
+            .Include(Connection => Connection.PersonRole)
             .SingleOrDefaultAsync();
     }
 
