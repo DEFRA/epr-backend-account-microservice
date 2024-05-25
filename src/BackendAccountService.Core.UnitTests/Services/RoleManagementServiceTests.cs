@@ -224,12 +224,15 @@ public class RoleManagementServiceTests
     {
         // Arrange
         SetUpDatabase(externalId, userId, organisationExternalId, serviceKey, true);
+        var enrolementsBefore = _dbContext.Enrolments.Where(x => x.ServiceRole.Key == Data.DbConstants.ServiceRole.Packaging.BasicUser.Key).ToList();
 
         // Act
         var request = new AcceptNominationForApprovedPersonRequest { DeclarationFullName = "first last", DeclarationTimeStamp = DateTime.Now, JobTitle = "Professional", Telephone = "01274889955" };
         var result = await _rmService.AcceptNominationForApprovedPerson(externalId, userId, organisationExternalId, serviceKey, request);
 
         // Assert
+        var enrolementsAfter = _dbContext.Enrolments.Where(x => x.ServiceRole.Key == Data.DbConstants.ServiceRole.Packaging.BasicUser.Key).ToList();
+        enrolementsAfter.Count.Should().Be(enrolementsBefore.Count - 1);
         result.Succeeded.Should().Be(expectedSuccess);
         result.ErrorMessage.Should().Be(errorMessage);
         _dbContext.ApprovedPersonEnrolments.Where(x => x.Id == 1).FirstOrDefault().NomineeDeclaration.Should().Be(request.DeclarationFullName);

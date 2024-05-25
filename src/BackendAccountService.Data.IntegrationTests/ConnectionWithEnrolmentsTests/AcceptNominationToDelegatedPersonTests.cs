@@ -67,6 +67,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             var enrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
                 _writeDbContext, organisationId, DbConstants.ServiceRole.Packaging.BasicUser.Key, DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Enrolled);
+            var enrolmentIdOfEnroledRecord = enrolment.Id;
 
             await _connectionsService.NominateToDelegatedPerson(
                 connectionId: enrolment.Connection.ExternalId,
@@ -95,6 +96,8 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                     NomineeDeclaration = "Nominee Declaration",
                     Telephone = "01234000000"
                 });
+
+            (await _writeDbContext.Enrolments.Where(enrolment => enrolment.Id == enrolmentIdOfEnroledRecord).CountAsync()).Should().Be(0);
 
             result.Succeeded.Should().BeTrue();
             result.ErrorMessage.Should().BeNullOrEmpty();

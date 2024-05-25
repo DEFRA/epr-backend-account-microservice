@@ -153,10 +153,10 @@ public class RoleManagementService : IRoleManagementService
         {
             if (enrolment.DelegatedPersonEnrolment != null)
             {
-                _accountsDbContext.Remove(enrolment.DelegatedPersonEnrolment);
+                enrolment.DelegatedPersonEnrolment.IsDeleted = true;
             }
 
-            _accountsDbContext.Remove(enrolment);
+            enrolment.IsDeleted = true;
 
             removedServiceRoles.Add(new RemovedServiceRole
             {
@@ -353,7 +353,7 @@ public class RoleManagementService : IRoleManagementService
 
         foreach (var basicUserEnrolment in activeEnrolments.Where(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.BasicUser.Key))
         {
-            _accountsDbContext.Remove(basicUserEnrolment);
+            basicUserEnrolment.IsDeleted = true;
         }
 
         await _accountsDbContext.SaveChangesAsync(userId, organisationId);
@@ -420,7 +420,7 @@ public class RoleManagementService : IRoleManagementService
 
         foreach (var basicUserEnrolment in activeEnrolments.Where(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.BasicUser.Key))
         {
-            _accountsDbContext.Remove(basicUserEnrolment);
+            basicUserEnrolment.IsDeleted = true;
         }
 
         await _accountsDbContext.SaveChangesAsync(userId, organisationId);

@@ -138,7 +138,8 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             delegatedPersonEnrolmentNew.Id.Should().NotBe(delegatedPersonEnrolment.Id);
             delegatedPersonEnrolmentNew.ServiceRole.Key.Should().Be(DbConstants.ServiceRole.Packaging.BasicUser.Key);
             delegatedPersonEnrolmentNew.Connection.PersonRoleId.Should().Be(personRoleId);
-            delegatedPersonEnrolmentNew.LastUpdatedOn.Should().BeAfter(delegatedPersonEnrolment.LastUpdatedOn);
+            delegatedPersonEnrolment.IsDeleted.Should().Be(true);
+            delegatedPersonEnrolmentNew.IsDeleted.Should().Be(false);
         }
 
         [TestMethod]
