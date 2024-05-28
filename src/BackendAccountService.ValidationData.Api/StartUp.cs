@@ -33,6 +33,9 @@ public class StartUp : FunctionsStartup
             services.AddScoped<ICompanyDetailsDataService, CompanyDetailsDataService>();
             services.AddDbContext<AccountsDbContext>(options =>
                 options.UseSqlServer(accountDatabaseOptions.ConnectionString));
+            
+            services.AddHealthChecks();
+
         }
         catch (Exception e)
         {

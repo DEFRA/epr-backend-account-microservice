@@ -12,6 +12,8 @@ using BackendAccountService.ValidationData.Api.Models;
 using System.IO;
 using System.Text.Json;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace BackendAccountService.ValidationData.Api;
 
@@ -134,6 +136,30 @@ public class CompanyDetailsFunctions
         {
             _logger.LogExit();
         }
+    }
+
+    [FunctionName("HealthCheck")]
+    public static async Task<IActionResult> CustomHealthCheck(
+        [HttpTrigger(AuthorizationLevel.Anonymous, 
+            nameof(HttpMethod.Get), 
+            Route = "admin/error")] 
+        HttpRequest req)
+    {
+        var healthCheckService = req.HttpContext.RequestServices.GetService<HealthCheckService>();
+        var report = await healthCheckService.CheckHealthAsync();
+
+        var statusCode = report.Status switch
+        {
+            HealthStatus.Healthy => StatusCodes.Status500InternalServerError,
+            HealthStatus.Unhealthy => StatusCodes.Status503ServiceUnavailable,
+            HealthStatus.Degraded => StatusCodes.Status500InternalServerError,
+            _ => StatusCodes.Status500InternalServerError
+        };
+
+        return new ObjectResult(report)
+        {
+            StatusCode = statusCode
+        };
     }
 
     private static ObjectResult Problem(
