@@ -6,14 +6,12 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BackendAccountService.ValidationData.Api.Models;
-using System.IO;
-using System.Text.Json;
 using System.Collections.Generic;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace BackendAccountService.ValidationData.Api;
 
@@ -43,7 +41,8 @@ public class CompanyDetailsFunctions
 
         try
         {
-            var organisations = await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumber(organisationId);
+            var organisations =
+                await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumber(organisationId);
 
             if (organisations is null || organisationId is null)
             {
@@ -77,7 +76,9 @@ public class CompanyDetailsFunctions
 
         try
         {
-            var organisations = await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(organisationId, complianceSchemeId);
+            var organisations =
+                await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(
+                    organisationId, complianceSchemeId);
 
             if (organisations is null || organisationId is null)
             {
@@ -115,7 +116,8 @@ public class CompanyDetailsFunctions
 
             if (referenceNumbers == null)
             {
-                return Problem("Invalid ReferenceNumbers property in request body", statusCode: StatusCodes.Status400BadRequest);
+                return Problem("Invalid ReferenceNumbers property in request body",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             var organisations = await _companyDetailsService.GetAllProducersCompanyDetails(referenceNumbers);
@@ -138,28 +140,13 @@ public class CompanyDetailsFunctions
         }
     }
 
-    [FunctionName("HealthCheck")]
-    public static async Task<IActionResult> CustomHealthCheck(
-        [HttpTrigger(AuthorizationLevel.Anonymous, 
-            nameof(HttpMethod.Get), 
-            Route = "admin/error")] 
+
+    [FunctionName("HealthHttpTrigger")]
+    public static async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, nameof(HttpMethod.Get), Route = "error")]
         HttpRequest req)
     {
-        var healthCheckService = req.HttpContext.RequestServices.GetService<HealthCheckService>();
-        var report = await healthCheckService.CheckHealthAsync();
-
-        var statusCode = report.Status switch
-        {
-            HealthStatus.Healthy => StatusCodes.Status500InternalServerError,
-            HealthStatus.Unhealthy => StatusCodes.Status503ServiceUnavailable,
-            HealthStatus.Degraded => StatusCodes.Status500InternalServerError,
-            _ => StatusCodes.Status500InternalServerError
-        };
-
-        return new ObjectResult(report)
-        {
-            StatusCode = statusCode
-        };
+        return new OkObjectResult("Error") { StatusCode = (int)HttpStatusCode.InternalServerError };
     }
 
     private static ObjectResult Problem(
