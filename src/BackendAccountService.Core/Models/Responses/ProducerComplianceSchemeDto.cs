@@ -11,4 +11,6 @@ public class ProducerComplianceSchemeDto
     public string ComplianceSchemeOperatorName { get; set; }
     
     public Guid ComplianceSchemeOperatorId { get; set; }
+
+    public int? ComplianceSchemeNationId { get; set; }
 }

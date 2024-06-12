@@ -105,9 +105,26 @@ public class OrganisationService : IOrganisationService
 
     public async Task<PaginatedResponse<OrganisationSearchResult>> GetOrganisationsBySearchTerm(string query, int nationId, int pageSize, int page)
     {
+        IOrderedQueryable<OrganisationSearchResult> organisationsInNationQueryable = FetchProducersInNation(query, nationId);
+
+        var organisationsNotInNationQueryable = FetchProducesNotInNation(query, nationId);
+
+        var allorganisationsQueryable = organisationsInNationQueryable.Concat(organisationsNotInNationQueryable);
+
+        var response = await PaginatedResponse<OrganisationSearchResult>.CreateAsync(allorganisationsQueryable, page, pageSize);
+        foreach (var item in response.Items)
+        {
+            item.OrganisationType = DetermineOrganisationType(item.IsComplianceScheme, item.CompanyId);
+        }
+
+        return response;
+    }
+
+    private IOrderedQueryable<OrganisationSearchResult> FetchProducersInNation(string query, int nationId)
+    {
         var lowerCaseQuery = query.ToLower();
         var organisationIdQuery = lowerCaseQuery.Replace(" ", String.Empty);
-        var organisationsQueryable =     _accountsDbContext.Organisations
+        var organisationsQueryable = _accountsDbContext.Organisations
             .AsNoTracking()
             .GroupJoin(
                 _accountsDbContext.ComplianceSchemes,
@@ -115,19 +132,19 @@ public class OrganisationService : IOrganisationService
                 scheme => scheme.CompaniesHouseNumber,
                 (org, scheme) => new { org, scheme })
             .SelectMany(
-                groupJoined => groupJoined.scheme.DefaultIfEmpty(), 
-                (groupJoined, scheme) => new 
+                groupJoined => groupJoined.scheme.DefaultIfEmpty(),
+                (groupJoined, scheme) => new
                 {
                     Organisation = groupJoined.org,
                     ComplianceSchemeIsDeleted = scheme.IsDeleted,
                     ComplianceSchemeNationId = scheme.NationId
                 })
             .Where(joined => !joined.Organisation.IsDeleted)
-            .Where(joined => joined.Organisation.Name.ToLower().Contains(lowerCaseQuery) ||  joined.Organisation.ReferenceNumber.ToLower().Contains(organisationIdQuery))
-            .Where(joined => 
+            .Where(joined => joined.Organisation.Name.ToLower().Contains(lowerCaseQuery) || joined.Organisation.ReferenceNumber.ToLower().Contains(organisationIdQuery))
+            .Where(joined =>
                 joined.Organisation.NationId == nationId || (!joined.ComplianceSchemeIsDeleted && joined.ComplianceSchemeNationId == nationId))
             .Where(joined => joined.Organisation.OrganisationTypeId != Data.DbConstants.OrganisationType.Regulators)
-            .GroupBy(joined => new 
+            .GroupBy(joined => new
             {
                 OrganisationId = joined.Organisation.ReferenceNumber,
                 CompanyId = joined.Organisation.Id,
@@ -146,15 +163,40 @@ public class OrganisationService : IOrganisationService
                 OrganisationName = grouped.Key.OrganisationName
             })
             .OrderBy(org => org.OrganisationName);
-
-        var response =  await PaginatedResponse<OrganisationSearchResult>.CreateAsync(organisationsQueryable,page, pageSize);
-        foreach (var item in response.Items)
-        {
-            item.OrganisationType = DetermineOrganisationType(item.IsComplianceScheme, item.CompanyId);
-        }
-        return response;
+        return organisationsQueryable;
     }
-    
+
+    private IQueryable<OrganisationSearchResult> FetchProducesNotInNation(string query, int nationId)
+    {
+        return from n in _accountsDbContext.Nations
+               join cs in _accountsDbContext.ComplianceSchemes on n.Id equals cs.NationId
+               join sc in _accountsDbContext.SelectedSchemes on cs.Id equals sc.ComplianceSchemeId
+               join oc in _accountsDbContext.OrganisationsConnections on sc.OrganisationConnectionId equals oc.Id
+               join o in _accountsDbContext.Organisations on oc.FromOrganisationId equals o.Id
+               where n.Id == nationId
+                     && o.Name.ToLower().Contains(query.ToLower())
+                     && o.NationId != nationId
+               group o by new
+               {
+                   o.ReferenceNumber,
+                   o.Id,
+                   o.CompaniesHouseNumber,
+                   o.ExternalId,
+                   o.IsComplianceScheme,
+                   o.Name
+               } into grouped
+               orderby grouped.Key.Name
+               select new OrganisationSearchResult
+               {
+                   OrganisationId = grouped.Key.ReferenceNumber,
+                   CompanyId = grouped.Key.Id,
+                   CompanyHouseNumber = grouped.Key.CompaniesHouseNumber,
+                   ExternalId = grouped.Key.ExternalId,
+                   IsComplianceScheme = grouped.Key.IsComplianceScheme,
+                   OrganisationName = grouped.Key.Name
+               };
+    }
+
     public async Task<List<OrganisationUserOverviewResponseModel>> GetProducerUsers(Guid organisationExternalId)
     {
         return await _accountsDbContext.Enrolments

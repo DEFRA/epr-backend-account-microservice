@@ -15,7 +15,9 @@ public class RegulatorServiceWithOrganisationTypeTests
     private AccountsDbContext _dbContext;
     private RegulatorService _regulatorService;
     private OrganisationService _organisationService;
+    private ComplianceSchemeService _complianceSchemeService;
     private Mock<ILogger<RegulatorService>> _logger = null;
+    private Mock<ILogger<ComplianceSchemeService>> _complianceSchemeServiceLogger = null;
     private Mock<ITokenService> _tokenService;
     private static readonly Guid ComplianceSchemeOrg = new Guid("00000000-0000-0000-0000-000000000010");
     private static readonly Guid DirectProducerOrg = new Guid("11111111-0000-0000-0000-000000000001");
@@ -33,10 +35,12 @@ public class RegulatorServiceWithOrganisationTypeTests
 
         _tokenService = new Mock<ITokenService>();
         _logger = new Mock<ILogger<RegulatorService>>();
-        
+        _complianceSchemeServiceLogger = new Mock<ILogger<ComplianceSchemeService>>();
+
         _dbContext = new AccountsDbContext(contextOptions);
         _organisationService = new OrganisationService(_dbContext);
-        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object);
+        _complianceSchemeService = new ComplianceSchemeService(_dbContext, _complianceSchemeServiceLogger.Object);
+        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object,_complianceSchemeService);
     }
     
     [TestMethod]

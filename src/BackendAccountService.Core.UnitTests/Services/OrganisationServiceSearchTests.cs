@@ -143,7 +143,80 @@ public class OrganisationServiceSearchTests
 
         AddAssert(results.Items[0], organisation);
     }
-    
+    [TestMethod]
+    public async Task WhenGetOrganisationsBySearchTermForOrganisationWhichIsOfADifferentCountryFromThatOfTheRegulator_ThenReturnCorrectValues()
+    {
+        // Arrange
+        var nations = CreateNations();
+        foreach (var nation in nations)
+        {
+            _accountContext.Add(nation);
+        }
+
+        var organisationOne = CreateOrganisation();
+        _accountContext.Add(organisationOne);
+        var organisationTwo = CreateOrganisation(nationId: Data.DbConstants.Nation.Scotland);
+        _accountContext.Add(organisationTwo);
+        _accountContext.Add(CreateOrganisation(nationId: Data.DbConstants.Nation.Scotland));
+
+        var complianceScheme = CreateComplianceScheme(organisationOne.CompaniesHouseNumber, Data.DbConstants.Nation.England);
+        var selectedSchemes = CreateSelectedSchemes(organisationConnectionId: 1, complianceSchemeId: 1, externalId: Guid.NewGuid());
+
+        var organisationsConnections = CreateOrganisationsConnections(fromOrganisationId: 2, fromOrganisationRoleId: 2, toOrganisationId: 3, toOrganisationRoleId: 1, externalId: Guid.NewGuid());
+
+        organisationOne.IsComplianceScheme = true;
+
+        _accountContext.Add(complianceScheme);
+        _accountContext.Add(organisationsConnections);
+        _accountContext.Add(selectedSchemes);
+
+        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
+
+        var query = organisationTwo.Name;
+
+        // Act
+        var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
+
+        // Assert
+        results.Items.Count.Should().Be(1);
+
+        AddAssert(results.Items[0], organisationTwo);
+    }
+
+    private IEnumerable<Nation> CreateNations()
+    {
+        return new List<Nation>()
+        {
+            new Nation() { Id = 0, Name = "Not Set" },
+            new Nation() { Id = 1, Name = "England" },
+            new Nation() { Id = 2, Name = "Northern Ireland" },
+            new Nation() { Id = 3, Name = "Scotland" },
+            new Nation() { Id = 4, Name = "Wales" }
+        };
+    }
+
+    private SelectedScheme CreateSelectedSchemes(int organisationConnectionId, int complianceSchemeId, Guid externalId)
+    {
+        return new SelectedScheme
+        {
+            OrganisationConnectionId = organisationConnectionId,
+            ComplianceSchemeId = complianceSchemeId,
+            ExternalId = externalId
+        };
+    }
+
+    private OrganisationsConnection CreateOrganisationsConnections(int fromOrganisationId, int fromOrganisationRoleId, int toOrganisationId, int toOrganisationRoleId, Guid externalId)
+    {
+        return new OrganisationsConnection
+        {
+            FromOrganisationId = fromOrganisationId,
+            FromOrganisationRoleId = fromOrganisationRoleId,
+            ToOrganisationId = toOrganisationId,
+            ToOrganisationRoleId=toOrganisationRoleId,
+            ExternalId = externalId
+        };
+    }
+
     [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermWithRegulatorOrgReferenceNumber_ThenReturnNone()
     {
@@ -305,7 +378,7 @@ public class OrganisationServiceSearchTests
         AddAssert(results.Items[0], organisation);
     }
 
-    private Organisation CreateOrganisation()
+    private Organisation CreateOrganisation(int? nationId = Data.DbConstants.Nation.England)
     {
         return new Organisation
         {
@@ -327,7 +400,7 @@ public class OrganisationServiceSearchTests
             County = "County 8",
             Postcode = "BT44 5QW",
             Country = "Country 8",
-            NationId = Data.DbConstants.Nation.England,
+            NationId = nationId,
             IsDeleted= false,
         };
     }

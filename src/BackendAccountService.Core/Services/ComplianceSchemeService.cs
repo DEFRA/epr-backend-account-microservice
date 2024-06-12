@@ -395,7 +395,8 @@ public class ComplianceSchemeService : IComplianceSchemeService
                 ComplianceSchemeName = selectedScheme.ComplianceScheme.Name,
                 ComplianceSchemeId = selectedScheme.ComplianceScheme.ExternalId,
                 ComplianceSchemeOperatorId = selectedScheme.OrganisationConnection.ToOrganisation.ExternalId,
-                ComplianceSchemeOperatorName = selectedScheme.OrganisationConnection.ToOrganisation.Name
+                ComplianceSchemeOperatorName = selectedScheme.OrganisationConnection.ToOrganisation.Name,
+                ComplianceSchemeNationId = selectedScheme.ComplianceScheme.Nation?.Id
             };
             
             return Result<ProducerComplianceSchemeDto>.SuccessResult(complianceSchemeModel);
@@ -632,6 +633,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .Include(org => org.OrganisationConnection)
             .Include(org => org.OrganisationConnection.ToOrganisation)
             .Include(cs => cs.ComplianceScheme)
+            .Include(n => n.ComplianceScheme.Nation)
             .AsNoTracking()
             .SingleOrDefaultAsync(selectedScheme =>
                 selectedScheme.OrganisationConnection.FromOrganisation.ExternalId == organisationId &&

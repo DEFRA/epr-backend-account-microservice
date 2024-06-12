@@ -21,6 +21,7 @@ public class RegulatorService: IRegulatorService
     private readonly IOrganisationService _organisationService;
     private readonly ITokenService _tokenService;
     private readonly ILogger<RegulatorService> _logger;
+    private readonly IComplianceSchemeService _complianceSchemeService; 
     private const string RegulatingService = "Regulating";
     private const string EnrolmentNotFoundMessage = "Enrolment not found";
     private const string UnsupportedEnrolmentStatusMessage = "Unsupported enrolment status";
@@ -31,12 +32,14 @@ public class RegulatorService: IRegulatorService
     public RegulatorService(AccountsDbContext accountsDbContext, 
                             IOrganisationService organisationService,
                             ITokenService tokenService,
-                            ILogger<RegulatorService> logger)
+                            ILogger<RegulatorService> logger,
+                            IComplianceSchemeService complianceSchemeService)
     {
         _accountsDbContext = accountsDbContext;
         _organisationService = organisationService;
         _tokenService = tokenService;
         _logger = logger;
+        _complianceSchemeService = complianceSchemeService;
     }
 
     public async Task<PaginatedResponse<OrganisationEnrolments>> GetPendingApplicationsAsync(int nationId, int currentPage, int pageSize, string? organisationName, string applicationType)
@@ -349,7 +352,7 @@ public class RegulatorService: IRegulatorService
         
         if (organisation == null)
             return false;
-        
+
         if (!organisation.IsComplianceScheme)
         {
             var organisationEnrolments = _accountsDbContext.Enrolments
@@ -357,9 +360,9 @@ public class RegulatorService: IRegulatorService
                 .WhereServiceIs(RegulatingService)
                 .WhereUserObjectIdIs(userId)
                 .WhereOrganisationIsRegulator()
-                .SelectDistinctSingleOrganisation();
+                .SelectDistinctSingleOrganisation(); 
 
-            return organisationEnrolments != null;
+            return organisationEnrolments != null || ComplianceSchemeIsOfADifferentNation(organisation);
         }
         
         var regulatorOrganisation = _accountsDbContext.Enrolments
@@ -375,7 +378,16 @@ public class RegulatorService: IRegulatorService
 
         return isComplianceSchemeNationMatchesRegulatorNation;
     }
-    
+
+    private bool ComplianceSchemeIsOfADifferentNation(Organisation organisation)
+    {
+        var producerComplianceScheme = _complianceSchemeService.GetComplianceSchemeForProducer(organisation.ExternalId).Result.Value;
+        if (producerComplianceScheme == null || producerComplianceScheme.ComplianceSchemeNationId == null)
+            return false;
+
+        return producerComplianceScheme.ComplianceSchemeNationId != organisation.NationId;
+    }
+
     public bool IsRegulator(Guid userId)
     {
         var organisation = _accountsDbContext.Enrolments

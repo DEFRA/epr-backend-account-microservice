@@ -1,6 +1,7 @@
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Core.Models.Result;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.DbConstants;
 using BackendAccountService.Data.Entities;
@@ -26,6 +27,7 @@ public class RegulatorServiceTests
     private AccountsDbContext _dbContext;
     private RegulatorService _regulatorService;
     private OrganisationService _organisationService;
+    //private ComplianceSchemeService _complianceSchemeService;
     private static readonly Guid RegulatorUserId = new Guid("00000000-0000-0000-0000-000000000001");
     private static readonly Guid OrganisationId = new Guid("00000000-0000-0000-0000-000000000010");
     private static readonly Guid TransferredOrganisationId = new Guid("00000000-0000-0000-0000-000000000100");
@@ -63,8 +65,10 @@ public class RegulatorServiceTests
     private const string InvalidEnrolmentStatusMessage = "Unsupported enrolment status";
     private const string ApprovedUser2ProducerEmail = "producer.user4@test.com";
     private Mock<ILogger<RegulatorService>> _logger;
+    private Mock<ILogger<ComplianceSchemeService>> _complianceSchemeServiceLogger = null;
     private Mock<ITokenService> _tokenService;
-    
+    private Mock<IComplianceSchemeService> _complianceSchemeService;
+
     [TestInitialize]
     public void Setup()
     {
@@ -73,23 +77,26 @@ public class RegulatorServiceTests
             .ConfigureWarnings(builder => builder.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         _dbContext = new AccountsDbContext(contextOptions);
-        
+
         SetUpDatabase(_dbContext);
 
         _logger = new Mock<ILogger<RegulatorService>>();
+        _complianceSchemeServiceLogger = new Mock<ILogger<ComplianceSchemeService>>();
         _tokenService = new Mock<ITokenService>();
-        
+
         _organisationService = new OrganisationService(_dbContext);
-        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object);
-        
+        //_complianceSchemeService = new ComplianceSchemeService(_dbContext, _complianceSchemeServiceLogger.Object);
+        _complianceSchemeService = new  Mock<IComplianceSchemeService>();
+        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object, _complianceSchemeService.Object);
+
     }
-    
+
     [TestMethod]
     public async Task When_Regulator_Nation_Is_Requested_And_User_Exists_Then_Return_Nation_Id()
     {
         //Act
-       var result = _regulatorService.GetRegulatorNationId(RegulatorUserId);
-       
+        var result = _regulatorService.GetRegulatorNationId(RegulatorUserId);
+
         //Assert
         result.Should().Be(1);
     }
@@ -99,18 +106,18 @@ public class RegulatorServiceTests
     {
         //Act
         var result = _regulatorService.GetRegulatorNationId(Guid.NewGuid());
-       
+
         //Assert
         result.Should().Be(0);
     }
-    
+
     [TestMethod]
     public async Task When_Pending_Applications_Requested_Without_Search_Without_Filter_For_Page_One_And_Page_Size_10_Then_Return_All_Pending_Enrolments_Of_The_User_Nation()
     {
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexOne, PageSizeTen,
             null, ApplicationTypeAll);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Any(o => o.OrganisationName.Equals(OtherNationOrgName)).Should().BeFalse();
@@ -128,19 +135,19 @@ public class RegulatorServiceTests
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexOne, PageSizeTen,
             null, ApplicationTypeAll);
-       
+
         //Assert
         var organisationIdsReturned = result.Items.Select(o => o.OrganisationId).ToList();
-        
+
         var producersNationIds = _dbContext.Organisations
             .Where(x => !x.IsComplianceScheme && organisationIdsReturned.Contains(x.ExternalId)).Select(x => x.NationId);
         producersNationIds.Should().AllBeEquivalentTo(NationId, "Because all nationIds should match requested value");
-        
+
         var companiesHouseNumbers = _dbContext.Organisations.Where(x => x.IsComplianceScheme && organisationIdsReturned.Contains(x.ExternalId)).Select(x => x.CompaniesHouseNumber);
-        var complianceSchemes  = 
+        var complianceSchemes =
             _dbContext.ComplianceSchemes
                 .Where(x => companiesHouseNumbers.Contains(x.CompaniesHouseNumber)).ToList();
-            
+
         var companiesHouseNumbersAndNationIds = complianceSchemes
                 .GroupBy(cs => cs.CompaniesHouseNumber)
                 .ToDictionary(
@@ -156,60 +163,60 @@ public class RegulatorServiceTests
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexTen, PageSizeTen,
             null, ApplicationTypeAll);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Count.Should().Be(0);
         result.TotalItems.Should().Be(4);
         result.CurrentPage.Should().Be(10);
     }
-    
+
     [TestMethod]
     public async Task When_Pending_Applications_Requested_Without_Search_And_Without_Filter_For_Page_Two_And_Page_Size_2_Then_Return_Pending_Enrolments_Of_The_User_Nation()
     {
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexTwo, PageSizeTwo,
             null, ApplicationTypeAll);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Count.Should().Be(2);
         result.TotalItems.Should().Be(4);
     }
-    
+
     [TestMethod]
     public async Task When_Pending_Applications_Requested_Without_Search_And_Filter_For_Pending_Approved_Person_For_Page_Two_And_Page_Size_2_Then_Return_Pending_Enrolments_Of_The_User_Nation()
     {
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexOne, PageSizeTwo,
             null, ApplicationTypeApproved);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Count.Should().Be(2);
         result.TotalItems.Should().Be(3);
     }
-    
+
     [TestMethod]
     public async Task When_Pending_Applications_Requested_Without_Search_And_Filter_For_Pending_Delegated_Person_For_Page_Two_And_Page_Size_2_Then_Return_Pending_Enrolments_Of_The_User_Nation()
     {
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexOne, PageSizeOne,
             null, ApplicationTypeDelegated);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Count.Should().Be(1);
         result.TotalItems.Should().Be(2);
     }
-    
+
     [TestMethod]
     public async Task When_Pending_Applications_Requested_With_Search_For_Asda_And_Without_Filter_For_Page_One_And_Page_Size_2_Then_Return_Pending_Enrolments_Of_The_User_Nation()
     {
         //Act
         PaginatedResponse<OrganisationEnrolments> result = await _regulatorService.GetPendingApplicationsAsync(NationId, PageIndexOne, PageSizeTwo,
             SearchOrgName, ApplicationTypeAll);
-       
+
         //Assert
         result.Should().BeOfType(typeof(PaginatedResponse<OrganisationEnrolments>));
         result.Items.Count.Should().Be(1);
@@ -253,7 +260,7 @@ public class RegulatorServiceTests
         result.Users.Any(x => x.Enrolments.ServiceRole == ServiceRole.Packaging.ApprovedPerson.Key).Should().BeTrue();
         result.Users.Any(x => x.Enrolments.ServiceRole == ServiceRole.Packaging.DelegatedPerson.Key).Should().BeTrue();
     }
-    
+
     [TestMethod]
     public async Task When_Organisations_Enrolments_Requested_Then_Return_Transfer_Details()
     {
@@ -269,23 +276,23 @@ public class RegulatorServiceTests
         result.TransferDetails.OldNationId.Should().Be(Nation.Scotland);
         result.TransferDetails.TransferredDate.Should().Be(expectedComment.CreatedOn);
     }
-    
+
     [TestMethod]
     public async Task When_Organisations_Enrolments_Requested_Then_Return_Pending_Enrolments_For_Organisation_Type_Companies_House()
     {
         //Act
         var result = await _regulatorService.GetOrganisationEnrolmentDetails(OrganisationId);
-        
+
         //Assert
         Assert.AreEqual("Companies House Company", result.OrganisationType);
     }
-    
+
     [TestMethod]
     public async Task When_Organisations_Enrolments_Requested_Then_Return_Pending_Enrolments_For_Producer_Type_Sole_Trader()
     {
         //Act
         var result = await _regulatorService.GetOrganisationEnrolmentDetails(OrganisationIdSoleTrader);
-        
+
         //Assert
         Assert.AreEqual("Sole trader", result.OrganisationType);
     }
@@ -299,7 +306,61 @@ public class RegulatorServiceTests
         //Assert
         result.Should().BeTrue();
     }
-    
+
+    [TestMethod]
+    public async Task WhenLoggedOnRegulatorIsNotConnectedToAnyOrganisationAndNoOrganisationsIsLinkedToAComplicanceSchemeOfTheRegulatorsNation_Then_Return_False()
+    {
+        //Arrange
+        var regulatorUserId = new Guid("00000000-0000-0000-0000-000000000011");
+
+        ProducerComplianceSchemeDto producerComplianceSchemeDto = null;
+        Result<ProducerComplianceSchemeDto> value = new Result<ProducerComplianceSchemeDto>(true, producerComplianceSchemeDto, string.Empty, System.Net.HttpStatusCode.Found);
+        _complianceSchemeService.Setup(service => service.GetComplianceSchemeForProducer(It.IsAny<Guid>()))
+            .ReturnsAsync(value);
+
+        //Act
+        var result = _regulatorService.DoesRegulatorNationMatchOrganisationNation(regulatorUserId, OrganisationId);
+
+        //Assert
+        result.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task WhenLoggedOnRegulatorIsNotConnectedToAnyOrganisationAndOrganisationsIsLinkedToAComplicanceSchemeOfTheRegulatorsNationButComplianceSchemeNationIdIsNull_Then_Return_False()
+    {
+        //Arrange
+        var regulatorUserId = new Guid("00000000-0000-0000-0000-000000000011");
+
+        ProducerComplianceSchemeDto producerComplianceSchemeDto = new ProducerComplianceSchemeDto {  ComplianceSchemeNationId = null };
+        Result<ProducerComplianceSchemeDto> value = new Result<ProducerComplianceSchemeDto>(true, producerComplianceSchemeDto, string.Empty, System.Net.HttpStatusCode.Found);
+        _complianceSchemeService.Setup(service => service.GetComplianceSchemeForProducer(It.IsAny<Guid>()))
+            .ReturnsAsync(value);
+
+        //Act
+        var result = _regulatorService.DoesRegulatorNationMatchOrganisationNation(regulatorUserId, OrganisationId);
+
+        //Assert
+        result.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task WhenLoggedOnRegulatorIsNotConnectedToAnyOrganisationAndOrganisationsIsLinkedToAComplicanceSchemeOfTheRegulatorsNationAndComplianceSchemeNationIdIsNotNull_Then_Return_True()
+    {
+        //Arrange
+        var regulatorUserId = new Guid("00000000-0000-0000-0000-000000000011");
+
+        ProducerComplianceSchemeDto producerComplianceSchemeDto = new ProducerComplianceSchemeDto { ComplianceSchemeNationId = 34 };
+        Result<ProducerComplianceSchemeDto> value = new Result<ProducerComplianceSchemeDto>(true, producerComplianceSchemeDto, string.Empty, System.Net.HttpStatusCode.Found);
+        _complianceSchemeService.Setup(service => service.GetComplianceSchemeForProducer(It.IsAny<Guid>()))
+            .ReturnsAsync(value);
+
+        //Act
+        var result = _regulatorService.DoesRegulatorNationMatchOrganisationNation(regulatorUserId, OrganisationId);
+
+        //Assert
+        result.Should().BeTrue();
+    }
+
     [TestMethod]
     public async Task When_Authorising_Regulator_And_Compliance_Scheme_Organisaiton_Are_Same_As_Regulator_Nation_Then_Return_True()
     {
@@ -309,7 +370,7 @@ public class RegulatorServiceTests
         //Assert
         result.Should().BeTrue();
     }
-    
+
     [TestMethod]
     public async Task When_Authorising_Regulator_And_Organisation_Name_Is_Not_Same_As_Regulator_Then_Return_False()
     {
@@ -319,7 +380,7 @@ public class RegulatorServiceTests
         //Assert
         result.Should().BeFalse();
     }
-    
+
     [TestMethod]
     public async Task When_Regulator_Nation_Is_Requested_Then_Return_Nation_Id()
     {
@@ -329,7 +390,7 @@ public class RegulatorServiceTests
         //Assert
         result.Should().NotBe(0);
     }
-    
+
     [TestMethod]
     public async Task When_Regulator_Nation_Is_Requested_And_User_Does_Not_Exist_Then_Return_Nation_Id_As_Zero()
     {
@@ -339,7 +400,7 @@ public class RegulatorServiceTests
         //Assert
         result.Should().Be(0);
     }
-    
+
     [TestMethod]
     public async Task When_Update_Enrolment_Is_Requested_And_Enrolment_IS_Not_Found_Then_Return_Failure()
     {
@@ -349,11 +410,11 @@ public class RegulatorServiceTests
                 null);
 
         //Assert
-        
+
         result.Succeeded.Should().BeFalse();
         result.ErrorMessage.Should().Be(InvalidEnrolmentMessage);
     }
-    
+
     [TestMethod]
     public async Task When_Update_Enrolment_Is_Requested_And_Enrolment_Status_Is_Not_Accepted_Or_Rejected_Then_Return_Failure()
     {
@@ -363,11 +424,11 @@ public class RegulatorServiceTests
                 null);
 
         //Assert
-        
+
         result.Succeeded.Should().BeFalse();
         result.ErrorMessage.Should().Be(InvalidEnrolmentStatusMessage);
     }
-    
+
     [TestMethod]
     public async Task When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Accepted_Then_Return_Success()
     {
@@ -377,7 +438,7 @@ public class RegulatorServiceTests
                 null);
 
         //Assert
-        
+
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
         _dbContext.Enrolments.SingleOrDefault(e =>
@@ -385,7 +446,7 @@ public class RegulatorServiceTests
                                                  && e.EnrolmentStatusId == EnrolmentStatus.Approved)
             .Should().NotBeNull();
     }
-    
+
     [TestMethod]
     public async Task When_Update_Enrolment_Is_Requested_And_Delegated_Person_Is_Accepted_Then_Return_Success()
     {
@@ -395,7 +456,7 @@ public class RegulatorServiceTests
                 null);
 
         //Assert
-        
+
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
         _dbContext.Enrolments.SingleOrDefault(e =>
@@ -403,7 +464,7 @@ public class RegulatorServiceTests
                                                   && e.EnrolmentStatusId == EnrolmentStatus.Approved)
             .Should().NotBeNull();
     }
-    
+
     [TestMethod]
     public async Task When_Update_Enrolment_Is_Requested_And_Delegated_Person_Is_Rejected_Then_Save_Rejected_Comments_And_Create_Basic_Enrolment_And_Return_Success()
     {
@@ -413,7 +474,7 @@ public class RegulatorServiceTests
                 RejectedComment);
 
         //Assert
-        
+
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
         var rejectedEnrolment = _dbContext.Enrolments.IgnoreQueryFilters().SingleOrDefault(e =>
@@ -425,7 +486,7 @@ public class RegulatorServiceTests
         _dbContext.RegulatorComments
             .SingleOrDefault(e => e.EnrolmentId == rejectedEnrolment.Id && e.RejectedComments.Equals(RejectedComment))
             .Should().NotBeNull();
-        
+
         _dbContext.Enrolments
             .SingleOrDefault(e => e.ConnectionId == rejectedEnrolment.ConnectionId && e.EnrolmentStatusId == EnrolmentStatus.Enrolled && e.ServiceRoleId == ServiceRole.Packaging.BasicUser.Id)
             .Should().NotBeNull();
@@ -479,7 +540,7 @@ public class RegulatorServiceTests
             .Any(enrolments => enrolments.Connection.Organisation.ExternalId == OrganisationId && !enrolments.IsDeleted)
             .Should().BeFalse();
     }
-    
+
     [TestMethod]
     public async Task
         When_Update_Enrolment_Is_Requested_And_Delegated_Person_Is_Rejected_Then_Do_Not_Set_user_id_to_default_Guid()
@@ -499,12 +560,12 @@ public class RegulatorServiceTests
                                               && e.EnrolmentStatusId == EnrolmentStatus.Rejected
                                               && e.IsDeleted);
         rejectedEnrolment.Should().NotBeNull();
-        
+
         var user = _dbContext.Users.IgnoreQueryFilters().SingleOrDefault(e => e.UserId == Guid.Empty);
 
         Assert.IsNull(user);
     }
-    
+
     [TestMethod]
     public async Task
         When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_Then_Set_user_id_to_default_Guid()
@@ -550,19 +611,19 @@ public class RegulatorServiceTests
             _regulatorService.TransferOrganisationNation(request);
 
         //Assert
-        
+
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
-        _dbContext.Organisations.Any(org=>org.ExternalId == OrganisationId && org.Nation.Name == "Scotland").Should().BeTrue();
-        _dbContext.Organisations.Any(org=>org.ExternalId == OrganisationId && org.TransferNation.Name == "England").Should().BeTrue();
+        _dbContext.Organisations.Any(org => org.ExternalId == OrganisationId && org.Nation.Name == "Scotland").Should().BeTrue();
+        _dbContext.Organisations.Any(org => org.ExternalId == OrganisationId && org.TransferNation.Name == "England").Should().BeTrue();
 
         _dbContext.RegulatorComments
             .Include(rc => rc.Enrolment)
             .ThenInclude(e => e.Connection)
             .ThenInclude(c => c.Organisation)
-        .Count(x => x.Enrolment.Connection.Organisation.ExternalId==OrganisationId).Should().Be(1);
+        .Count(x => x.Enrolment.Connection.Organisation.ExternalId == OrganisationId).Should().Be(1);
     }
-    
+
     [TestMethod]
     public async Task
         When_Transfer_Enrolment_Is_Requested_And_Nation_Is_Invalid_Then_Return_Error()
@@ -578,11 +639,11 @@ public class RegulatorServiceTests
         //Act
         var result = await
             _regulatorService.TransferOrganisationNation(request);
-        
+
         result.Succeeded.Should().BeFalse();
         result.ErrorMessage.Should().Be("Invalid Nation");
     }
-    
+
     [TestMethod]
     public async Task When_Transfer_Enrolment_Is_Requested_For_Compliance_Scheme_Then_Return_Error()
     {
@@ -597,11 +658,11 @@ public class RegulatorServiceTests
         //Act
         var result = await
             _regulatorService.TransferOrganisationNation(request);
-        
+
         result.Succeeded.Should().BeFalse();
         result.ErrorMessage.Should().Be("Cannot transfer compliance scheme");
     }
-    
+
     [TestMethod]
     public async Task When_User_List_For_Regulator_Requested_Then_Return_List_With_Approved_Users_Only()
     {
@@ -609,7 +670,7 @@ public class RegulatorServiceTests
         var enrolment = _dbContext.Enrolments.SingleOrDefault(x => x.ExternalId == DelegatedPersonId);
         enrolment.EnrolmentStatusId = EnrolmentStatus.Approved;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         // Act
         var userList = await _regulatorService.GetUserListForRegulator(OrganisationId, true);
 
@@ -623,19 +684,19 @@ public class RegulatorServiceTests
     {
         // act 
         var organisationData = await _regulatorService.GetCompanyDetailsById(OrganisationId);
-        
+
         // Assert
         organisationData.Should().NotBeNull();
         organisationData.Company.Should().NotBeNull();
         organisationData.CompanyUserInformation.Count().Should().BeGreaterThan(1);
     }
-    
+
     [TestMethod]
     public async Task When_Organisation_Data_Requested_Then_Do_Not_Include_Users_With_Wrong_Status()
     {
         // act 
         var organisationData = await _regulatorService.GetCompanyDetailsById(OrganisationId);
-        
+
         // Assert
         organisationData.CompanyUserInformation.Should().Contain(u =>
             u.ExternalId.Equals(BasicUserExternalId1));
@@ -643,7 +704,7 @@ public class RegulatorServiceTests
             u.ExternalId.Equals(BasicUserExternalId2));
     }
 
- /* Remove only */
+    /* Remove only */
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
     {
@@ -652,7 +713,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
@@ -660,15 +721,15 @@ public class RegulatorServiceTests
             OrganisationId = organisation.ExternalId,
             PromotedPersonExternalId = Guid.Empty
         };
-        
-       // Act
+
+        // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
     }
-    
-   [TestMethod]
+
+    [TestMethod]
     public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Valid_Data_Passed_ApprovedUser_Should_Be_Deleted_And_DelegatedPerson_Should_Be_Demoted()
     {
         // Arrange
@@ -677,32 +738,32 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
- 
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
-            RemovedConnectionExternalId =connExternalId,
+            RemovedConnectionExternalId = connExternalId,
             OrganisationId = organisation.ExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
         result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
         result.LastOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
-       
+
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.SingleOrDefault().ServiceRoleId.Should()
             .Be(ServiceRole.Packaging.BasicUser.Id);
         organisation.PersonOrganisationConnections.LastOrDefault().PersonRoleId.Should().Be(2);
-        
+
         var approvedUser = organisation.PersonOrganisationConnections.FirstOrDefault();
         approvedUser.IsDeleted.Should().BeTrue();
         approvedUser.Enrolments.FirstOrDefault().IsDeleted.Should().BeTrue();
-       
+
     }
-    
+
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Valid_Data_Passed_Data_Is_Passed_For_Email_Notification_For_Enrolled_Users()
     {
@@ -723,14 +784,14 @@ public class RegulatorServiceTests
         };
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
         result.Count.Should().Be(2);
         result.FirstOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
         result.LastOrDefault().EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
     }
-    
+
     /* Promote only */
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
@@ -740,7 +801,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
@@ -748,10 +809,10 @@ public class RegulatorServiceTests
             OrganisationId = organisation.ExternalId,
             PromotedPersonExternalId = Guid.NewGuid()
         };
-        
+
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
     }
@@ -764,7 +825,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
- 
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
@@ -772,10 +833,10 @@ public class RegulatorServiceTests
             OrganisationId = organisation.ExternalId,
             PromotedPersonExternalId = personExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
 
@@ -786,7 +847,7 @@ public class RegulatorServiceTests
         organisation.PersonOrganisationConnections.FirstOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
             .Be(EnrolmentStatus.Nominated);
     }
-    
+
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser_And_Delegated_Users_Demoted()
     {
@@ -796,7 +857,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
- 
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
@@ -804,10 +865,10 @@ public class RegulatorServiceTests
             OrganisationId = organisation.ExternalId,
             PromotedPersonExternalId = personExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
 
@@ -820,7 +881,7 @@ public class RegulatorServiceTests
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
             .Be(EnrolmentStatus.Nominated);
     }
-    
+
     /* Remove and Promote */
     [TestMethod]
     public async Task RemoveApprovedPerson_RemoveApAndPromoteExistingUser_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser()
@@ -829,11 +890,11 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
-        
+
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
-        
+
         var request = new ApprovedUserRequest
         {
             UserId = Guid.NewGuid(),
@@ -841,10 +902,10 @@ public class RegulatorServiceTests
             OrganisationId = organisation.ExternalId,
             PromotedPersonExternalId = personExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.RemoveApprovedPerson(request);
-        
+
         // Assert
         result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
 
@@ -855,12 +916,12 @@ public class RegulatorServiceTests
         result[1].ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
         result[2].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
         result[2].ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
-       
+
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count.Should().Be(2);
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
             .Be(EnrolmentStatus.Nominated);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdDoesNotBelongToOrganisation_AddRemoveApprovedPerson_ReturnNoTokenAndDemotedUsers()
     {
@@ -869,24 +930,24 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
             InvitedPersonEmail = "test1@test.com",
             RemovedConnectionExternalId = Guid.NewGuid()
         };
-        
+
         // Act
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         result.InviteToken.Should().BeNullOrWhiteSpace();
         result.AssociatedPersonList.Count.Should().Be(0);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdDoesNotBelongToOrganisation_AddRemoveApprovedPerson_ShouldNotChangeOrgDelegatedAndApprovedUsers()
     {
@@ -895,21 +956,21 @@ public class RegulatorServiceTests
         var approvedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id).Id;
         var delegatedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id).Id;
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
             InvitedPersonEmail = "test1@test.com",
             RemovedConnectionExternalId = Guid.NewGuid()
         };
-        
+
         // Act
         _ = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         var approvedPerson = _dbContext.Persons.Single(x => x.Id == approvedPersonId);
         approvedPerson.IsDeleted.Should().BeFalse();
-        
+
         var delegatedPersonEnrolment = _dbContext.Enrolments
             .Include(x => x.Connection)
             .Include(x => x.Connection.Person)
@@ -918,7 +979,7 @@ public class RegulatorServiceTests
         delegatedPersonEnrolment.ServiceRoleId.Should().Be(ServiceRole.Packaging.DelegatedPerson.Id);
         delegatedPersonEnrolment.IsDeleted.Should().BeFalse();
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdIsNotProvided_AddRemoveApprovedPerson_ShouldNotRemoveApprovedUser()
     {
@@ -927,14 +988,14 @@ public class RegulatorServiceTests
         _tokenService
             .Setup(x => x.GenerateInviteToken())
             .Returns(token);
-        
+
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        
+
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
@@ -942,17 +1003,17 @@ public class RegulatorServiceTests
             AddingOrRemovingUserEmail = regulatorPerson.Email,
             AddingOrRemovingUserId = regulatorPerson.ExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         result.InviteToken.Should().Be(token);
         result.AssociatedPersonList.Count.Should().Be(0);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldReturnTokenAndDemotedBasicUsers()
     {
@@ -961,15 +1022,15 @@ public class RegulatorServiceTests
         _tokenService
             .Setup(x => x.GenerateInviteToken())
             .Returns(token);
-        
+
         var organisation = SetUpOrganisation(_dbContext);
         var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        
+
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
@@ -978,17 +1039,17 @@ public class RegulatorServiceTests
             AddingOrRemovingUserId = regulatorPerson.ExternalId,
             RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         result.InviteToken.Should().Be(token);
         result.AssociatedPersonList.Count.Should().Be(3);
         result.OrganisationReferenceNumber.Should().Be(organisation.ReferenceNumber);
         result.OrganisationName.Should().Be(organisation.Name);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldCreateNewlyInviteeAccount()
     {
@@ -997,15 +1058,15 @@ public class RegulatorServiceTests
         _tokenService
             .Setup(x => x.GenerateInviteToken())
             .Returns(token);
-        
+
         var organisation = SetUpOrganisation(_dbContext);
         var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        
+
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
@@ -1014,10 +1075,10 @@ public class RegulatorServiceTests
             AddingOrRemovingUserId = regulatorPerson.ExternalId,
             RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
         };
-        
+
         // Act
         await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         var newlyInvitedUser = GetEnrolmentQuery()
             .Single(x => x.Connection.Person.Email == request.InvitedPersonEmail);
@@ -1025,7 +1086,7 @@ public class RegulatorServiceTests
         newlyInvitedUser.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         newlyInvitedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldDemoteDelegatedUsersToBasic()
     {
@@ -1034,15 +1095,15 @@ public class RegulatorServiceTests
         _tokenService
             .Setup(x => x.GenerateInviteToken())
             .Returns(token);
-        
+
         var organisation = SetUpOrganisation(_dbContext);
         var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         var existingDelegatedPerson1 = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         var existingDelegatedPerson2 = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        
+
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
@@ -1051,39 +1112,39 @@ public class RegulatorServiceTests
             AddingOrRemovingUserId = regulatorPerson.ExternalId,
             RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
         };
-        
+
         // Act
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         var approvedUser = GetEnrolmentQuery()
             .Single(x => x.Id == approvedPersonEnrolment.Id);
-        
+
         approvedUser.Connection.PersonRoleId.Should().Be(PersonRole.Admin);
         approvedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
-       
+
         var delegatedPersonEnrolment1 = GetEnrolmentQuery()
             .Single(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
-        
+
         delegatedPersonEnrolment1.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment1.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
-        
+
         var delegatedPersonEnrolment2 = GetEnrolmentQuery()
             .Single(x => x.Connection.Person.Id == existingDelegatedPerson2.Id);
-        
+
         delegatedPersonEnrolment2.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment2.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
-        
+
         result.AssociatedPersonList.Count.Should().Be(3);
         result.AssociatedPersonList.Should().Contain(x => x.Email == delegatedPersonEnrolment1.Connection.Person.Email);
         result.AssociatedPersonList.Should().Contain(x => x.Email == delegatedPersonEnrolment2.Connection.Person.Email);
         result.AssociatedPersonList.Should().Contain(x => x.Email == approvedPersonEnrolment.Email);
-        
+
         result.AssociatedPersonList[0].EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
         result.AssociatedPersonList[1].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
         result.AssociatedPersonList[2].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
     }
-    
+
     [TestMethod]
     public async Task RemovedConnectionExternalIdIsProvided_AddRemoveApprovedPerson_ShouldDeleteGivenApprovedUser()
     {
@@ -1092,15 +1153,15 @@ public class RegulatorServiceTests
         _tokenService
             .Setup(x => x.GenerateInviteToken())
             .Returns(token);
-        
+
         var organisation = SetUpOrganisation(_dbContext);
         var approvedPersonEnrolment = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        
+
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
         await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        
+
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = organisation.ExternalId,
@@ -1109,10 +1170,10 @@ public class RegulatorServiceTests
             AddingOrRemovingUserId = regulatorPerson.ExternalId,
             RemovedConnectionExternalId = approvedPersonEnrolment.OrganisationConnections.First().ExternalId
         };
-        
+
         // Act
         _ = await _regulatorService.AddRemoveApprovedPerson(request);
-        
+
         // Assert
         var deletedApprovedUserEnrolment = GetEnrolmentQuery()
             .Single(x => x.Id == approvedPersonEnrolment.Id);
@@ -1129,12 +1190,12 @@ public class RegulatorServiceTests
             .Include(x => x.Connection)
             .Include(x => x.Connection.Person);
     }
-    
+
     private static void SetUpDatabase(AccountsDbContext setupContext)
     {
         setupContext.Database.EnsureDeleted();
         setupContext.Database.EnsureCreated();
-        
+
         var multiOrgPerson = new Person
         {
             FirstName = "Multi Org",
@@ -1217,7 +1278,7 @@ public class RegulatorServiceTests
             Enrolment = approvedEnrolment1
         };
         setupContext.RegulatorComments.Add(regulatorComment);
-        
+
         var delegatedEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Pending,
@@ -1249,7 +1310,7 @@ public class RegulatorServiceTests
             }
         };
         setupContext.Enrolments.Add(delegatedEnrolment1);
-        
+
         var delegatedOtherNationEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Pending,
@@ -1281,7 +1342,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(delegatedOtherNationEnrolment1);
-        
+
         var producerOrg4 = new Organisation
         {
             Name = "Producer Org 4 - Spar",
@@ -1291,7 +1352,7 @@ public class RegulatorServiceTests
             ExternalId = OrganisationId
         };
         setupContext.Organisations.Add(producerOrg4);
-        
+
         var approvedEnrolment2 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Pending,
@@ -1315,7 +1376,7 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 PersonRoleId = PersonRole.Admin
             },
-            DelegatedPersonEnrolment = new ()
+            DelegatedPersonEnrolment = new()
             {
                 RelationshipType = RelationshipType.Employment
             }
@@ -1344,13 +1405,13 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 PersonRoleId = PersonRole.Admin
             },
-            DelegatedPersonEnrolment = new ()
+            DelegatedPersonEnrolment = new()
             {
                 RelationshipType = RelationshipType.Employment
             }
         };
         setupContext.Enrolments.Add(delegatedEnrolment2);
-        
+
         var basicEnrolment = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Enrolled,
@@ -1374,13 +1435,13 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 PersonRoleId = PersonRole.Admin
             },
-            DelegatedPersonEnrolment = new ()
+            DelegatedPersonEnrolment = new()
             {
                 RelationshipType = RelationshipType.Employment
             }
         };
         setupContext.Enrolments.Add(basicEnrolment);
-        
+
         var basicEnrolment2 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.NotSet,
@@ -1404,13 +1465,13 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 PersonRoleId = PersonRole.Admin
             },
-            DelegatedPersonEnrolment = new ()
+            DelegatedPersonEnrolment = new()
             {
                 RelationshipType = RelationshipType.Employment
             }
         };
         setupContext.Enrolments.Add(basicEnrolment2);
-        
+
         var multiOrgUserBasicEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Enrolled,
@@ -1422,13 +1483,13 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 PersonRoleId = PersonRole.Admin
             },
-            DelegatedPersonEnrolment = new ()
+            DelegatedPersonEnrolment = new()
             {
                 RelationshipType = RelationshipType.Employment
             }
         };
         setupContext.Enrolments.Add(multiOrgUserBasicEnrolment1);
-        
+
         var deletedEnrolment1 = new Enrolment
         {
             IsDeleted = true,
@@ -1461,7 +1522,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(deletedEnrolment1);
-        
+
         var basicUserEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Enrolled,
@@ -1493,7 +1554,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(basicUserEnrolment1);
-        
+
         var approvedSoleTraderUserEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Approved,
@@ -1526,7 +1587,7 @@ public class RegulatorServiceTests
             },
             DelegatedPersonEnrolment = null
         };
-        
+
         setupContext.Enrolments.Add(approvedSoleTraderUserEnrolment1);
 
         var approvedPersonApprovedEnrolment1 = new Enrolment
@@ -1560,7 +1621,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(approvedPersonApprovedEnrolment1);
-        
+
         var delegatedPersonApprovedEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Approved,
@@ -1592,7 +1653,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(delegatedPersonApprovedEnrolment1);
-        
+
         var multiOrgUserEnrolment2 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Approved,
@@ -1613,7 +1674,7 @@ public class RegulatorServiceTests
             DelegatedPersonEnrolment = null
         };
         setupContext.Enrolments.Add(multiOrgUserEnrolment2);
-        
+
         var csEnrolment1 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Pending,
@@ -1655,7 +1716,7 @@ public class RegulatorServiceTests
             NationId = Nation.England
         };
         setupContext.ComplianceSchemes.Add(complianceScheme1);
-        
+
         var csEnrolment2 = new Enrolment
         {
             EnrolmentStatusId = EnrolmentStatus.Pending,
@@ -1697,7 +1758,7 @@ public class RegulatorServiceTests
             NationId = Nation.Scotland
         };
         setupContext.ComplianceSchemes.Add(complianceScheme3);
-        
+
         var complianceScheme2 = new ComplianceScheme
         {
             CompaniesHouseNumber = "11111111",
@@ -1705,7 +1766,7 @@ public class RegulatorServiceTests
             NationId = Nation.NorthernIreland
         };
         setupContext.ComplianceSchemes.Add(complianceScheme2);
-    setupContext.SaveChanges(Guid.Empty, Guid.Empty);
+        setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
     private static Organisation SetUpOrganisation(AccountsDbContext setupContext)
     {
@@ -1743,7 +1804,7 @@ public class RegulatorServiceTests
             Email = $"user1+{Guid.NewGuid()}@test.com"
         };
         _dbContext.Add(user1);
-        
+
         var person1 = new Person()
         {
             FirstName = $"User {organisationId}",
@@ -1754,7 +1815,7 @@ public class RegulatorServiceTests
             UserId = user1.Id
         };
         _dbContext.Add(person1);
-        
+
         var enrolment1 = new Enrolment
         {
             Connection = new PersonOrganisationConnection()
@@ -1776,10 +1837,10 @@ public class RegulatorServiceTests
         {
             UserId = new Guid("00000000-0000-4000-0000-000000000010"),
             Email = "userAnother@test.com",
-            Id= 20
+            Id = 20
         };
         _dbContext.Add(userAnother);
-        
+
         var personAnother = new Person()
         {
             FirstName = "",
@@ -1788,10 +1849,10 @@ public class RegulatorServiceTests
             Telephone = "0123456789",
             ExternalId = new Guid("00000000-0050-0000-0000-000000000120"),
             UserId = userAnother.Id,
-            Id= 50
+            Id = 50
         };
         _dbContext.Add(personAnother);
-        
+
         var enrolmentAnother = new Enrolment
         {
             Connection = new PersonOrganisationConnection()
@@ -1804,7 +1865,7 @@ public class RegulatorServiceTests
             EnrolmentStatusId = EnrolmentStatus.Enrolled,
             ServiceRoleId = ServiceRole.Packaging.DelegatedPerson.Id
         };
-        
+
         _dbContext.Add(enrolmentAnother);
 
         return personAnother;
