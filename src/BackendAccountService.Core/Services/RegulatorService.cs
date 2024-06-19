@@ -599,10 +599,10 @@ public class RegulatorService: IRegulatorService
                 .Where(conn => conn.Organisation.ExternalId == request.OrganisationId)
                 // Ensure that connection belongs to the organisation that user is authorised to
                 .Include(p => p.Person)
-                .SingleOrDefault(pp => pp.Person.ExternalId == request.PromotedPersonExternalId);
-        
+                .SingleOrDefault(pp => pp.Person.ExternalId == request.PromotedPersonExternalId) ?? throw new ArgumentException("connection cannot be null");
+
             // add new enrolment
-             
+
             var newEnrolment = new Enrolment
             {
                 ConnectionId = connection.Id,
@@ -724,6 +724,11 @@ public class RegulatorService: IRegulatorService
         
         foreach (var enrolment in delegatedPersonEnrolments )
         {
+            if (enrolment.EnrolmentStatusId == EnrolmentStatus.Nominated)
+            {
+                enrolment.IsDeleted = true;
+            }
+                
             enrolment.ServiceRoleId = ServiceRole.Packaging.BasicUser.Id;
             enrolment.Connection.PersonRoleId = (int)PersonRole.Employee;
             

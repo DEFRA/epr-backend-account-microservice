@@ -921,6 +921,45 @@ public class RegulatorServiceTests
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
             .Be(EnrolmentStatus.Nominated);
     }
+    [TestMethod]
+    public async Task WhenApprovedPersonIsRemoved_AnyEnrolementForANominatedDelegatedPersonShouldBeSoftDeleted()
+    {
+        var organisation = SetUpOrganisation(_dbContext);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id, EnrolmentStatus.Nominated);
+        _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
+
+        var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
+
+        var request = new ApprovedUserRequest
+        {
+            UserId = Guid.NewGuid(),
+            RemovedConnectionExternalId = connExternalId,
+            OrganisationId = organisation.ExternalId,
+            PromotedPersonExternalId = personExternalId
+        };
+        // Act
+        var result = await _regulatorService.RemoveApprovedPerson(request);
+
+        // Assert
+        result.Should().BeOfType<List<AssociatedPersonResponseModel>>();
+
+        result.Count.Should().Be(3);
+        result[0].EmailNotificationType.Should().Be(EmailNotificationType.RemovedApprovedUser);
+        result[0].ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        result[1].EmailNotificationType.Should().Be(EmailNotificationType.PromotedApprovedUser);
+        result[1].ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
+        result[2].EmailNotificationType.Should().Be(EmailNotificationType.DemotedDelegatedUsed);
+        result[2].ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
+
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count.Should().Be(2);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count(x => x.ServiceRoleId == ServiceRole.Packaging.DelegatedPerson.Id).Should().Be(0);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.Count(x => x.ServiceRoleId == ServiceRole.Packaging.BasicUser.Id).Should().Be(1);
+        organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
+            .Be(EnrolmentStatus.Nominated);
+    }
 
     [TestMethod]
     public async Task RemovedConnectionExternalIdDoesNotBelongToOrganisation_AddRemoveApprovedPerson_ReturnNoTokenAndDemotedUsers()
@@ -1796,7 +1835,7 @@ public class RegulatorServiceTests
 
         return organisation1;
     }
-    private Person SetUpPersonEnrolment(int organisationId, int serviceRoleId)
+    private Person SetUpPersonEnrolment(int organisationId, int serviceRoleId, int enrolmentStatus = EnrolmentStatus.Approved)
     {
         var user1 = new User()
         {
@@ -1825,7 +1864,7 @@ public class RegulatorServiceTests
                 OrganisationRoleId = OrganisationRole.Employer,
                 ExternalId = Guid.NewGuid()
             },
-            EnrolmentStatusId = EnrolmentStatus.Approved,
+            EnrolmentStatusId = enrolmentStatus,
             ServiceRoleId = serviceRoleId
         };
         _dbContext.Add(enrolment1);

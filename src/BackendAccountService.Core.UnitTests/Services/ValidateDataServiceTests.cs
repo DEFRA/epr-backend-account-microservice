@@ -1,3 +1,4 @@
+using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Core.UnitTests.TestHelpers;
 using BackendAccountService.Data.Infrastructure;
@@ -13,7 +14,7 @@ public class ValidateDataServiceTests
     private AccountsDbContext _accountContext = null!;
     private ValidationService _validationService = null!;
     private readonly NullLogger<ValidationService> _logger = new();
-    
+
     [TestInitialize]
     public void Setup()
     {
@@ -243,5 +244,45 @@ public class ValidateDataServiceTests
        
         //Assert
         result.Should().Be(expectedResult);
+    }
+
+    [TestMethod]
+    [DataRow("approvedperson1@test.com")]
+    public async Task IsAuthorisedToManageComplianceScheme_When_User_Is_Enrolled_Then_Return_True(
+        string loggedInUserEmail)
+    {
+        //Setup
+        EnrolmentsTestHelper.SetUpDatabase(_accountContext);
+
+        var loggedInUserId = _accountContext.Users.Single(x => x.Email == loggedInUserEmail).UserId.Value;
+        var organisationId = _accountContext.Organisations.Single(x => x.Name == "organisation1").ExternalId;
+
+        //Act
+        var result = _validationService.IsAuthorisedToManageComplianceScheme(
+            loggedInUserId,
+            organisationId);
+
+        //Assert
+        result.Should().BeTrue();
+    }
+
+    [TestMethod]
+    [DataRow("approvedperson1@test.com")]
+    public async Task IsAuthorisedToViewComplianceSchemeMembers_When_User_Is_Not_Enrolled_Then_Return_False(
+        string loggedInUserEmail)
+    {
+        //Setup
+        EnrolmentsTestHelper.SetUpDatabase(_accountContext);
+
+        var loggedInUserId = _accountContext.Users.Single(x => x.Email == loggedInUserEmail).UserId.Value;
+        var organisationId = _accountContext.Organisations.Single(x => x.Name == "organisation1").ExternalId;
+
+        //Act
+        var result = await _validationService.IsAuthorisedToViewComplianceSchemeMembers(
+            loggedInUserId,
+            organisationId);
+
+        // Assert
+        result.Should().BeFalse();
     }
 }
