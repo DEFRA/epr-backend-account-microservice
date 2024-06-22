@@ -113,6 +113,8 @@ public class NominateToDelegatedPersonTests
 
         delegatedPersonEnrolment.Enrolment.EnrolmentStatusId.Should().Be(DbConstants.EnrolmentStatus.Nominated);
         delegatedPersonEnrolment.Enrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.DelegatedPerson.Id);
+
+        nominatedPersonEnrolment.Connection.PersonRoleId.Should().Be(editedEnrolment.Connection.PersonRoleId);
     }
 
     [TestMethod]

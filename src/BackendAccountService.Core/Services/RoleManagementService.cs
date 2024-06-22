@@ -235,8 +235,6 @@ public class RoleManagementService : IRoleManagementService
             return (false, "Only Basic User can be nominated");
         }
 
-        connection.PersonRoleId = DbConstants.PersonRole.Admin;
-
         var nominatorEnrolment = await GetApprovedPersonEnrolmentAsync(userId, organisationId, serviceKey);
 
         await AddDelegatedPersonNomination(connection, nominationRequest, nominatorEnrolment);
