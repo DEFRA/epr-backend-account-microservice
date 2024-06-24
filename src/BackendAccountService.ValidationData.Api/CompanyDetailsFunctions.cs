@@ -6,12 +6,12 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BackendAccountService.ValidationData.Api.Models;
-using System.IO;
-using System.Text.Json;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace BackendAccountService.ValidationData.Api;
 
@@ -41,7 +41,8 @@ public class CompanyDetailsFunctions
 
         try
         {
-            var organisations = await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumber(organisationId);
+            var organisations =
+                await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumber(organisationId);
 
             if (organisations is null || organisationId is null)
             {
@@ -75,7 +76,9 @@ public class CompanyDetailsFunctions
 
         try
         {
-            var organisations = await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(organisationId, complianceSchemeId);
+            var organisations =
+                await _companyDetailsService.GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(
+                    organisationId, complianceSchemeId);
 
             if (organisations is null || organisationId is null)
             {
@@ -113,7 +116,8 @@ public class CompanyDetailsFunctions
 
             if (referenceNumbers == null)
             {
-                return Problem("Invalid ReferenceNumbers property in request body", statusCode: StatusCodes.Status400BadRequest);
+                return Problem("Invalid ReferenceNumbers property in request body",
+                    statusCode: StatusCodes.Status400BadRequest);
             }
 
             var organisations = await _companyDetailsService.GetAllProducersCompanyDetails(referenceNumbers);
@@ -134,6 +138,15 @@ public class CompanyDetailsFunctions
         {
             _logger.LogExit();
         }
+    }
+
+
+    [FunctionName("HealthHttpTrigger")]
+    public static async Task<IActionResult> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, nameof(HttpMethod.Get), Route = "error")]
+        HttpRequest req)
+    {
+        return new OkObjectResult("Error") { StatusCode = (int)HttpStatusCode.InternalServerError };
     }
 
     private static ObjectResult Problem(
