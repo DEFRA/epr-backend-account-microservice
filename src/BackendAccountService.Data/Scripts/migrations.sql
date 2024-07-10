@@ -3476,7 +3476,7 @@ BEGIN
 END;
 GO
 
-COMMIT
+COMMIT;
 GO
 
 BEGIN TRANSACTION;
@@ -3513,3 +3513,81 @@ GO
 
 COMMIT;
 GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    CREATE TABLE [OrganisationRelationshipTypes] (
+        [Id] int NOT NULL,
+        [Name] nvarchar(100) NULL,
+        CONSTRAINT [PK_OrganisationRelationshipTypes] PRIMARY KEY ([Id])
+    );
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    CREATE TABLE [OrganisationRelationships] (
+        [Id] int NOT NULL IDENTITY,
+        [FirstOrganisationId] int NOT NULL,
+        [SecondOrganisationId] int NOT NULL,
+        [OrganisationRelationshipTypeId] int NOT NULL,
+        [RelationFromDate] datetime2 NOT NULL,
+        [RelationToDate] datetime2 NULL,
+        [RelationExpiryReason] nvarchar(max) NULL,
+        [CreatedOn] datetime2 NOT NULL,
+        [LastUpdatedById] int NOT NULL,
+        [LastUpdatedOn] datetime2 NOT NULL,
+        [LastUpdatedByOrganisationId] int NOT NULL,
+        CONSTRAINT [PK_OrganisationRelationships] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_OrganisationRelationships_OrganisationRelationshipTypes_OrganisationRelationshipTypeId] FOREIGN KEY ([OrganisationRelationshipTypeId]) REFERENCES [OrganisationRelationshipTypes] ([Id]),
+        CONSTRAINT [FK_OrganisationRelationships_Organisations_FirstOrganisationId] FOREIGN KEY ([FirstOrganisationId]) REFERENCES [Organisations] ([Id]),
+        CONSTRAINT [FK_OrganisationRelationships_Users_LastUpdatedById] FOREIGN KEY ([LastUpdatedById]) REFERENCES [Users] ([Id])
+    );
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRelationshipTypes]'))
+        SET IDENTITY_INSERT [OrganisationRelationshipTypes] ON;
+    EXEC(N'INSERT INTO [OrganisationRelationshipTypes] ([Id], [Name])
+    VALUES (0, N''Not Set''),
+    (1, N''Parent''),
+    (2, N''Holding''),
+    (3, N''Subsidary'')');
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRelationshipTypes]'))
+        SET IDENTITY_INSERT [OrganisationRelationshipTypes] OFF;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    CREATE INDEX [IX_OrganisationRelationships_FirstOrganisationId] ON [OrganisationRelationships] ([FirstOrganisationId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    CREATE INDEX [IX_OrganisationRelationships_LastUpdatedById] ON [OrganisationRelationships] ([LastUpdatedById]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    CREATE INDEX [IX_OrganisationRelationships_OrganisationRelationshipTypeId] ON [OrganisationRelationships] ([OrganisationRelationshipTypeId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240709131348_Add_OrganisationRelationshipType_OrganisationRelationships', N'6.0.15');
+END;
+GO
+
+COMMIT;
+GO
+

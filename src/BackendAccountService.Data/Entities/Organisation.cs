@@ -73,4 +73,6 @@ public class Organisation : DataEntity
     public ICollection<OrganisationsConnection> ToOrganisationsConnections { get; set; } = null!;
 
     public ICollection<PersonOrganisationConnection> PersonOrganisationConnections { get; set; } = null!;
+
+    public ICollection<OrganisationRelationship> OrganisationRelationships { get; set; } = null!;
 }

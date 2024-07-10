@@ -35,6 +35,10 @@ public class AccountsDbContext : DbContext
 
     public DbSet<OrganisationType> OrganisationTypes { get; set; } = null!;
 
+    public DbSet<OrganisationRelationship> OrganisationRelationships { get; set; } = null!;
+
+    public DbSet<OrganisationRelationshipType> OrganisationRelationshipTypes { get; set; } = null!;
+
     public DbSet<Person> Persons { get; set; } = null!;
 
     public DbSet<PersonInOrganisationRole> PersonInOrganisationRoles { get; set; } = null!;
@@ -121,6 +125,19 @@ public class AccountsDbContext : DbContext
             entity.HasOne(connection => connection.ToOrganisationRole)
                 .WithMany()
                 .HasForeignKey(connection => connection.ToOrganisationRoleId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<OrganisationRelationship>(entity =>
+        {
+            entity.HasOne(relation => relation.FirstOrganisation)
+                .WithMany(organisation => organisation.OrganisationRelationships)
+                .HasForeignKey(connection => connection.FirstOrganisationId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(relationtype => relationtype.OrganisationRelationshipType)
+                .WithMany()
+                .HasForeignKey(connection => connection.OrganisationRelationshipTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 
@@ -490,6 +507,16 @@ public class AccountsDbContext : DbContext
                 .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasData(PopulateComplianceSchemes());
+        });
+
+        modelBuilder.Entity<OrganisationRelationshipType>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.NotSet, Name = "Not Set" },
+                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Parent, Name = "Parent" },
+                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Holding, Name = "Holding" },
+                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Subsidary, Name = "Subsidary" });
         });
     }
 
