@@ -29,13 +29,13 @@ public class UserService : IUserService
             .Include(user => user.Person)
             .FirstOrDefaultAsync(user => user.Email == email && user.InviteToken == inviteToken);
     }
-    
+
     public async Task<Result<UserOrganisationsListModel>> GetUserOrganisationAsync(Guid userId)
     {
         try
         {
             UserOrganisationsListModel details = new UserOrganisationsListModel();
-            var person = _accountsDbContext.Persons.Include(user=>user.User).FirstOrDefault(person => person.User.UserId == userId && !person.IsDeleted);
+            var person = _accountsDbContext.Persons.Include(user => user.User).FirstOrDefault(person => person.User.UserId == userId && !person.IsDeleted);
             if (person == null)
             {
                 return Result<UserOrganisationsListModel>.FailedResult($"No user found with the user id {userId}", HttpStatusCode.NotFound);
@@ -121,7 +121,16 @@ public class UserService : IUserService
                 OrganisationType = personOrganisationConnection.Organisation.OrganisationType.Name,
                 ProducerType = personOrganisationConnection.Organisation.ProducerType?.Name,
                 OrganisationNumber = personOrganisationConnection.Organisation.ReferenceNumber,
-                NationId = personOrganisationConnection.Organisation.NationId
+                NationId = personOrganisationConnection.Organisation.NationId,
+                BuildingName = personOrganisationConnection.Organisation.BuildingName,
+                BuildingNumber = personOrganisationConnection.Organisation.BuildingNumber,
+                Street = personOrganisationConnection.Organisation.Street,
+                Locality = personOrganisationConnection.Organisation.Locality,
+                DependentLocality = personOrganisationConnection.Organisation.DependentLocality,
+                Town = personOrganisationConnection.Organisation.Town,
+                County = personOrganisationConnection.Organisation.County,
+                Country = personOrganisationConnection.Organisation.Country,
+                Postcode = personOrganisationConnection.Organisation.Postcode
             });
         }
         return organisations;
@@ -188,11 +197,11 @@ public class UserService : IUserService
             })
             .SingleOrDefaultAsync();
     }
-    
-    
+
+
     public async Task<UserModel?> GetApprovedUserUserByEmailAsync(string email)
     {
-        var user =  await _accountsDbContext.Users.Where(p => p.Email == email).FirstOrDefaultAsync();
+        var user = await _accountsDbContext.Users.Where(p => p.Email == email).FirstOrDefaultAsync();
         var userModel = new UserModel()
         {
             Id = user.Id,
@@ -201,7 +210,7 @@ public class UserService : IUserService
             ExternalIdpUserId = user.ExternalIdpUserId,
             Email = user.Email
         };
-        
+
         return userModel;
     }
 }
