@@ -3591,3 +3591,90 @@ GO
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    DECLARE @var37 sysname;
+    SELECT @var37 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[OrganisationRelationships]') AND [c].[name] = N'RelationFromDate');
+    IF @var37 IS NOT NULL EXEC(N'ALTER TABLE [OrganisationRelationships] DROP CONSTRAINT [' + @var37 + '];');
+    ALTER TABLE [OrganisationRelationships] ADD DEFAULT (SYSDATETIMEOFFSET()) FOR [RelationFromDate];
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    ALTER TABLE [OrganisationRelationships] ADD [OrganisationRegistrationTypeId] int NOT NULL DEFAULT 0;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    CREATE TABLE [OrganisationRegistrationTypes] (
+        [Id] int NOT NULL,
+        [Name] nvarchar(100) NULL,
+        [Key] nvarchar(10) NULL,
+        CONSTRAINT [PK_OrganisationRegistrationTypes] PRIMARY KEY ([Id])
+    );
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] ON;
+    EXEC(N'INSERT INTO [OrganisationRegistrationTypes] ([Id], [Key], [Name])
+    VALUES (0, NULL, N''Not Set'')');
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] OFF;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] ON;
+    EXEC(N'INSERT INTO [OrganisationRegistrationTypes] ([Id], [Key], [Name])
+    VALUES (1, NULL, N''Group'')');
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] OFF;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] ON;
+    EXEC(N'INSERT INTO [OrganisationRegistrationTypes] ([Id], [Key], [Name])
+    VALUES (2, NULL, N''Individual'')');
+    IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Key', N'Name') AND [object_id] = OBJECT_ID(N'[OrganisationRegistrationTypes]'))
+        SET IDENTITY_INSERT [OrganisationRegistrationTypes] OFF;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    CREATE INDEX [IX_OrganisationRelationships_OrganisationRegistrationTypeId] ON [OrganisationRelationships] ([OrganisationRegistrationTypeId]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    ALTER TABLE [OrganisationRelationships] ADD CONSTRAINT [FK_OrganisationRelationships_OrganisationRegistrationTypes_OrganisationRegistrationTypeId] FOREIGN KEY ([OrganisationRegistrationTypeId]) REFERENCES [OrganisationRegistrationTypes] ([Id]);
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240718083252_OrganisationRegistrationType_Table_UpdateRelationships', N'6.0.15');
+END;
+GO
+
+COMMIT;
+GO
+

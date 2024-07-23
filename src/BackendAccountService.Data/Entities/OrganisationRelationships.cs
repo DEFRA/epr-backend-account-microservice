@@ -30,6 +30,10 @@ public class OrganisationRelationship
 
     public OrganisationRelationshipType OrganisationRelationshipType { get; } = null!;
 
+    public int OrganisationRegistrationTypeId { get; set; }
+
+    public OrganisationRegistrationType OrganisationRegistrationType { get; } = null!;
+
 }
 
 

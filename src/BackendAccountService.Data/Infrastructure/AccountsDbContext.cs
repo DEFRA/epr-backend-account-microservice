@@ -39,6 +39,8 @@ public class AccountsDbContext : DbContext
 
     public DbSet<OrganisationRelationshipType> OrganisationRelationshipTypes { get; set; } = null!;
 
+    public DbSet<OrganisationRegistrationType> OrganisationRegistrationTypes { get; set; } = null!;
+
     public DbSet<Person> Persons { get; set; } = null!;
 
     public DbSet<PersonInOrganisationRole> PersonInOrganisationRoles { get; set; } = null!;
@@ -139,8 +141,13 @@ public class AccountsDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(connection => connection.OrganisationRelationshipTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
-        });
 
+            entity.HasOne(relationtype => relationtype.OrganisationRegistrationType)
+                .WithMany()
+                .HasForeignKey(connection => connection.OrganisationRegistrationTypeId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+        
         modelBuilder.Entity<PersonsConnection>(entity =>
         {
             entity.HasOne(connection => connection.FromPerson)
@@ -289,6 +296,10 @@ public class AccountsDbContext : DbContext
             entity.Property("CreatedOn").HasDefaultValueSql("SYSDATETIMEOFFSET()");
             entity.Property("LastUpdatedOn").HasDefaultValueSql("SYSDATETIMEOFFSET()");
         }
+
+        modelBuilder.Entity<OrganisationRelationship>()
+            .Property("RelationFromDate")
+            .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
         modelBuilder.Entity<ComplianceSchemeMemberRemovalAuditLog>()
             .Property("RemovedOn")
@@ -517,6 +528,15 @@ public class AccountsDbContext : DbContext
                 new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Parent, Name = "Parent" },
                 new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Holding, Name = "Holding" },
                 new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Subsidary, Name = "Subsidary" });
+        });
+
+        modelBuilder.Entity<OrganisationRegistrationType>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.NotSet, Name = "Not Set" },
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Group, Name = "Group" },
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Individual, Name = "Individual" });
         });
     }
 

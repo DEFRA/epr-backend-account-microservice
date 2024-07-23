@@ -20,10 +20,17 @@ In development the database will migrate automatically to the SQL container, if 
 If ports clash on your local machine change them in the docker compose files.
 # Database Migrations
 ## Add
-To add a new migration fun the following command in the src directory
+To add a new migration run the following command in the src directory
 ```
 dotnet ef migrations add <Migration Name> --context AccountsDbContext --startup-project BackendAccountService.Api --project BackendAccountService.Data
 ```
+
+To generate the SQL following commad required to run in the src directory
+
+```
+dotnet ef migrations script --context AccountsDbContext --startup-project BackendAccountService.Api --project BackendAccountService.Data --idempotent --output .\BackendAccountService.Data\Scripts\migrations.sql
+```
+					 
 
 # Contributing to this project
 Please read the [contribution guidelines](CONTRIBUTING.md) before submitting a pull request.
