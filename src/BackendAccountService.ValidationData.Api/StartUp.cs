@@ -1,5 +1,4 @@
-﻿using System;
-using BackendAccountService.Data.Infrastructure;
+﻿using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.ValidationData.Api;
 using BackendAccountService.ValidationData.Api.Config;
 using BackendAccountService.ValidationData.Api.Extensions;
@@ -8,13 +7,12 @@ using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System;
+using System.Diagnostics.CodeAnalysis;
 
 [assembly: FunctionsStartup(typeof(StartUp))]
 
 namespace BackendAccountService.ValidationData.Api;
-
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 
 [ExcludeFromCodeCoverage]
 public class StartUp : FunctionsStartup
