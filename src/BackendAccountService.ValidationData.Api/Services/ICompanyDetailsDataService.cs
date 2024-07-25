@@ -9,7 +9,11 @@ public interface ICompanyDetailsDataService
 {
     Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationReferenceNumber(string referenceNumber);
 
+    Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationExternalId(Guid organisationExternalId);
+
     Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(string referenceNumber, Guid? complianceSchemeId);
 
     Task<CompanyDetailsResponse> GetAllProducersCompanyDetails(IEnumerable<string> referenceNumbers);
+
+    Task<CompanyDetailsResponse> GetAllProducersCompanyDetailsAsProducer(OrganisationReferencesRequest organisationReferences);
 }

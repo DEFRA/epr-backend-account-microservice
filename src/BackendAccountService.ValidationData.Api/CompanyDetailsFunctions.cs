@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using BackendAccountService.ValidationData.Api.Models;
 using System.IO;
 using System.Text.Json;
-using System.Collections.Generic;
 
 namespace BackendAccountService.ValidationData.Api;
 
@@ -52,7 +51,45 @@ public class CompanyDetailsFunctions
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
+            return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
+        }
+        finally
+        {
+            _logger.LogExit();
+        }
+    }
+
+    [FunctionName("GetCompanyDetailsByProducer")]
+    public async Task<IActionResult> GetCompanyDetailsByProducerAsync(
+        [HttpTrigger(
+            AuthorizationLevel.Anonymous,
+            nameof(HttpMethod.Get),
+            Route = "company-details-by-producer/{producerOrganisationId}")]
+        HttpRequest req,
+        string producerOrganisationId)
+    {
+        _logger.LogEnter();
+
+        try
+        {
+            if (!Guid.TryParse(producerOrganisationId, out var organisationExternalId))
+            {
+                return Problem("Check that the organisation ID is correct", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            var organisations = await _companyDetailsService.GetCompanyDetailsByOrganisationExternalId(organisationExternalId);
+
+            if (organisations is null)
+            {
+                return Problem("Organisation not found", statusCode: StatusCodes.Status404NotFound);
+            }
+
+            return new OkObjectResult(organisations);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -86,7 +123,7 @@ public class CompanyDetailsFunctions
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -109,14 +146,14 @@ public class CompanyDetailsFunctions
         {
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
-            var referenceNumbers = JsonSerializer.Deserialize<IEnumerable<string>>(requestBody);
+            var referenceNumbers = JsonSerializer.Deserialize<OrganisationReferencesRequest>(requestBody);
 
             if (referenceNumbers == null)
             {
                 return Problem("Invalid ReferenceNumbers property in request body", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var organisations = await _companyDetailsService.GetAllProducersCompanyDetails(referenceNumbers);
+            var organisations = await _companyDetailsService.GetAllProducersCompanyDetailsAsProducer(referenceNumbers);
 
             if (organisations is null)
             {
@@ -127,7 +164,7 @@ public class CompanyDetailsFunctions
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally

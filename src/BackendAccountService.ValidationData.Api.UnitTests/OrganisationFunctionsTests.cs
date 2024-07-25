@@ -44,7 +44,7 @@ public class OrganisationFunctionsTests
     }
 
     [TestMethod]
-    public async Task GetOrganisationByExternalId_IsNotNull_ReturnsOk()
+    public async Task GetOrganisationAsync_IsNotNull_ReturnsOk()
     {
         // Arrange
         var organisationMock = new OrganisationResponse()
@@ -115,7 +115,7 @@ public class OrganisationFunctionsTests
     }
 
     [TestMethod]
-    public async Task GetOrganisationMembersByComplianceId_IsNotNull_ReturnsOk()
+    public async Task GetOrganisationMembersAsync_IsNotNull_ReturnsOk()
     {
         // Arrange
         var organisationMock = new OrganisationMembersResponse()
@@ -228,7 +228,7 @@ public class OrganisationFunctionsTests
     }
 
     [TestMethod]
-    public async Task GetExistingOrganisations_RequestBodyAndReferenceNumbersAreNotNull_ReturnsOk()
+    public async Task GetExistingOrganisationsAsync_RequestBodyAndReferenceNumbersAreNotNull_ReturnsOk()
     {
         // Arrange
         var requestMock = new Mock<HttpRequest>();

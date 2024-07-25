@@ -29,7 +29,7 @@ public class CompanyDetailsFunctionsTests
     }
 
     [TestMethod]
-    public async Task GetOrganisationAsync_NoExceptionThrown_WhenValidPayload()
+    public async Task GetCompanyDetailsAsync_NoExceptionThrown_WhenValidPayload()
     {
         // Arrange
         var expectedOrganisation = "123456";
@@ -45,7 +45,7 @@ public class CompanyDetailsFunctionsTests
     }
 
     [TestMethod]
-    public async Task GetCompanyDetailsByOrganisationReferenceNumber_IsNotNull_ReturnsOk()
+    public async Task GetCompanyDetailsAsync_IsNotNull_ReturnsOk()
     {
         // Arrange
         var expectedOrganisation = "123456";
@@ -219,8 +219,8 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetails(
-                   It.IsAny<IEnumerable<string>>()
+               .GetAllProducersCompanyDetailsAsProducer(
+                   It.IsAny<OrganisationReferencesRequest>()
                    )).ThrowsAsync(new Exception(exceptionErrorMessage));
 
         var problem = new ProblemDetails
@@ -231,7 +231,12 @@ public class CompanyDetailsFunctionsTests
             Type = "Exception"
         };
 
-        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var organisationReferencesRequest = new OrganisationReferencesRequest
+        {
+            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
+            OrganisationExternalId = string.Empty
+        };
+        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);
@@ -277,11 +282,16 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetails(
-                   It.IsAny<IEnumerable<string>>()
+               .GetAllProducersCompanyDetailsAsProducer(
+                   It.IsAny<OrganisationReferencesRequest>()
                    )).ReturnsAsync(organisationsResult);
 
-        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var organisationReferencesRequest = new OrganisationReferencesRequest
+        {
+            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
+            OrganisationExternalId = string.Empty
+        };
+        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);
@@ -316,11 +326,16 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetails(
-                   It.IsAny<IEnumerable<string>>()
+               .GetAllProducersCompanyDetailsAsProducer(
+                   It.IsAny<OrganisationReferencesRequest>()
                    )).ReturnsAsync(default(CompanyDetailsResponse));
 
-        var jsonPayload = JsonSerializer.Serialize<IEnumerable<string>>(referenceNumbers.ReferenceNumbers);
+        var organisationReferencesRequest = new OrganisationReferencesRequest
+        {
+            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
+            OrganisationExternalId = string.Empty
+        };
+        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);
@@ -436,5 +451,89 @@ public class CompanyDetailsFunctionsTests
             StatusCode = 400,
             Value = problem
         });
+    }
+
+    [TestMethod]
+    public async Task GetCompanyDetailsByProducerAsync_NoExceptionThrown_WhenValidPayload()
+    {
+        // Arrange
+        var expectedProducerId = "33D44FDA-5C21-4021-A06C-202AA9B5E946";
+        _companyDetailsServiceMock.Setup(service => service
+                .GetCompanyDetailsByOrganisationReferenceNumber(expectedProducerId));
+
+        // Act / Assert
+        await _systemUnderTest
+            .Invoking(x => x
+                .GetCompanyDetailsByProducerAsync(It.IsAny<HttpRequest>(), expectedProducerId))
+            .Should()
+            .NotThrowAsync();
+    }
+
+    [TestMethod]
+    public async Task GetCompanyDetailsByProducerAsync_IsNotNull_ReturnsOk()
+    {
+        // Arrange
+        var expectedProducerId = "33D44FDA-5C21-4021-A06C-202AA9B5E946";
+        var producerIdAsGuid = Guid.Parse(expectedProducerId);
+        var requestMock = new Mock<HttpRequest>();
+        var companyDetails = new CompanyDetailResponse { ReferenceNumber = "123456", CompaniesHouseNumber = "12345678" };
+
+        var organisations = new List<CompanyDetailResponse>
+        {
+            companyDetails
+        };
+
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = organisations
+        };
+
+        requestMock.Setup(req => req.Method).Returns("GET");
+        requestMock.Setup(req => req.ContentType).Returns("application/json");
+
+        _companyDetailsServiceMock.Setup(service => service
+                .GetCompanyDetailsByOrganisationExternalId(producerIdAsGuid))
+            .ReturnsAsync(organisationsResult);
+
+        // Act
+        var result = await _systemUnderTest
+            .GetCompanyDetailsByProducerAsync(It.IsAny<HttpRequest>(), expectedProducerId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [TestMethod]
+    public async Task GetCompanyDetailsByProducerAsync_CatchesAndLogsException_WhenThrown()
+    {
+        // Arrange
+        var expectedProducerId = "33D44FDA-5C21-4021-A06C-202AA9B5E946";
+        var producerIdAsGuid = Guid.Parse(expectedProducerId);
+        const string exceptionErrorMessage = "Error attempting to fetch organisation";
+
+        _companyDetailsServiceMock.Setup(service => service
+                .GetCompanyDetailsByOrganisationExternalId(producerIdAsGuid))
+            .ThrowsAsync(new Exception(exceptionErrorMessage));
+
+        var problem = new ProblemDetails
+        {
+            Detail = exceptionErrorMessage,
+            Status = 500,
+            Title = "Unhandled exception",
+            Type = "Exception"
+        };
+
+        // Act
+        var result = await _systemUnderTest
+            .GetCompanyDetailsByProducerAsync(It.IsAny<HttpRequest>(), expectedProducerId);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+        result.Should().BeEquivalentTo(new ObjectResult(problem)
+        {
+            StatusCode = 500,
+            Value = problem
+        });
+        _loggerMock.VerifyLog(logger => logger.LogError(exceptionErrorMessage));
     }
 }

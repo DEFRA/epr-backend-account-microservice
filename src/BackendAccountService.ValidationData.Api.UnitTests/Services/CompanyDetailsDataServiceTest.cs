@@ -72,6 +72,47 @@ public class CompanyDetailsDataServiceTests
     }
 
     [TestMethod]
+    public async Task GetCompanyDetailsByOrganisationExternalId_NoOrganisationExists_ThenReturnNull()
+    {
+        // Arrange
+        var externalId = Guid.NewGuid();
+
+        // Act
+        var result = await _companyDetailsService.GetCompanyDetailsByOrganisationExternalId(externalId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetCompanyDetailsByOrganisationExternalId_HasMembers_ThenReturnOrgWithMembers()
+    {
+        // Arrange
+        var externalId = Guid.Parse("11111111-0000-0000-0000-000000000001");
+        var expectedMember = await _accountContext.Organisations.AsNoTracking()
+            .Where(organisation => organisation.ExternalId == externalId)
+            .ToListAsync();
+
+        foreach (var org in expectedMember)
+        {
+            _companyDetailsResponseList.Add(new CompanyDetailResponse { ReferenceNumber = org.ReferenceNumber, CompaniesHouseNumber = org.CompaniesHouseNumber });
+        }
+
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = _companyDetailsResponseList
+        };
+
+        // Act
+        var result = await _companyDetailsService.GetCompanyDetailsByOrganisationExternalId(externalId);
+
+        // Assert
+        result.Should().BeOfType(typeof(CompanyDetailsResponse));
+        result.Organisations.Should().NotBeEmpty();
+        result.Organisations.Equals(organisationsResult.Organisations);
+    }
+
+    [TestMethod]
     public async Task GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId_NoOrganisationExists_ThenReturnNull()
     {
         // Arrange
@@ -177,6 +218,57 @@ public class CompanyDetailsDataServiceTests
 
         // Act
         var result = await _companyDetailsService.GetAllProducersCompanyDetails(expectedOrganisation);
+
+        // Assert
+        result.Should().BeOfType(typeof(CompanyDetailsResponse));
+        result.Organisations.Should().NotBeEmpty();
+        result.Organisations.Equals(organisationsResult.Organisations);
+    }
+
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsProducer_NoOrganisationExists_ThenReturnNull()
+    {
+        // Arrange
+        var organisationReferencesRequest = new OrganisationReferencesRequest
+        {
+            ReferenceNumbers = new List<string>() { },
+            OrganisationExternalId = "11111111-0000-0000-0000-000000000001"
+        };
+
+        // Act
+        var result = await _companyDetailsService.GetAllProducersCompanyDetailsAsProducer(organisationReferencesRequest);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetAllProducersCompanyDetailsAsProducer_HasMembers_ThenReturnOrgWithMembers()
+    {
+        // Arrange
+        var expectedOrganisation = new List<string>() { "123456", "123466" };
+        var organisationReferencesRequest = new OrganisationReferencesRequest
+        {
+            ReferenceNumbers = expectedOrganisation,
+            OrganisationExternalId = "10000000-0000-0000-0000-000000000001"
+        };
+
+        var organisations = await _accountContext.Organisations
+           .AsNoTracking()
+           .Where(organisation => expectedOrganisation.Contains(organisation.ReferenceNumber) && organisation.ExternalId.ToString() == organisationReferencesRequest.OrganisationExternalId && organisation.ExternalId.ToString() == organisationReferencesRequest.OrganisationExternalId && !organisation.IsComplianceScheme && (organisation.OrganisationTypeId == 1 || organisation.OrganisationTypeId == 2))
+           .ToListAsync();
+
+        foreach (var org in organisations)
+        {
+            _companyDetailsResponseList.Add(new CompanyDetailResponse { ReferenceNumber = org.ReferenceNumber, CompaniesHouseNumber = org.CompaniesHouseNumber });
+        }
+        var organisationsResult = new CompanyDetailsResponse
+        {
+            Organisations = _companyDetailsResponseList
+        };
+
+        // Act
+        var result = await _companyDetailsService.GetAllProducersCompanyDetailsAsProducer(organisationReferencesRequest);
 
         // Assert
         result.Should().BeOfType(typeof(CompanyDetailsResponse));

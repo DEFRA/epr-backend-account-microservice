@@ -39,6 +39,26 @@ public class CompanyDetailsDataService : ICompanyDetailsDataService
             };
     }
 
+    public async Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationExternalId(Guid organisationExternalId)
+    {
+        var organisations = await _accountsDbContext.Organisations
+            .AsNoTracking()
+            .Where(organisation => organisation.ExternalId == organisationExternalId)
+            .Select(org => new CompanyDetailResponse
+            {
+                ReferenceNumber = org.ReferenceNumber,
+                CompaniesHouseNumber = org.CompaniesHouseNumber
+            })
+            .ToListAsync();
+
+        return organisations is null || !organisations.Any()
+            ? null
+            : new CompanyDetailsResponse
+            {
+                Organisations = organisations
+            };
+    }
+
     public async Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(string referenceNumber, Guid? complianceSchemeId)
     {
         var complianceScheme = await _accountsDbContext.ComplianceSchemes
@@ -85,6 +105,31 @@ public class CompanyDetailsDataService : ICompanyDetailsDataService
         var organisations = await _accountsDbContext.Organisations
             .AsNoTracking()
             .Where(organisation => referenceNumbers.Contains(organisation.ReferenceNumber) && !organisation.IsComplianceScheme && (organisation.OrganisationTypeId == 1 || organisation.OrganisationTypeId == 2))
+            .Select(org => new CompanyDetailResponse
+            {
+                ReferenceNumber = org.ReferenceNumber,
+                CompaniesHouseNumber = org.CompaniesHouseNumber
+            })
+            .ToListAsync();
+
+        return organisations is null || !organisations.Any()
+            ? null
+            : new CompanyDetailsResponse
+            {
+                Organisations = organisations
+            };
+    }
+
+    public async Task<CompanyDetailsResponse> GetAllProducersCompanyDetailsAsProducer(OrganisationReferencesRequest organisationReferences)
+    {
+        var hasExternalId = Guid.TryParse(organisationReferences.OrganisationExternalId, out var organisationExternalId);
+
+        var organisations = await _accountsDbContext.Organisations
+            .AsNoTracking()
+            .Where(organisation => organisationReferences.ReferenceNumbers.Contains(organisation.ReferenceNumber) 
+                && !organisation.IsComplianceScheme
+                && (organisation.OrganisationTypeId == 1 || organisation.OrganisationTypeId == 2) 
+                && (hasExternalId && organisation.ExternalId == organisationExternalId))
             .Select(org => new CompanyDetailResponse
             {
                 ReferenceNumber = org.ReferenceNumber,
