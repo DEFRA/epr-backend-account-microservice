@@ -3678,3 +3678,101 @@ GO
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    DECLARE @var38 sysname;
+    SELECT @var38 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[OrganisationRelationships]') AND [c].[name] = N'LastUpdatedOn');
+    IF @var38 IS NOT NULL EXEC(N'ALTER TABLE [OrganisationRelationships] DROP CONSTRAINT [' + @var38 + '];');
+    ALTER TABLE [OrganisationRelationships] ALTER COLUMN [LastUpdatedOn] datetimeoffset NOT NULL;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    DECLARE @var39 sysname;
+    SELECT @var39 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[OrganisationRelationships]') AND [c].[name] = N'CreatedOn');
+    IF @var39 IS NOT NULL EXEC(N'ALTER TABLE [OrganisationRelationships] DROP CONSTRAINT [' + @var39 + '];');
+    ALTER TABLE [OrganisationRelationships] ALTER COLUMN [CreatedOn] datetimeoffset NOT NULL;
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    EXEC(N'UPDATE [OrganisationRegistrationTypes] SET [Key] = N''''
+    WHERE [Id] = 0;
+    SELECT @@ROWCOUNT');
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    EXEC(N'UPDATE [OrganisationRegistrationTypes] SET [Key] = N''GR''
+    WHERE [Id] = 1;
+    SELECT @@ROWCOUNT');
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    EXEC(N'UPDATE [OrganisationRegistrationTypes] SET [Key] = N''IN''
+    WHERE [Id] = 2;
+    SELECT @@ROWCOUNT');
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722102552_OrganisationRelationshipsDates')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240722102552_OrganisationRelationshipsDates', N'6.0.15');
+END;
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722133405_OrganisationRelationshipsDefaults')
+BEGIN
+    DECLARE @var40 sysname;
+    SELECT @var40 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[OrganisationRelationships]') AND [c].[name] = N'LastUpdatedOn');
+    IF @var40 IS NOT NULL EXEC(N'ALTER TABLE [OrganisationRelationships] DROP CONSTRAINT [' + @var40 + '];');
+    ALTER TABLE [OrganisationRelationships] ADD DEFAULT (SYSDATETIMEOFFSET()) FOR [LastUpdatedOn];
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722133405_OrganisationRelationshipsDefaults')
+BEGIN
+    DECLARE @var41 sysname;
+    SELECT @var41 = [d].[name]
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[OrganisationRelationships]') AND [c].[name] = N'CreatedOn');
+    IF @var41 IS NOT NULL EXEC(N'ALTER TABLE [OrganisationRelationships] DROP CONSTRAINT [' + @var41 + '];');
+    ALTER TABLE [OrganisationRelationships] ADD DEFAULT (SYSDATETIMEOFFSET()) FOR [CreatedOn];
+END;
+GO
+
+IF NOT EXISTS(SELECT * FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20240722133405_OrganisationRelationshipsDefaults')
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20240722133405_OrganisationRelationshipsDefaults', N'6.0.15');
+END;
+GO
+
+COMMIT;
+GO
+

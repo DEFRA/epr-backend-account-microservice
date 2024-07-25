@@ -8,6 +8,5 @@ namespace BackendAccountService.Data.Entities
 
         [MaxLength(100)]
         public string? Name { get; set; }
-
     }
 }

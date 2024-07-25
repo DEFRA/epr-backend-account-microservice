@@ -534,9 +534,9 @@ public class AccountsDbContext : DbContext
         {
             entity.Property(type => type.Id).ValueGeneratedNever();
             entity.HasData(
-                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.NotSet, Name = "Not Set" },
-                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Group, Name = "Group" },
-                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Individual, Name = "Individual" });
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.NotSet, Key = "", Name = "Not Set" },
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Group, Key = "GR", Name = "Group" },
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Individual, Key= "IN", Name = "Individual" });
         });
     }
 

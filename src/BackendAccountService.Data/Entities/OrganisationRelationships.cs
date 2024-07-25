@@ -1,6 +1,6 @@
 ﻿namespace BackendAccountService.Data.Entities;
 
-public class OrganisationRelationship
+public class OrganisationRelationship : IEditableEntity
 {
     public int Id { get; set; }
 
@@ -16,11 +16,11 @@ public class OrganisationRelationship
 
     public string? RelationExpiryReason { get; set; }
 
-    public DateTime CreatedOn { get; set; }
+    public DateTimeOffset CreatedOn { get; private set; }
 
     public int LastUpdatedById  { get; set; }
 
-    public DateTime LastUpdatedOn { get; set; }
+    public DateTimeOffset LastUpdatedOn { get; private set; }
 
     public int LastUpdatedByOrganisationId { get; set; }
 
