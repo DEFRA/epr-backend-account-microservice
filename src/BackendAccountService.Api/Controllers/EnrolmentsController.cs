@@ -28,6 +28,7 @@ public class EnrolmentsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveEnrolment(
         [FromRoute, NotDefault] Guid personExternalId,
         [FromQuery, Required, NotDefault] Guid userId, 

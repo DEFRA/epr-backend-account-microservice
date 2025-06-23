@@ -1,10 +1,12 @@
-using System.Net;
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
+using BackendAccountService.Core.Models;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
+using System.Net;
 using System.Text.Json;
 
 namespace BackendAccountService.Api.Controllers;
@@ -27,7 +29,7 @@ public class UsersController : ApiControllerBase
     [Route("user-organisations")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserOrganisationsListModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetUserOrganisation(Guid userId)
     {
@@ -55,9 +57,10 @@ public class UsersController : ApiControllerBase
     [HttpGet]
     [Route("user-account")]
     [Produces("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PersonWithOrganisationsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetPersonOrganisations(
         [BindRequired, FromHeader(Name = "X-EPR-User")] Guid userId,
         [BindRequired, FromQuery] string serviceKey)

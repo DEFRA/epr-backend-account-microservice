@@ -35,7 +35,7 @@ public class AccountsManagementController : ApiControllerBase
     [HttpPost]
     [Consumes("application/json")]
     [Route("invite-user")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> InviteUser(AddInviteUserRequest request)
     {
@@ -103,7 +103,7 @@ public class AccountsManagementController : ApiControllerBase
     [HttpPost]
     [Consumes("application/json")]
     [Route("enrol-invited-user")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(void), StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> EnrolInvitedUser(EnrolInvitedUserRequest request)
     {

@@ -1,8 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using BackendAccountService.Api.Configuration;
+﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Models;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 namespace BackendAccountService.Api.Controllers;
 
@@ -25,7 +27,7 @@ public class OrganisationsController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrganisationResponseModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrganisationsByCompaniesHouseNumber(string companiesHouseNumber)
@@ -44,7 +46,7 @@ public class OrganisationsController : ApiControllerBase
     [HttpGet]
     [Consumes("application/json")]
     [Route("users")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrganisationUsersResponseModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Users(Guid userId, Guid organisationId, int serviceRoleId)
     {
@@ -59,7 +61,7 @@ public class OrganisationsController : ApiControllerBase
 
     [HttpGet]
     [Route("organisation-by-externalId")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(OrganisationDetailModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrganisationByExternalIdAsync(Guid externalId)
@@ -91,7 +93,7 @@ public class OrganisationsController : ApiControllerBase
     
     [HttpGet]
     [Route("organisation-by-invite-token")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApprovedPersonOrganisationModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrganisationByExternalIdAsync([Required]string token)

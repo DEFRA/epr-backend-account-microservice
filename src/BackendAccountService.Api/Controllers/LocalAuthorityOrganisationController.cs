@@ -1,6 +1,8 @@
 ﻿using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Core.Models.Result;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -26,8 +28,8 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet("retrieve")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(IList<LocalAuthorityResponseModel>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IList<LocalAuthorityResponseModel>), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetLocalAuthorityOrganisation()
@@ -42,7 +44,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet("district-code")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocalAuthorityResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -63,7 +65,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet("organisation-name")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocalAuthorityResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -84,7 +86,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet("organisation-type-id")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IList<LocalAuthorityResponseModel>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -105,7 +107,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet("external-id")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocalAuthorityResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -128,7 +130,7 @@ namespace BackendAccountService.Api.Controllers
         [Route("create")]
         [HttpPost]
         [Consumes("application/json")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(LocalAuthorityResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateNewLocalAuthorityOrganisation(CreateLocalAuthorityRequest request)
@@ -238,7 +240,7 @@ namespace BackendAccountService.Api.Controllers
         }
         
         [HttpGet("nation-name")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -259,7 +261,7 @@ namespace BackendAccountService.Api.Controllers
         }
         
         [HttpGet("organisation-type-name")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

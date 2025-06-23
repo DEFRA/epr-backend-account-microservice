@@ -1,5 +1,6 @@
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -31,7 +32,7 @@ public class ComplianceSchemesController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAllComplianceSchemes()
     {
@@ -43,7 +44,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("{organisationId:guid}/schemes/{complianceSchemeId:guid}/scheme-members")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ComplianceSchemeMembershipResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetComplianceSchemeMembers(
@@ -97,7 +98,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("select")]
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SelectedSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> SelectComplianceScheme(SelectComplianceSchemeRequest request)
     {
@@ -119,7 +120,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("update")]
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SelectedSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateSelectedComplianceScheme(UpdateSelectedComplianceSchemeRequest request)
     {
@@ -141,7 +142,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("get-for-producer")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProducerComplianceSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemeForProducer(Guid userOid, Guid organisationId)
     {
@@ -164,7 +165,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("get-for-operator")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemesForOperator(Guid organisationId)
     {
@@ -176,7 +177,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("{organisationId:guid}/scheme-members/{selectedSchemeId:guid}")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ComplianceSchemeMemberDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetComplianceSchemeMemberDetails(
@@ -309,7 +310,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("member-removal-reasons")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeRemovalReasonResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemeReasonsForRemoval()
     {

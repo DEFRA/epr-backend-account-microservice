@@ -32,7 +32,7 @@ public class ConnectionsController : ApiControllerBase
 
     [HttpGet]
     [Route("{connectionId:guid}/roles")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ConnectionWithEnrolmentsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -65,7 +65,7 @@ public class ConnectionsController : ApiControllerBase
 
     [HttpGet]
     [Route("{connectionId:guid}/person")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ConnectionWithPersonResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -96,9 +96,10 @@ public class ConnectionsController : ApiControllerBase
     [HttpPut]
     [Consumes("application/json")]
     [Route("{connectionId:guid}/roles")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UpdatePersonRoleResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdatePersonRole(
         Guid connectionId,
         UpdatePersonRoleRequest updateRequest,
@@ -152,6 +153,7 @@ public class ConnectionsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> NominateToDelegatedPerson(
         Guid connectionId,
         [BindRequired, FromQuery] string serviceKey,

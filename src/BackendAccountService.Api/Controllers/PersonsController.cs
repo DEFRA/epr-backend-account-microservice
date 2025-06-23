@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using BackendAccountService.Api.Configuration;
+﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Core.Models.Result;
 using BackendAccountService.Core.Services;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 
 namespace BackendAccountService.Api.Controllers;
@@ -21,7 +22,7 @@ public class PersonsController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PersonResponseModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPersonByUserId(Guid userId)
@@ -39,7 +40,7 @@ public class PersonsController : ApiControllerBase
     
     [HttpGet]
     [Route("person-by-externalId")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PersonResponseModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPersonByExternalIdAsync([Required]Guid externalId)
@@ -57,7 +58,7 @@ public class PersonsController : ApiControllerBase
     
     [HttpGet]
     [Route("person-by-invite-token")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(InviteApprovedUserModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPersonByInviteTokenAsync([Required]string token)

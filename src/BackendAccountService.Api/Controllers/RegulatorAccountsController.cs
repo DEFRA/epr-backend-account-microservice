@@ -28,8 +28,9 @@ namespace BackendAccountService.Api.Controllers
 
         [HttpPost]
         [Route("invite-user")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> InviteUser(AddInviteUserRequest request)
         {
             var isUserInvited = await _validateDataService.IsUserInvitedAsync(request.InvitedUser.Email);
@@ -58,7 +59,7 @@ namespace BackendAccountService.Api.Controllers
 
         [HttpGet]
         [Route("invited-user")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> InvitedUser(Guid userId, string email)

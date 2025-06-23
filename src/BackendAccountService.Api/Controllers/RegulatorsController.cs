@@ -1,5 +1,7 @@
 using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -31,8 +33,9 @@ public class RegulatorsController : ApiControllerBase
 
     [HttpGet]
     [Route("pending-applications")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResponse<OrganisationEnrolments>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetPendingApplications(Guid userId, int currentPage, int pageSize, string? organisationName, string? applicationType)
     {
         var isUserAuthorised = _regulatorService.IsRegulator(userId);
@@ -61,7 +64,7 @@ public class RegulatorsController : ApiControllerBase
 
     [HttpGet]
     [Route("applications/enrolments")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApplicationEnrolmentDetails), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetPendingApplicationsForOrganisation(Guid userId, Guid organisationId)
     {
@@ -76,7 +79,7 @@ public class RegulatorsController : ApiControllerBase
     [HttpGet]
     [Consumes("application/json")]
     [Route("organisations/users")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IQueryable<OrganisationUsersResponseModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Users(Guid userId, Guid organisationId, bool getApprovedUsersOnly)
     {
@@ -156,7 +159,7 @@ public class RegulatorsController : ApiControllerBase
     
     [HttpGet]
     [Route("get-organisations-by-search-term")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PaginatedResponse<OrganisationSearchResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrganisationsBySearchTerm(Guid userId, int currentPage, int pageSize, string query)
@@ -179,7 +182,7 @@ public class RegulatorsController : ApiControllerBase
     
     [HttpGet]
     [Route("organisation-by-external-id")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CompanySearchDetailsModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrganisationsByOrganisationId(Guid organisationId, Guid userId)
@@ -194,7 +197,7 @@ public class RegulatorsController : ApiControllerBase
     
     [HttpGet]
     [Route("users-by-organisation-external-id")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<OrganisationUserOverviewResponseModel>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsersByOrganisationExternalId(Guid userId, Guid externalId)
     {
         return await ExecuteProtectedAction(userId, externalId,async () =>
@@ -208,7 +211,7 @@ public class RegulatorsController : ApiControllerBase
     [HttpPost]
     [Route("remove-approved-users")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<AssociatedPersonResponseModel>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveApprovedPerson(ApprovedUserRequest request)
@@ -229,7 +232,7 @@ public class RegulatorsController : ApiControllerBase
     [HttpPost]
     [Route("add-remove-approved-users")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AddRemoveApprovedPersonResponseModel), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status304NotModified)]
     public async Task<IActionResult> AddRemoveApprovedUser(AddRemoveApprovedUserRequest request)

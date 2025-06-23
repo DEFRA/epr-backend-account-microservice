@@ -1,6 +1,7 @@
 ﻿using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -27,7 +28,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet(Name = "GetOrganisationIdFromNation")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CheckOrganisationExistResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> GetOrganisationIdFromNation([FromQuery] string nation)
         {
@@ -37,7 +38,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(CreateRegulatorOrganisationResponse), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateRegulatorOrganisation([FromBody] CreateRegulatorOrganisationRequest request)
         {
@@ -59,7 +60,7 @@ namespace BackendAccountService.Api.Controllers
         
         [HttpGet]
         [Route("organisation-nation")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetNationIdsFromOrganisationId([FromQuery] Guid organisationId)
         {
             _logger.LogInformation($"Retrieving the nation Id for the organisation: {organisationId}");

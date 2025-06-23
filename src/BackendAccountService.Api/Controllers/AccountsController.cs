@@ -34,8 +34,8 @@ public class AccountsController : ApiControllerBase
 
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateAccount(AccountModel account)
     {
         var serviceRole = await _accountService.GetServiceRoleAsync(account.Connection.ServiceRole);
@@ -88,8 +88,8 @@ public class AccountsController : ApiControllerBase
     [HttpPost]
     [Route("ApprovedUser")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateApprovedUserAccount(ApprovedUserAccountModel account)
     {
         var serviceRole = await _accountService.GetServiceRoleAsync(account.Connection.ServiceRole);
