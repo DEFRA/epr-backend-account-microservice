@@ -44,53 +44,56 @@ public class RegulatorService: IRegulatorService
 
     public async Task<PaginatedResponse<OrganisationEnrolments>> GetPendingApplicationsAsync(int nationId, int currentPage, int pageSize, string? organisationName, string applicationType)
     {
+        // Gets list of pending applications
+        // Refactored to join ComplianceSchemes in same query instead of making a separated db call and passing list of companies house numbers as a parametere
+        // When the list has large amount of data, it can also cause issues
         var enrolments =
             _accountsDbContext.Enrolments
                 .Join(
                     _accountsDbContext.Organisations,
-                    e => e.Connection.OrganisationId,
-                    o => o.Id,
-                    (e, o) => new { e, o }
+                    enrollment => enrollment.Connection.OrganisationId,
+                    org => org.Id,
+                    (enrollment, org) => new { enrollment, org }
                 )
                 .GroupJoin(
                     _accountsDbContext.ComplianceSchemes,
-                    eo => eo.o.CompaniesHouseNumber,
+                    eo => eo.org.CompaniesHouseNumber,
                     c => c.CompaniesHouseNumber,
-                    (eo, complianceJoin) => new { eo.e, eo.o, complianceJoin }
+                    (eo, complianceJoin) => new { eo.enrollment, eo.org, complianceJoin }
                 )
                 .SelectMany(
                     x => x.complianceJoin.DefaultIfEmpty(),
-                    (x, cj) => new { x.e, x.o, cj }
+                    (x, cj) => new { x.enrollment, x.org, cj }
                 )
                 .Where(x =>
-                    x.e.EnrolmentStatus.Id == EnrolmentStatus.Pending &&
+                    x.enrollment.EnrolmentStatus.Id == EnrolmentStatus.Pending &&
                     (
-                        x.o.Nation.Id == nationId ||
-                        (x.o.IsComplianceScheme && x.cj.NationId == nationId)
+                        x.org.Nation.Id == nationId ||
+                        (x.org.IsComplianceScheme && x.cj.NationId == nationId)
                     ) &&
                     (
-                        x.e.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ||
-                        x.e.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id
+                        x.enrollment.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ||
+                        x.enrollment.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id
                     ) &&
                     (
                         string.IsNullOrWhiteSpace(organisationName) ||
-                        x.o.Name.ToLower().Contains(organisationName.ToLower())
+                        x.org.Name.ToLower().Contains(organisationName.ToLower())
                     )
                 )
                 .GroupBy(x => new
                 {
-                    OrgId = x.o.ExternalId,
-                    OrgName = x.o.Name
+                    OrgId = x.org.ExternalId,
+                    OrgName = x.org.Name
                 })
                 .Select(g => new OrganisationEnrolments
                 {
                     OrganisationId = g.Key.OrgId,
                     OrganisationName = g.Key.OrgName,
-                    LastUpdate = g.Min(s => s.e.LastUpdatedOn.Date),
+                    LastUpdate = g.Min(s => s.enrollment.LastUpdatedOn.Date),
                     Enrolments = new()
                     {
-                        HasApprovedPending = g.Sum(s => s.e.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ? 1 : 0) > 0,
-                        HasDelegatePending = g.Sum(s => s.e.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id ? 1 : 0) > 0
+                        HasApprovedPending = g.Sum(s => s.enrollment.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ? 1 : 0) > 0,
+                        HasDelegatePending = g.Sum(s => s.enrollment.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id ? 1 : 0) > 0
                     }
                 })
                 .OrderByDescending(r => r.Enrolments.HasApprovedPending)
