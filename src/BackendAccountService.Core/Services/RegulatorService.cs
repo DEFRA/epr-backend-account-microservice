@@ -44,39 +44,74 @@ public class RegulatorService: IRegulatorService
 
     public async Task<PaginatedResponse<OrganisationEnrolments>> GetPendingApplicationsAsync(int nationId, int currentPage, int pageSize, string? organisationName, string applicationType)
     {
-        var companiesHouseList = _accountsDbContext.ComplianceSchemes.Where(x => x.NationId == nationId).Select(x=>x.CompaniesHouseNumber).ToList();
-        
-        var enrolments = _accountsDbContext.Enrolments.Where(
-            e => e.EnrolmentStatus.Id == EnrolmentStatus.Pending
-            && (e.Connection.Organisation.Nation.Id == nationId || (e.Connection.Organisation.IsComplianceScheme && companiesHouseList.Contains(e.Connection.Organisation.CompaniesHouseNumber)))
-            && (e.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ||e.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id)
-            && (string.IsNullOrWhiteSpace(organisationName) || e.Connection.Organisation.Name.ToLower().Contains(organisationName.ToLower())))
-            .AsNoTracking()
-            .GroupBy(e=> new { id = e.Connection.Organisation.ExternalId, name = e.Connection.Organisation.Name})
-            .Select(x=>new OrganisationEnrolments
-            {
-                OrganisationId = x.Key.id,
-                OrganisationName = x.Key.name,
-                LastUpdate = x.Min(s=> s.LastUpdatedOn.Date),
-                Enrolments = new()
+        // Gets list of pending applications
+        // Refactored to join ComplianceSchemes in same query instead of making a separated db call and passing list of companies house numbers as a parametere
+        // When the list has large amount of data, it can also cause issues
+        var enrolments =
+            _accountsDbContext.Enrolments
+                .Join(
+                    _accountsDbContext.Organisations,
+                    enrollment => enrollment.Connection.OrganisationId,
+                    org => org.Id,
+                    (enrollment, org) => new { enrollment, org }
+                )
+                .GroupJoin(
+                    _accountsDbContext.ComplianceSchemes,
+                    eo => eo.org.CompaniesHouseNumber,
+                    c => c.CompaniesHouseNumber,
+                    (eo, complianceJoin) => new { eo.enrollment, eo.org, complianceJoin }
+                )
+                .SelectMany(
+                    x => x.complianceJoin.DefaultIfEmpty(),
+                    (x, cj) => new { x.enrollment, x.org, cj }
+                )
+                .Where(x =>
+                    x.enrollment.EnrolmentStatus.Id == EnrolmentStatus.Pending &&
+                    (
+                        x.org.Nation.Id == nationId ||
+                        (x.org.IsComplianceScheme && x.cj.NationId == nationId)
+                    ) &&
+                    (
+                        x.enrollment.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ||
+                        x.enrollment.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id
+                    ) &&
+                    (
+                        string.IsNullOrWhiteSpace(organisationName) ||
+                        x.org.Name.ToLower().Contains(organisationName.ToLower())
+                    )
+                )
+                .GroupBy(x => new
                 {
-                    HasApprovedPending = x.Sum(s=>s.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ? 1:0) >0,
-                    HasDelegatePending = x.Sum(s=>s.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id ? 1:0) >0
-                }
-            }).OrderByDescending(x=>x.Enrolments.HasApprovedPending).ThenBy(x=>x.LastUpdate).ThenBy(x=>x.OrganisationName)
-            .AsQueryable();
+                    OrgId = x.org.ExternalId,
+                    OrgName = x.org.Name
+                })
+                .Select(g => new OrganisationEnrolments
+                {
+                    OrganisationId = g.Key.OrgId,
+                    OrganisationName = g.Key.OrgName,
+                    LastUpdate = g.Min(s => s.enrollment.LastUpdatedOn.Date),
+                    Enrolments = new()
+                    {
+                        HasApprovedPending = g.Sum(s => s.enrollment.ServiceRole.Id == ServiceRole.Packaging.ApprovedPerson.Id ? 1 : 0) > 0,
+                        HasDelegatePending = g.Sum(s => s.enrollment.ServiceRole.Id == ServiceRole.Packaging.DelegatedPerson.Id ? 1 : 0) > 0
+                    }
+                })
+                .OrderByDescending(r => r.Enrolments.HasApprovedPending)
+                .ThenBy(r => r.LastUpdate)
+                .ThenBy(r => r.OrganisationName);
+
+        var query = enrolments.AsNoTracking();
 
         if (applicationType.Equals(ServiceRoles.ApprovedPerson, StringComparison.CurrentCultureIgnoreCase))
         {
-            enrolments = enrolments.Where(e => e.Enrolments.HasApprovedPending).AsQueryable();
+            query = query.Where(e => e.Enrolments.HasApprovedPending);
         }
         else if (applicationType.Equals(ServiceRoles.DelegatedPerson, StringComparison.CurrentCultureIgnoreCase))
         {
-            enrolments = enrolments.Where(e => e.Enrolments.HasDelegatePending).AsQueryable();
+            query = query.Where(e => e.Enrolments.HasDelegatePending);
         }
 
-        return await PaginatedResponse<OrganisationEnrolments>.CreateAsync(enrolments,currentPage, pageSize);
-
+        return await PaginatedResponse<OrganisationEnrolments>.CreateAsync(query, currentPage, pageSize);
     }
 
     public async Task<(bool Succeeded, string ErrorMessage)> UpdateEnrolmentStatusForUserAsync(Guid userId,
