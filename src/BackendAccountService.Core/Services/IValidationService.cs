@@ -10,4 +10,8 @@ public interface IValidationService
     Task<bool> IsAuthorisedToManageDelegatedUsersFromOrganisationForService(Guid userId, Guid organisationId, string serviceKey);
     bool IsAuthorisedToRemoveEnrolledUser(Guid loggedInUserId, Guid organisationId, int serviceRoleId, Guid enrolledPersonId);
     Task<string> UserInvitedTokenAsync(Guid? userId);
+    Task<bool> IsAuthorisedToManageSubsidiaries(Guid userId, Guid organisationId, params int[] serviceRoles);
+    Task<bool> IsApprovedOrDelegatedUserInEprPackaging(Guid userId, Guid organisationId, string serviceKey);
+    Task<bool> IsBasicUserInEprPackaging(Guid userId, Guid organisationId, string serviceKey);
+    bool IsExternalIdExists(Guid externalId, string entityTypeCode);
 }

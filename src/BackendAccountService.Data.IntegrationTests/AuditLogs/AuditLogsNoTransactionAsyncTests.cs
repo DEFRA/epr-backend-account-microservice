@@ -10,7 +10,7 @@ namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
 [TestClass]
 public class AuditLogsNoTransactionAsyncTests : AuditLogsBaseTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
     private static DbContextOptions<AccountsDbContext> _options = null!;
 
     private new static readonly Enrolment Enrolment = CreateEnrolment();
@@ -18,7 +18,7 @@ public class AuditLogsNoTransactionAsyncTests : AuditLogsBaseTests
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
             .UseSqlServer(_database.ConnectionString!)
             .LogTo(message => Debug.WriteLine(message), LogLevel.Information)

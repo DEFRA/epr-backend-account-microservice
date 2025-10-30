@@ -1,15 +1,18 @@
 ﻿using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Models.Result;
+using BackendAccountService.Data.Entities;
 
-namespace BackendAccountService.Core.Services
+namespace BackendAccountService.Core.Services;
+
+public interface IPersonService
 {
-    public interface IPersonService
-    {
-        Task<PersonResponseModel?> GetPersonByUserIdAsync(Guid userId);
+    Task<Person?> GetPersonByUserId(Guid userId);
+
+    Task<PersonResponseModel?> GetPersonResponseByUserId(Guid userId);
+
+    Task<PersonResponseModel?> GetAllPersonByUserIdAsync(Guid userId);
+
+    Task<PersonResponseModel?> GetPersonByExternalIdAsync(Guid externalId);
         
-        Task<PersonResponseModel?> GetPersonByExternalIdAsync(Guid externalId);
-        
-        Task<InviteApprovedUserModel> GetPersonServiceRoleByInviteTokenAsync(string token);
-        
-    }
+    Task<InviteApprovedUserModel> GetPersonServiceRoleByInviteTokenAsync(string token);
 }

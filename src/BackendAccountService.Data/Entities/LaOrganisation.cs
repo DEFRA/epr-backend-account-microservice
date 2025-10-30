@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BackendAccountService.Data.Entities;
 
+[ExcludeFromCodeCoverage]
 public class LaOrganisation : IEditableEntity, ISoftDeletableEntity
 {
     public int Id { get; set; }

@@ -10,7 +10,7 @@ public static class ServiceRoleExtensions
         Dictionary<string, int> serviceRoleHierarchy;
         switch (serviceId)
         {
-            case Service.RegulatorEnrolement:
+            case Service.RegulatorEnrolment:
                 serviceRoleHierarchy = new Dictionary<string, int>
                 {
                     { ServiceRole.Regulator.Basic.Key, 1 },
@@ -27,14 +27,14 @@ public static class ServiceRoleExtensions
                 break;
         }
 
-        return roles.Where(r => serviceRoleHierarchy.Keys.Contains(r)).MaxBy(role => serviceRoleHierarchy[role]);
+        return roles.Where(r => serviceRoleHierarchy.ContainsKey(r)).MaxBy(role => serviceRoleHierarchy[role]);
     }
     
     public static string[] GetAuthorizedRolesToRemoveUser(string? highestServiceRole, int serviceId)
     {
         return (highestServiceRole, serviceId) switch
         {
-            (_, Service.RegulatorEnrolement) => new [] { ServiceRole.Regulator.Admin.Key },
+            (_, Service.RegulatorEnrolment) => new [] { ServiceRole.Regulator.Admin.Key },
             (DelegatedPerson.Key, _) => new[] { ApprovedPerson.Key },
             (BasicUser.Key, _) => new [] { ApprovedPerson.Key, DelegatedPerson.Key, BasicUser.Key },
             (ApprovedPerson.Key, _) => Array.Empty<string>(),

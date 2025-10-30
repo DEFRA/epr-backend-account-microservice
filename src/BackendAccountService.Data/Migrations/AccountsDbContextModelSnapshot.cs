@@ -17,10 +17,10 @@ namespace BackendAccountService.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.15")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.HasSequence<int>("OrganisationReferenceNumber")
                 .StartsAt(100001L);
@@ -31,7 +31,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -72,7 +72,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Changes")
                         .HasColumnType("nvarchar(max)");
@@ -117,13 +117,908 @@ namespace BackendAccountService.Data.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.ChangeHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ApprovedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ApproverComments")
+                        .HasMaxLength(180)
+                        .HasColumnType("nvarchar(180)");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<DateTimeOffset?>("DecisionDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("DeclarationDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrganisationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PersonId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApprovedById");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("OrganisationId");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("ChangeHistory");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.CodeClassificationLookup", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CodeClass")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("GroupType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.ToTable("CodeClassificationLookups");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            CodeClass = "Not Set",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Not Set",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            GroupType = "Not Set",
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        },
+                        new
+                        {
+                            Id = 1,
+                            CodeClass = "Joiner",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Joiner scenario",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            GroupType = "Entry",
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CodeClass = "Leaver",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Leaver scenario",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            GroupType = "Exit",
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        });
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.CodeScenarioMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CodeStatusConfigId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<int>("ScenarioReferenceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeStatusConfigId");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("ScenarioReferenceId");
+
+                    b.ToTable("CodeScenarioMapping");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Active = true,
+                            CodeStatusConfigId = 1,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Active = true,
+                            CodeStatusConfigId = 1,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Active = true,
+                            CodeStatusConfigId = 2,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Active = true,
+                            CodeStatusConfigId = 3,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Active = true,
+                            CodeStatusConfigId = 4,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 6
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Active = true,
+                            CodeStatusConfigId = 5,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 7
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Active = true,
+                            CodeStatusConfigId = 6,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 5
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Active = true,
+                            CodeStatusConfigId = 7,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 8
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Active = true,
+                            CodeStatusConfigId = 8,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 9
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Active = true,
+                            CodeStatusConfigId = 9,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 10
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Active = true,
+                            CodeStatusConfigId = 10,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 11
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Active = true,
+                            CodeStatusConfigId = 11,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 12
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Active = true,
+                            CodeStatusConfigId = 12,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 12
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Active = true,
+                            CodeStatusConfigId = 13,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 13
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Active = true,
+                            CodeStatusConfigId = 14,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 14
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Active = true,
+                            CodeStatusConfigId = 15,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 18
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Active = true,
+                            CodeStatusConfigId = 16,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 16
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Active = true,
+                            CodeStatusConfigId = 17,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 17
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Active = true,
+                            CodeStatusConfigId = 18,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 18
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Active = true,
+                            CodeStatusConfigId = 19,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 19
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Active = true,
+                            CodeStatusConfigId = 20,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 20
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Active = true,
+                            CodeStatusConfigId = 21,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ScenarioReferenceId = 21
+                        });
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.CodeStatusConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClassificationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("nvarchar(2)");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<bool?>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("LegacyCode")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
+
+                    b.Property<string>("MappedOldCodes")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MatchType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool?>("RequiresJoinerDate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("RequiresLeaverDate")
+                        .HasColumnType("bit");
+
+                    b.Property<bool?>("RequiresRegType")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClassificationId");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.ToTable("CodeStatusConfigs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ClassificationId = 1,
+                            Code = "01",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer who previously met thresholds has joined a group.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "A",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ClassificationId = 1,
+                            Code = "02",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer who did not previously meet thresholds has joined a group (% obligation).",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "B",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = true,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ClassificationId = 1,
+                            Code = "03",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer who did not previously meet thresholds has joined a group (% obligation).",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "C",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = true,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ClassificationId = 2,
+                            Code = "04",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer left group; HC responsible for obligations due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "D",
+                            MappedOldCodes = "C,D",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ClassificationId = 2,
+                            Code = "05",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer left group; HC responsible for obligations due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "E",
+                            MappedOldCodes = "C,D",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ClassificationId = 2,
+                            Code = "06",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer meets thresholds; HC still responsible post-MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "F",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ClassificationId = 1,
+                            Code = "07",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer joined group; HC not responsible due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "G",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ClassificationId = 2,
+                            Code = "08",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer left group; HC still responsible due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "H",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ClassificationId = 1,
+                            Code = "09",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer joined group; not obligated due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "I",
+                            MappedOldCodes = "None",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ClassificationId = 2,
+                            Code = "10",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer left group; HC still responsible due to MYC.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "J",
+                            MappedOldCodes = "J",
+                            MatchType = "Direct",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ClassificationId = 2,
+                            Code = "11",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "No longer obligated – insolvency event.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "K",
+                            MappedOldCodes = "A,B,H",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ClassificationId = 2,
+                            Code = "12",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Ceased performing producer function.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "L",
+                            MappedOldCodes = "L",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ClassificationId = 2,
+                            Code = "13",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer resigned from compliance scheme.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "M",
+                            MappedOldCodes = "E",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ClassificationId = 2,
+                            Code = "14",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "CS terminated producer’s membership.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "N",
+                            MappedOldCodes = "F",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ClassificationId = 1,
+                            Code = "15",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Became a producer due to mid-year change.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "O",
+                            MappedOldCodes = "None",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ClassificationId = 2,
+                            Code = "16",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Merged with another company – not incapacity related.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "P",
+                            MappedOldCodes = "I",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = true,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ClassificationId = 1,
+                            Code = "17",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Person becomes a producer as a result of carrying on the activities of an incapacitated producer.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "Q",
+                            MappedOldCodes = "A,B,H",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ClassificationId = 1,
+                            Code = "18",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer who meets thresholds independently has left group. Holding company remains responsible for obligation due to mid year change.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "",
+                            MappedOldCodes = "",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = true,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = false
+                        },
+                        new
+                        {
+                            Id = 19,
+                            ClassificationId = 1,
+                            Code = "19",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer registered late.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "",
+                            MappedOldCodes = "",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = true,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 20,
+                            ClassificationId = 1,
+                            Code = "20",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Other – Joiner.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "",
+                            MappedOldCodes = "",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        },
+                        new
+                        {
+                            Id = 21,
+                            ClassificationId = 2,
+                            Code = "21",
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Other - Leaver.",
+                            Enabled = true,
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            LegacyCode = "",
+                            MappedOldCodes = "",
+                            MatchType = "ManualReview",
+                            RequiresJoinerDate = false,
+                            RequiresLeaverDate = false,
+                            RequiresRegType = true
+                        });
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.ComplianceScheme", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompaniesHouseNumber")
                         .IsRequired()
@@ -899,7 +1794,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ComplianceSchemeId")
                         .HasColumnType("int");
@@ -939,7 +1834,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AuditLogId")
                         .HasColumnType("int");
@@ -962,7 +1857,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -1089,7 +1984,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ComplianceSchemeName")
                         .HasMaxLength(160)
@@ -1163,7 +2058,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ConnectionId")
                         .HasColumnType("int");
@@ -1220,7 +2115,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("APContact")
                         .HasColumnType("nvarchar(50)")
@@ -1491,7 +2386,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1524,6 +2419,104 @@ namespace BackendAccountService.Data.Migrations
                     b.ToTable("LaOrganisations");
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.LeaverCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
+
+                    b.Property<string>("ReasonsForLeaving")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LeaverCodes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Key = "",
+                            ReasonsForLeaving = "Not Set"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Key = "A",
+                            ReasonsForLeaving = "Administration/Receivership"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Key = "B",
+                            ReasonsForLeaving = "Liquidation/dissolution"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Key = "C",
+                            ReasonsForLeaving = "Dropped below turnover threshold"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Key = "D",
+                            ReasonsForLeaving = "Dropped below tonnage threshold"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Key = "E",
+                            ReasonsForLeaving = "Resignation (not incapacity related)"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Key = "F",
+                            ReasonsForLeaving = "Scheme has terminated membership (not incapacity related)"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Key = "G",
+                            ReasonsForLeaving = "Business closure (not incapacity related)"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Key = "H",
+                            ReasonsForLeaving = "Bankruptcy"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Key = "I",
+                            ReasonsForLeaving = "Merged with another company (not incapacity related)"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Key = "J",
+                            ReasonsForLeaving = "Now a subsidiary of another company (not incapacity related)"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Key = "K",
+                            ReasonsForLeaving = "Not ready to register by 15th April"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Key = "L",
+                            ReasonsForLeaving = "No longer obligated (Not threshold related)"
+                        });
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.Nation", b =>
                 {
                     b.Property<int>("Id")
@@ -1534,6 +2527,11 @@ namespace BackendAccountService.Data.Migrations
                         .HasMaxLength(54)
                         .HasColumnType("nvarchar(54)");
 
+                    b.Property<string>("NationCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.HasKey("Id");
 
                     b.ToTable("Nations");
@@ -1542,27 +2540,32 @@ namespace BackendAccountService.Data.Migrations
                         new
                         {
                             Id = 0,
-                            Name = "Not Set"
+                            Name = "Not Set",
+                            NationCode = ""
                         },
                         new
                         {
                             Id = 1,
-                            Name = "England"
+                            Name = "England",
+                            NationCode = "GB-ENG"
                         },
                         new
                         {
                             Id = 2,
-                            Name = "Northern Ireland"
+                            Name = "Northern Ireland",
+                            NationCode = "GB-NIR"
                         },
                         new
                         {
                             Id = 3,
-                            Name = "Scotland"
+                            Name = "Scotland",
+                            NationCode = "GB-SCT"
                         },
                         new
                         {
                             Id = 4,
-                            Name = "Wales"
+                            Name = "Wales",
+                            NationCode = "GB-WLS"
                         });
                 });
 
@@ -1572,7 +2575,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1631,7 +2634,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("BuildingName")
                         .HasMaxLength(100)
@@ -1800,7 +2803,10 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CodeStatusConfigId")
+                        .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -1809,6 +2815,9 @@ namespace BackendAccountService.Data.Migrations
 
                     b.Property<int>("FirstOrganisationId")
                         .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("JoinerDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int>("LastUpdatedById")
                         .HasColumnType("int");
@@ -1821,7 +2830,16 @@ namespace BackendAccountService.Data.Migrations
                         .HasColumnType("datetimeoffset")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
-                    b.Property<int>("OrganisationRegistrationTypeId")
+                    b.Property<int?>("LeaverCodeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("LeaverDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("OrganisationChangeReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("OrganisationRegistrationTypeId")
                         .HasColumnType("int");
 
                     b.Property<int>("OrganisationRelationshipTypeId")
@@ -1843,13 +2861,19 @@ namespace BackendAccountService.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CodeStatusConfigId");
+
                     b.HasIndex("FirstOrganisationId");
 
                     b.HasIndex("LastUpdatedById");
 
+                    b.HasIndex("LeaverCodeId");
+
                     b.HasIndex("OrganisationRegistrationTypeId");
 
                     b.HasIndex("OrganisationRelationshipTypeId");
+
+                    b.HasIndex("SecondOrganisationId");
 
                     b.ToTable("OrganisationRelationships");
                 });
@@ -1881,69 +2905,36 @@ namespace BackendAccountService.Data.Migrations
                         new
                         {
                             Id = 2,
-                            Name = "Holding"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Subsidary"
+                            Name = "Child"
                         });
                 });
 
-            modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationsConnection", b =>
+            modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationToPartnerRole", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTimeOffset>("CreatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<Guid>("ExternalId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasDefaultValueSql("NEWID()");
-
-                    b.Property<int>("FromOrganisationId")
+                    b.Property<int>("OrganisationId")
                         .HasColumnType("int");
 
-                    b.Property<int>("FromOrganisationRoleId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<DateTimeOffset>("LastUpdatedOn")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetimeoffset")
-                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
-
-                    b.Property<int>("ToOrganisationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ToOrganisationRoleId")
+                    b.Property<int>("PartnerRoleId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExternalId")
-                        .IsUnique();
+                    b.HasIndex("OrganisationId");
 
-                    b.HasIndex("FromOrganisationId");
+                    b.HasIndex("PartnerRoleId");
 
-                    b.HasIndex("FromOrganisationRoleId");
-
-                    b.HasIndex("ToOrganisationId");
-
-                    b.HasIndex("ToOrganisationRoleId");
-
-                    b.ToTable("OrganisationsConnections");
+                    b.ToTable("OrganisationToPartnerRoles");
                 });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationToPersonRole", b =>
@@ -2025,13 +3016,101 @@ namespace BackendAccountService.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationsConnection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<int>("FromOrganisationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FromOrganisationRoleId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<int>("ToOrganisationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToOrganisationRoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("FromOrganisationId");
+
+                    b.HasIndex("FromOrganisationRoleId");
+
+                    b.HasIndex("ToOrganisationId");
+
+                    b.HasIndex("ToOrganisationRoleId");
+
+                    b.ToTable("OrganisationsConnections");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.PartnerRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PartnerRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "Not Set"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "Individual Partner"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Corporate Partner"
+                        });
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.Person", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -2117,6 +3196,11 @@ namespace BackendAccountService.Data.Migrations
                         {
                             Id = 2,
                             Name = "Employee"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Member"
                         });
                 });
 
@@ -2126,7 +3210,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -2180,13 +3264,76 @@ namespace BackendAccountService.Data.Migrations
                     b.ToTable("PersonOrganisationConnections");
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.PersonOrganisationConnectionInvite", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<string>("InviteToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("InvitedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("InviteePersonId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<int>("OrganisationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("InvitedByUserId");
+
+                    b.HasIndex("InviteePersonId");
+
+                    b.HasIndex("OrganisationId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("PersonOrganisationConnectionInvites");
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.PersonsConnection", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -2280,6 +3427,16 @@ namespace BackendAccountService.Data.Migrations
                         {
                             Id = 5,
                             Name = "Other"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Limited partnership"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Limited Liability partnership"
                         });
                 });
 
@@ -2289,7 +3446,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<DateTimeOffset>("CreatedOn")
                         .ValueGeneratedOnAdd()
@@ -2341,13 +3498,317 @@ namespace BackendAccountService.Data.Migrations
                     b.ToTable("RegulatorComments");
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.ScenarioReference", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<Guid>("ExternalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValueSql("NEWID()");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("ObligationFlag")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ScenarioCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.ToTable("ScenarioReferences");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Not Set",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Set",
+                            ScenarioCode = "Not Set"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Threshold producer joins a group",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "1b"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Threshold producer joins a group",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "5b"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Below-threshold producer joins group (% obligation)",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "2a"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Below-threshold producer joins group (% obligation)",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "2b"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Meets thresholds but group responsible for obligation",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "3b"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Leaves group, holding company responsible",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "4a"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Leaves group, holding company responsible",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "4b"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Joined group mid-year, not obligated",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated",
+                            ScenarioCode = "5d"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Left group mid-year, HC still responsible",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "5d"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Joined group, not obligated",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated",
+                            ScenarioCode = "5c"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Left group, HC still responsible",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "5c"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer no longer obligated – insolvency or ceased function",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated – HC",
+                            ScenarioCode = "none"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Resigned from compliance scheme",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated – CS",
+                            ScenarioCode = "none"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Compliance scheme terminated membership",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated – CS",
+                            ScenarioCode = "none"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Merged with another company – non-incapacity, CS only",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated – CS",
+                            ScenarioCode = "none"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer data changed (e.g. acquisition of insolvent entity)",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "none"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer who meets thresholds independently has left group. Holding Company remains responsible for obligation due to Mid Year change",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated",
+                            ScenarioCode = "all"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Producer Registered late.",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "all"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Other - Joiner",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Obligated",
+                            ScenarioCode = "all"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Active = true,
+                            CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Description = "Other - Leaver",
+                            ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
+                            IsDeleted = false,
+                            LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            ObligationFlag = "Not Obligated",
+                            ScenarioCode = "all"
+                        });
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.SelectedScheme", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ComplianceSchemeId")
                         .HasColumnType("int");
@@ -2393,7 +3854,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
@@ -2434,6 +3895,13 @@ namespace BackendAccountService.Data.Migrations
                             Description = "Local Authority Payment Service",
                             Key = "LaPayment",
                             Name = "Local Authority Payment Service"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Description = "Extended Producer Responsibility For Packaging: Reprocessors And Exporters",
+                            Key = "ReprocessorExporter",
+                            Name = "EPR for packaging: reprocessors and exporters"
                         });
                 });
 
@@ -2443,7 +3911,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
@@ -2519,7 +3987,78 @@ namespace BackendAccountService.Data.Migrations
                             Key = "LaPayment.BasicUser",
                             Name = "Basic User",
                             ServiceId = 3
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Description = "Manage team, submit registration and accreditation",
+                            Key = "Re-Ex.ApprovedPerson",
+                            Name = "Approved Person",
+                            ServiceId = 4
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Key = "Re-Ex.DelegatedPerson",
+                            Name = "Delegated Person",
+                            ServiceId = 4
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Description = "Read only",
+                            Key = "Re-Ex.BasicUser",
+                            Name = "Basic User",
+                            ServiceId = 4
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Description = "Manage team, submit registration and accreditation",
+                            Key = "Re-Ex.AdminUser",
+                            Name = "Admin User",
+                            ServiceId = 4
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Description = "Submit registration and apply for accreditation",
+                            Key = "Re-Ex.StandardUser",
+                            Name = "Standard User",
+                            ServiceId = 4
                         });
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.SubsidiaryOrganisation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<DateTimeOffset>("LastUpdatedOn")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<int>("OrganisationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SubsidiaryId")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrganisationId");
+
+                    b.ToTable("SubsidiaryOrganisations");
                 });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.User", b =>
@@ -2528,7 +4067,7 @@ namespace BackendAccountService.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Email")
                         .HasMaxLength(254)
@@ -2579,6 +4118,61 @@ namespace BackendAccountService.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Enrolment");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.ChangeHistory", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.User", "ApprovedBy")
+                        .WithMany()
+                        .HasForeignKey("ApprovedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BackendAccountService.Data.Entities.Organisation", "Organisation")
+                        .WithMany()
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApprovedBy");
+
+                    b.Navigation("Organisation");
+
+                    b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.CodeScenarioMapping", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.CodeStatusConfig", "CodeStatusConfig")
+                        .WithMany()
+                        .HasForeignKey("CodeStatusConfigId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.ScenarioReference", "ScenarioReference")
+                        .WithMany()
+                        .HasForeignKey("ScenarioReferenceId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CodeStatusConfig");
+
+                    b.Navigation("ScenarioReference");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.CodeStatusConfig", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.CodeClassificationLookup", "CodeClassificationLookup")
+                        .WithMany()
+                        .HasForeignKey("ClassificationId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CodeClassificationLookup");
                 });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.ComplianceScheme", b =>
@@ -2728,6 +4322,11 @@ namespace BackendAccountService.Data.Migrations
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationRelationship", b =>
                 {
+                    b.HasOne("BackendAccountService.Data.Entities.CodeStatusConfig", "CodeStatusConfig")
+                        .WithMany()
+                        .HasForeignKey("CodeStatusConfigId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BackendAccountService.Data.Entities.Organisation", "FirstOrganisation")
                         .WithMany("OrganisationRelationships")
                         .HasForeignKey("FirstOrganisationId")
@@ -2740,11 +4339,15 @@ namespace BackendAccountService.Data.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("BackendAccountService.Data.Entities.LeaverCode", "LeaverCode")
+                        .WithMany()
+                        .HasForeignKey("LeaverCodeId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("BackendAccountService.Data.Entities.OrganisationRegistrationType", "OrganisationRegistrationType")
                         .WithMany()
                         .HasForeignKey("OrganisationRegistrationTypeId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("BackendAccountService.Data.Entities.OrganisationRelationshipType", "OrganisationRelationshipType")
                         .WithMany()
@@ -2752,13 +4355,44 @@ namespace BackendAccountService.Data.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("BackendAccountService.Data.Entities.Organisation", "SecondOrganisation")
+                        .WithMany()
+                        .HasForeignKey("SecondOrganisationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CodeStatusConfig");
+
                     b.Navigation("FirstOrganisation");
 
                     b.Navigation("LastUpdatedBy");
 
+                    b.Navigation("LeaverCode");
+
                     b.Navigation("OrganisationRegistrationType");
 
                     b.Navigation("OrganisationRelationshipType");
+
+                    b.Navigation("SecondOrganisation");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationToPartnerRole", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.Organisation", "Organisation")
+                        .WithMany()
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.PartnerRole", "PartnerRole")
+                        .WithMany()
+                        .HasForeignKey("PartnerRoleId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Organisation");
+
+                    b.Navigation("PartnerRole");
                 });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.OrganisationsConnection", b =>
@@ -2839,6 +4473,41 @@ namespace BackendAccountService.Data.Migrations
                     b.Navigation("Person");
 
                     b.Navigation("PersonRole");
+                });
+
+            modelBuilder.Entity("BackendAccountService.Data.Entities.PersonOrganisationConnectionInvite", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("InvitedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.Person", "Person")
+                        .WithMany()
+                        .HasForeignKey("InviteePersonId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.Organisation", "Organisation")
+                        .WithMany()
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("BackendAccountService.Data.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Organisation");
+
+                    b.Navigation("Person");
+
+                    b.Navigation("Service");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BackendAccountService.Data.Entities.PersonsConnection", b =>
@@ -2925,6 +4594,17 @@ namespace BackendAccountService.Data.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("BackendAccountService.Data.Entities.SubsidiaryOrganisation", b =>
+                {
+                    b.HasOne("BackendAccountService.Data.Entities.Organisation", "Organisation")
+                        .WithMany("SubsidiaryOrganisations")
+                        .HasForeignKey("OrganisationId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Organisation");
+                });
+
             modelBuilder.Entity("BackendAccountService.Data.Entities.Enrolment", b =>
                 {
                     b.Navigation("ApprovedPersonEnrolment");
@@ -2941,6 +4621,8 @@ namespace BackendAccountService.Data.Migrations
                     b.Navigation("OrganisationRelationships");
 
                     b.Navigation("PersonOrganisationConnections");
+
+                    b.Navigation("SubsidiaryOrganisations");
 
                     b.Navigation("ToOrganisationsConnections");
                 });

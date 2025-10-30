@@ -2,6 +2,7 @@ using System.Net;
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
+using BackendAccountService.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -35,8 +36,9 @@ public class AccountsManagementController : ApiControllerBase
     [HttpPost]
     [Consumes("application/json")]
     [Route("invite-user")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> InviteUser(AddInviteUserRequest request)
     {
         return await ExecuteProtectedAction(request.InvitingUser.UserId, request.InvitedUser.OrganisationId,
@@ -103,8 +105,9 @@ public class AccountsManagementController : ApiControllerBase
     [HttpPost]
     [Consumes("application/json")]
     [Route("enrol-invited-user")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> EnrolInvitedUser(EnrolInvitedUserRequest request)
     {
         if (!ModelState.IsValid)
@@ -115,16 +118,16 @@ public class AccountsManagementController : ApiControllerBase
         var user = await _userService.GetUserByInviteAsync(request.Email, request.InviteToken);
         if (user == null)
         {
-            _logger.LogError($"Invite not found for user {request.UserId}");
-            return Problem("Invite not found", statusCode: (int)HttpStatusCode.BadRequest);
+            _logger.LogError("Invite not found for user {UserId}", request.UserId);
+            return Problem("Invite not found", statusCode: (int)HttpStatusCode.NoContent);
         }
 
         var success = await _accountManagementService.EnrolInvitedUserAsync(user, request);
 
         if (!success)
         {
-            _logger.LogError($"No pending enrolments to update for user {request.UserId}");
-            return Problem("No pending enrolments to update", statusCode: (int)HttpStatusCode.BadRequest);
+            _logger.LogError("No pending enrolments to update for user {UserId}", request.UserId);
+            return Problem("No pending enrolments to update", statusCode: (int)HttpStatusCode.NoContent);
         }
 
         return NoContent();
@@ -136,7 +139,7 @@ public class AccountsManagementController : ApiControllerBase
 
         if (!isUserAuthorised)
         {
-            _logger.LogError($"User {userId} unauthorised to perform an action on behalf of organisation {organisationId}.");
+            _logger.LogError("User {UserId} unauthorised to perform an action on behalf of organisation {OrganisationId}.", userId, organisationId);
             return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 

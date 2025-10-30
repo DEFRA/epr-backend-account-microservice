@@ -1,8 +1,11 @@
-﻿using System.Text.Json.Serialization;
-using BackendAccountService.Api.Configuration;
+﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Services;
+using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
+using BackendAccountService.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 namespace BackendAccountService.Api.Extensions;
 
@@ -21,7 +24,11 @@ public static class ServiceProviderExtensions
 
     public static IServiceCollection RegisterDataComponents(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<AccountsDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("AccountsDatabase")));
+        services.AddDbContext<AccountsDbContext>(options =>
+            options
+                .UseSqlServer(configuration.GetConnectionString("AccountsDatabase"))
+                .UseRecompileExtensions());
+
         return services;
     }
 
@@ -57,6 +64,7 @@ public static class ServiceProviderExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IOrganisationService, OrganisationService>();
         services.AddScoped<IPersonService, PersonService>();
+        services.AddScoped<IPartnerService, PartnerService>();
         services.AddSingleton<ITokenService, TokenService>();
         services.AddScoped<IValidationService, ValidationService>();
         services.AddScoped<IAccountManagementService, AccountManagementService>();
@@ -66,5 +74,8 @@ public static class ServiceProviderExtensions
         services.AddScoped<IRegulatorService, RegulatorService>();
         services.AddScoped<INotificationsService, NotificationsService>();
         services.AddScoped<IRegulatorOrganisationService, RegulatorOrganisationService>();
+        services.AddScoped<IReprocessorExporterService, ReprocessorExporterService>();
+        services.AddScoped<IReprocessorExporterRepository, ReprocessorExporterRepository>();
+        services.AddScoped<IReExEnrolmentMaps, ReExEnrolmentMaps>();
     }
 }

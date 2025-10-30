@@ -8,4 +8,7 @@ public class Nation
 
     [MaxLength(54)]
     public string Name { get; set; }
+
+    [MaxLength(10)]
+    public string NationCode { get; set; }
 }

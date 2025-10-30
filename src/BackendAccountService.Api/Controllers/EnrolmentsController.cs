@@ -28,6 +28,7 @@ public class EnrolmentsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RemoveEnrolment(
         [FromRoute, NotDefault] Guid personExternalId,
         [FromQuery, Required, NotDefault] Guid userId, 
@@ -50,5 +51,24 @@ public class EnrolmentsController : ApiControllerBase
         return succeeded
             ? NoContent()
             : Problem(statusCode: StatusCodes.Status500InternalServerError, type: "failed to remove person");
+    }
+    
+    [HttpDelete("v1/{personExternalId}")]
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> RemovePersonConnectionAndEnrolment(
+        [FromRoute, NotDefault] Guid personExternalId,
+        [FromQuery, Required, NotDefault] Guid userId,
+        [FromQuery, Required, NotDefault] Guid organisationId,
+        [FromQuery, Required] int enrolmentId)
+    {
+        var succeeded = await _enrolmentsService.DeletePersonOrgConnectionOrEnrolmentAsync(
+            userId, personExternalId, organisationId, enrolmentId);
+
+        return succeeded
+            ? NoContent()
+            : Problem(statusCode: StatusCodes.Status500InternalServerError, type: "failed-to-remove-enrolment");
     }
 }

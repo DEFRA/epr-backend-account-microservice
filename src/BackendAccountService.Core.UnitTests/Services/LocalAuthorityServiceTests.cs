@@ -1,5 +1,4 @@
-﻿using System.Data;
-using System.Net;
+﻿using System.Net;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Models.Result;

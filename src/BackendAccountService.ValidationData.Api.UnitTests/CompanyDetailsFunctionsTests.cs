@@ -219,8 +219,8 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetailsAsProducer(
-                   It.IsAny<OrganisationReferencesRequest>()
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
                    )).ThrowsAsync(new Exception(exceptionErrorMessage));
 
         var problem = new ProblemDetails
@@ -231,12 +231,7 @@ public class CompanyDetailsFunctionsTests
             Type = "Exception"
         };
 
-        var organisationReferencesRequest = new OrganisationReferencesRequest
-        {
-            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
-            OrganisationExternalId = string.Empty
-        };
-        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
+        var jsonPayload = JsonSerializer.Serialize(referenceNumbers.ReferenceNumbers);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);
@@ -282,16 +277,11 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetailsAsProducer(
-                   It.IsAny<OrganisationReferencesRequest>()
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
                    )).ReturnsAsync(organisationsResult);
 
-        var organisationReferencesRequest = new OrganisationReferencesRequest
-        {
-            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
-            OrganisationExternalId = string.Empty
-        };
-        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
+        var jsonPayload = JsonSerializer.Serialize(referenceNumbers.ReferenceNumbers);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);
@@ -326,16 +316,11 @@ public class CompanyDetailsFunctionsTests
 
         _companyDetailsServiceMock
            .Setup(service => service
-               .GetAllProducersCompanyDetailsAsProducer(
-                   It.IsAny<OrganisationReferencesRequest>()
+               .GetAllProducersCompanyDetails(
+                   It.IsAny<IEnumerable<string>>()
                    )).ReturnsAsync(default(CompanyDetailsResponse));
 
-        var organisationReferencesRequest = new OrganisationReferencesRequest
-        {
-            ReferenceNumbers = referenceNumbers.ReferenceNumbers,
-            OrganisationExternalId = string.Empty
-        };
-        var jsonPayload = JsonSerializer.Serialize(organisationReferencesRequest);
+        var jsonPayload = JsonSerializer.Serialize(referenceNumbers.ReferenceNumbers);
         var requestBodyBytes = Encoding.UTF8.GetBytes(jsonPayload);
         var requestBodyStream = new MemoryStream(requestBodyBytes);
         requestMock.Setup(req => req.Body).Returns(requestBodyStream);

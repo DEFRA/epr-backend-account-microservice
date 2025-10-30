@@ -19,7 +19,7 @@ public class AccountManagementServiceTests
     private AccountManagementService _sut = null!;
     private readonly NullLogger<AccountManagementService> _logger = new();
     private TokenService _tokenService = null!;
-    private IEnrolmentsService _enrolmentsService = null!;
+    private EnrolmentsService _enrolmentsService = null!;
     private readonly Guid _existingOrgId = new Guid("00000000-0000-0000-0000-000000000001");
     
     private DbContextOptions<AccountsDbContext> _dbContextOptions = null!;

@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BackendAccountService.Data.Entities;
 
+[ExcludeFromCodeCoverage]
 public class PersonsConnection : DataEntity
 {
     public int Id { get; set; }

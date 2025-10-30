@@ -8,4 +8,6 @@ public static class ProducerType
     public const int NonUkOrganisation = 3;
     public const int SoleTrader = 4;
     public const int Other = 5;
+    public const int LimitedPartnership = 6;
+    public const int LimitedLiabilityPartnership = 7;
 }

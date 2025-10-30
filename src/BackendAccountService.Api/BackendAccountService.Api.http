@@ -1,0 +1,53 @@
+﻿# This file contains HTTP requests for testing the Reprocessor Exporter Accounts API.
+
+#set your userId here
+@userId = 4A0C95C5-484C-481C-A34A-405DB7AC3C92
+@BackendAccountService.Api_HostAddress = http://localhost:5000
+
+### AddOrganisation - No partners, single invited approved user
+POST {{BackendAccountService.Api_HostAddress}}/api/v1/reprocessor-exporter-accounts?serviceKey=ReprocessorExporter
+Content-Type: application/json
+X-EPR-User: {{userId}}
+
+{
+  "user": {
+    "isApprovedUser": false,
+    "jobTitle": "Director",
+    "userId": "{{userId}}"
+  },
+  "organisation": {
+    "address": {
+      "subBuildingName": "SubBuildingName(1)",
+      "buildingName": "BuildingName(1)",
+      "buildingNumber": "BuildingNumber(1)",
+      "street": "Street(1)",
+      "locality": "Locality(1)",
+      "dependentLocality": "DependentLocality(1)",
+      "county": "County(1)",
+      "country": "Country(1)",
+      "postcode": "PC(1)",
+      "town": "Town(1)"
+    },
+    "companiesHouseNumber": null,
+    "name": "Name(1)",
+    "tradingName": "TradingName(1)",
+    "organisationType": 2,
+    "nation": 1,
+    "isComplianceScheme": false
+  },
+  "partners": [],
+  "invitedApprovedUsers": [
+    {
+      "person": {
+        "contactEmail": "juan.kerr@example.com",
+        "firstName": "Juan",
+        "lastName": "Kerr",
+        "telephoneNumber": "01234567890"
+      },
+      "jobTitle": "Manager"
+    }
+  ],
+  "declarationTimeStamp": "2024-06-25T12:00:00Z"
+}
+
+###

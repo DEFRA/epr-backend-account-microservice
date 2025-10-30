@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BackendAccountService.Core.Models.Responses;
 
+[ExcludeFromCodeCoverage]
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 public class ConnectionWithEnrolmentsResponse
 {
@@ -8,6 +11,7 @@ public class ConnectionWithEnrolmentsResponse
     public ICollection<EnrolmentsFromConnectionResponse> Enrolments { get; init; }
 }
 
+[ExcludeFromCodeCoverage]
 public class EnrolmentsFromConnectionResponse
 {
     public string ServiceRoleKey { get; set; }

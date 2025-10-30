@@ -14,6 +14,7 @@ public static class EnrolmentsTestHelper
 
         var organisation1 = setupContext.AddOrganisation("organisation1");
         var organisation2 = setupContext.AddOrganisation("organisation2");
+        var organisation3 = setupContext.AddRegulatorOrganisation("organisation3");
         
         // setup basic users
         setupContext.AddUserToOrganisation(organisation1, "basicuser1@test.com", "Basic", "User1", PersonRole.Employee, Data.DbConstants.ServiceRole.Packaging.BasicUser.Id);
@@ -33,6 +34,8 @@ public static class EnrolmentsTestHelper
         
         // setup basic user from another org
         setupContext.AddUserToOrganisation(organisation2, "basicuseranotherorg@test.com", "Basic", "UserOtherOrg", PersonRole.Employee, Data.DbConstants.ServiceRole.Packaging.BasicUser.Id);
+        
+        setupContext.AddUserToOrganisation(organisation3, "regulatoruser@test.com", "Basic", "UserOtherOrg", PersonRole.Employee, Data.DbConstants.ServiceRole.Regulator.Basic.Id, Data.DbConstants.EnrolmentStatus.Invited);
         
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
@@ -71,27 +74,29 @@ public static class EnrolmentsTestHelper
     }
 
     private static void AddUserToOrganisation(this AccountsDbContext setupContext, Organisation organisation, string email, 
-        string firstName, string lastName, int personRoleId, int serviceRoleId)
+        string firstName, string lastName, int personRoleId, int serviceRoleId, int enrolmentStatus = Data.DbConstants.EnrolmentStatus.Pending)
     {
         var user = setupContext.AddUser(email);
         var person = setupContext.AddPerson(user,firstName, lastName);
         var connection = setupContext.AddPersonOrganisationConnection(person, organisation, personRoleId);
-        var enrolment = setupContext.AddEnrolment(connection, serviceRoleId);
+        var enrolment = setupContext.AddEnrolment(connection, serviceRoleId, enrolmentStatus);
     }
     
-    private static Enrolment AddEnrolment(this AccountsDbContext setupContext, PersonOrganisationConnection personOrganisationConnection, int serviceRoleId)
+    private static Enrolment AddEnrolment(this AccountsDbContext setupContext, PersonOrganisationConnection personOrganisationConnection, int serviceRoleId, int enrolmentStatus)
     {
         var enrolment = new Enrolment
         {
             Connection = personOrganisationConnection,
             ServiceRoleId = serviceRoleId,
-            EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Pending,
-            IsDeleted = false
+            EnrolmentStatusId = enrolmentStatus,
+            IsDeleted = false,
         };
         setupContext.Enrolments.Add(enrolment);
 
         return enrolment;
     }
+    
+   
 
     private static PersonOrganisationConnection AddPersonOrganisationConnection(
         this AccountsDbContext setupContext, 
@@ -118,7 +123,8 @@ public static class EnrolmentsTestHelper
         {
             UserId = Guid.NewGuid(),
             Email = email,
-            IsDeleted = false
+            IsDeleted = false,
+            InviteToken = $"{email}InviteToken"
         };
         setupContext.Users.Add(user);
 
@@ -147,6 +153,19 @@ public static class EnrolmentsTestHelper
         {
             Name = name,
             OrganisationTypeId = 1,
+            ExternalId =  Guid.NewGuid()
+        };
+        setupContext.Organisations.Add(organisation);
+
+        return organisation;
+    }
+    
+    private static Organisation AddRegulatorOrganisation(this AccountsDbContext setupContext, string name)
+    {
+        var organisation = new Organisation
+        {
+            Name = name,
+            OrganisationTypeId = Data.DbConstants.OrganisationType.Regulators,
             ExternalId =  Guid.NewGuid()
         };
         setupContext.Organisations.Add(organisation);

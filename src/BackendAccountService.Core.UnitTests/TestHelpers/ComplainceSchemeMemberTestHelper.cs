@@ -116,7 +116,70 @@ public static class ComplainceSchemeMemberTestHelper
             ExternalId = new Guid("44444444-0000-0000-0000-000000000001")
         };
         setupContext.SelectedSchemes.Add(selectedScheme2);
-        
+
+
+        var relationshipType = new OrganisationRelationshipType
+        {
+            Id = 10007,
+            Name = "Subsidiary"
+        };
+
+        setupContext.OrganisationRelationshipTypes.Add(relationshipType);
+
+        var parentOrganisation = new Organisation
+        {
+            Name = "Parent Organisation",
+            OrganisationTypeId = Data.DbConstants.OrganisationType.CompaniesHouseCompany,
+            ExternalId = new Guid("55555555-0000-0000-0000-000000000001"),
+            IsComplianceScheme = false,
+            ReferenceNumber = "199999",
+            NationId = 1
+        };
+        setupContext.Organisations.Add(parentOrganisation);
+
+
+        var childOrganisationWithData = new Organisation
+        {
+            Name = "Org Relationship Child 1",
+            OrganisationTypeId = Data.DbConstants.OrganisationType.CompaniesHouseCompany,
+            ExternalId = new Guid("66666666-0000-0000-0000-000000000002"),
+            IsComplianceScheme = false,
+            ReferenceNumber = "200000",
+            NationId = 1
+        };
+
+        var childOrganisationWithNulls = new Organisation
+        {
+            Name = "Org With Null Fields",
+            OrganisationTypeId = Data.DbConstants.OrganisationType.CompaniesHouseCompany,
+            ExternalId = new Guid("77777777-0000-0000-0000-000000000003"),
+            IsComplianceScheme = false,
+            ReferenceNumber = "200001",
+            NationId = 1
+        };
+
+        setupContext.Organisations.Add(childOrganisationWithData);
+        setupContext.Organisations.Add(childOrganisationWithNulls);
+
+
+        var relationshipWithData = new OrganisationRelationship
+        {
+            FirstOrganisationId = parentOrganisation.Id,
+            SecondOrganisationId = childOrganisationWithData.Id,
+            OrganisationRelationshipTypeId = relationshipType.Id,
+            JoinerDate = DateTime.UtcNow
+        };
+
+        var relationshipWithNulls = new OrganisationRelationship
+        {
+            FirstOrganisationId = parentOrganisation.Id,
+            SecondOrganisationId = childOrganisationWithNulls.Id,
+            OrganisationRelationshipTypeId = relationshipType.Id,
+            JoinerDate = null
+        };
+
+        setupContext.OrganisationRelationships.Add(relationshipWithData);
+        setupContext.OrganisationRelationships.Add(relationshipWithNulls);
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
 }

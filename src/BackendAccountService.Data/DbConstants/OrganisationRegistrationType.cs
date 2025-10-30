@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-
-namespace BackendAccountService.Data.DbConstants;
+﻿namespace BackendAccountService.Data.DbConstants;
 
 public static class OrganisationRegistrationType
 {

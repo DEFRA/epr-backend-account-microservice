@@ -1,8 +1,8 @@
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -11,7 +11,7 @@ namespace BackendAccountService.Core.UnitTests.Services;
 [TestClass]
 public class OrganisationServiceSearchTests
 {
-    private AccountsDbContext _accountContext= null!;
+    private AccountsDbContext _accountContext = null!;
     private OrganisationService _organisationService = null!;
 
     [TestInitialize]
@@ -23,7 +23,8 @@ public class OrganisationServiceSearchTests
             .Options;
 
         _accountContext = new AccountsDbContext(contextOptions);
-        _organisationService = new OrganisationService(_accountContext);
+        _organisationService = new OrganisationService(
+            _accountContext);
     }
 
     [TestMethod]
@@ -37,12 +38,12 @@ public class OrganisationServiceSearchTests
         var organisation = CreateOrganisation();
         organisation.Name = "Test organisation 1";
         organisation.ReferenceNumber = "ReferenceNumber1";
-        
+
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-        _accountContext.Add(complianceScheme);
-        _accountContext.Add(organisation);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 1, 1);
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
@@ -52,18 +53,18 @@ public class OrganisationServiceSearchTests
     public async Task WhenGetOrganisationsBySearchTermForPage1_ThenReturnCorrectValues()
     {
         var query = "Test org";
-        foreach (var orgName in new [] {"Test org 1", "Test org 2", "Test org 3"})
+        foreach (var orgName in new[] { "Test org 1", "Test org 2", "Test org 3" })
         {
             var organisation = CreateOrganisation();
             organisation.Name = orgName;
             var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-            
-            _accountContext.Add(organisation);
-            _accountContext.Add(complianceScheme);
+
+            await _accountContext.AddAsync(organisation);
+            await _accountContext.AddAsync(complianceScheme);
         }
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
         results.Items.Count.Should().Be(3);
         results.Items.Should().Contain(item => item.OrganisationName == "Test org 1");
@@ -75,18 +76,18 @@ public class OrganisationServiceSearchTests
     public async Task WhenGetOrganisationsBySearchTermForPage2_ThenReturnCorrectValues()
     {
         var query = "Test org";
-        foreach (var orgName in new [] {"Test org 1", "Test org 2", "Test org 3", "Test org 4"})
+        foreach (var orgName in new[] { "Test org 1", "Test org 2", "Test org 3", "Test org 4" })
         {
             var organisation = CreateOrganisation();
             organisation.Name = orgName;
             var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-            
-            _accountContext.Add(organisation);
-            _accountContext.Add(complianceScheme);
+
+            await _accountContext.AddAsync(organisation);
+            await _accountContext.AddAsync(complianceScheme);
         }
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 2);
         results.Items.Count.Should().Be(1);
         results.Items.Should().Contain(item => item.OrganisationName == "Test org 4");
@@ -97,13 +98,13 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         organisation.IsDeleted = true;
-        
+
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-            
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
         results.Items.Count.Should().Be(0);
@@ -114,11 +115,11 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.Scotland, 2, 1);
         results.Items.Count.Should().Be(0);
@@ -129,14 +130,14 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
-        
+
         organisation.IsComplianceScheme = true;
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
         results.Items.Count.Should().Be(1);
@@ -166,11 +167,11 @@ public class OrganisationServiceSearchTests
 
         organisationOne.IsComplianceScheme = true;
 
-        _accountContext.Add(complianceScheme);
-        _accountContext.Add(organisationsConnections);
-        _accountContext.Add(selectedSchemes);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.AddAsync(organisationsConnections);
+        await _accountContext.AddAsync(selectedSchemes);
 
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
 
         var query = organisationTwo.Name;
 
@@ -183,19 +184,19 @@ public class OrganisationServiceSearchTests
         AddAssert(results.Items[0], organisationTwo);
     }
 
-    private IEnumerable<Nation> CreateNations()
+    private static List<Data.Entities.Nation> CreateNations()
     {
-        return new List<Nation>()
+        return new List<Data.Entities.Nation>
         {
-            new Nation() { Id = 0, Name = "Not Set" },
-            new Nation() { Id = 1, Name = "England" },
-            new Nation() { Id = 2, Name = "Northern Ireland" },
-            new Nation() { Id = 3, Name = "Scotland" },
-            new Nation() { Id = 4, Name = "Wales" }
+            new() { Id = 0, Name = "Not Set", NationCode = "" },
+            new() { Id = 1, Name = "England", NationCode = "GB-ENG" },
+            new() { Id = 2, Name = "Northern Ireland", NationCode = "GB-NIR" },
+            new() { Id = 3, Name = "Scotland", NationCode = "GB-SCT" },
+            new() { Id = 4, Name = "Wales", NationCode = "GB-WLS" }
         };
     }
 
-    private SelectedScheme CreateSelectedSchemes(int organisationConnectionId, int complianceSchemeId, Guid externalId)
+    private static SelectedScheme CreateSelectedSchemes(int organisationConnectionId, int complianceSchemeId, Guid externalId)
     {
         return new SelectedScheme
         {
@@ -205,14 +206,14 @@ public class OrganisationServiceSearchTests
         };
     }
 
-    private OrganisationsConnection CreateOrganisationsConnections(int fromOrganisationId, int fromOrganisationRoleId, int toOrganisationId, int toOrganisationRoleId, Guid externalId)
+    private static OrganisationsConnection CreateOrganisationsConnections(int fromOrganisationId, int fromOrganisationRoleId, int toOrganisationId, int toOrganisationRoleId, Guid externalId)
     {
         return new OrganisationsConnection
         {
             FromOrganisationId = fromOrganisationId,
             FromOrganisationRoleId = fromOrganisationRoleId,
             ToOrganisationId = toOrganisationId,
-            ToOrganisationRoleId=toOrganisationRoleId,
+            ToOrganisationRoleId = toOrganisationRoleId,
             ExternalId = externalId
         };
     }
@@ -223,15 +224,15 @@ public class OrganisationServiceSearchTests
         var organisation = CreateOrganisation();
         organisation.OrganisationTypeId = Data.DbConstants.OrganisationType.Regulators;
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.ReferenceNumber;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
-        
+
         results.Items.Count.Should().Be(0);
     }
 
@@ -240,17 +241,17 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
+
         organisation.OrganisationTypeId = Data.DbConstants.OrganisationType.Regulators;
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
-        
+
         results.Items.Count.Should().Be(0);
     }
 
@@ -259,18 +260,18 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
+
         organisation.Name = "org with null reference number";
         organisation.ReferenceNumber = null;
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
-        
+
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
     }
@@ -280,14 +281,14 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
+
         organisation.Name = "Case Insensitive Test Organisation";
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = "cASE iNSENSITIVE tEST oRGANISATION";
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
 
@@ -300,85 +301,171 @@ public class OrganisationServiceSearchTests
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland, true);
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
-        
+
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
-        
+
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
     }
-    
+
     [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermWhichHasMismatchedNationIdButMatchingNationIdInComplianceScheme_ThenReturnsCorrectData()
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
+
         organisation.NationId = Data.DbConstants.Nation.NorthernIreland;
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.Scotland, 3, 1);
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
     }
-    
+
     [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermWhichIsDeletedOrg_HaveMatchingComplianceScheme_ThenReturnsNoData()
     {
         var organisation = CreateOrganisation();
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-        
+
         organisation.IsDeleted = true;
-        
-        _accountContext.Add(organisation);
-        _accountContext.Add(complianceScheme);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.Scotland, 3, 1);
         results.Items.Count.Should().Be(0);
     }
+
+    [TestMethod]
+    public async Task WhenGetOrganisationsBySearchTermWhichIsComplianceSchemeMember_ThenReturnsIndirectOrgType()
+    {
+        var orgName = "Test Org";
+        var organisation = CreateOrganisation();
+        var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
+        var organisationsConnections = CreateOrganisationsConnections(fromOrganisationId: 1, fromOrganisationRoleId: 2, toOrganisationId: 1, toOrganisationRoleId: 1, externalId: Guid.NewGuid());
+
+        organisation.Name = orgName;
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.AddAsync(organisationsConnections);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var results = await _organisationService.GetOrganisationsBySearchTerm(orgName, Data.DbConstants.Nation.England, 3, 1);
+
+        results.Items.FirstOrDefault().OrganisationType.Should().Be(OrganisationSchemeType.InDirectProducer.ToString());
+        AddAssert(results.Items[0], organisation);
+    }
+
+    [TestMethod]
+    public async Task WhenGetOrganisationsBySearchTermWhichIsSubsidiaryOfAComplianceSchemeMember_ThenReturnsIndirectOrgType()
+    {
+        var orgName = "Test Org";
+        var organisation = CreateOrganisation();
+        var org2 = CreateOrganisation();
+        var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
+        var organisationsConnections = CreateOrganisationsConnections(fromOrganisationId: 1, fromOrganisationRoleId: 2, toOrganisationId: 1, toOrganisationRoleId: 1, externalId: Guid.NewGuid());
+        var organisationRelationShip = new OrganisationRelationship { FirstOrganisationId = 1, SecondOrganisationId = 2 };
+
+        org2.Name = orgName;
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(org2);
+        await _accountContext.AddAsync(complianceScheme);
+        await _accountContext.AddAsync(organisationsConnections);
+        await _accountContext.AddAsync(organisationRelationShip);
     
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var results = await _organisationService.GetOrganisationsBySearchTerm(orgName, Data.DbConstants.Nation.England, 3, 1);
+
+        results.Items.FirstOrDefault().OrganisationType.Should().Be(OrganisationSchemeType.InDirectProducer.ToString());
+    }
+
+    [TestMethod]
+    public async Task WhenGetOrganisationsBySearchTermIsNotComplianceSchemeMember_ThenReturnsDirectOrgType()
+    {
+        var orgName = "Test Org";
+        var organisation = CreateOrganisation();
+
+        await _accountContext.AddAsync(organisation);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var results = await _organisationService.GetOrganisationsBySearchTerm(orgName, Data.DbConstants.Nation.England, 3, 1);
+
+        results.Items.FirstOrDefault().OrganisationType.Should().Be(OrganisationSchemeType.DirectProducer.ToString());
+    }
+
+    [TestMethod]
+    public async Task WhenGetOrganisationsBySearchTermIsSubsidiaryOfDirectProducer_ThenReturnsDirectOrgType()
+    {
+        var orgName = "Test Org";
+        var organisation = CreateOrganisation();
+        var organisationRelationShip = new OrganisationRelationship { FirstOrganisationId = 1, SecondOrganisationId = 1 };
+
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.AddAsync(organisationRelationShip);
+
+        _ = await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var results = await _organisationService.GetOrganisationsBySearchTerm(orgName, Data.DbConstants.Nation.England, 3, 1);
+
+        results.Items.FirstOrDefault().OrganisationType.Should().Be(OrganisationSchemeType.DirectProducer.ToString());
+    }
+
     [TestMethod]
     public async Task WhenGetOrganisationsByOrgNameSearchTermWhichHasNoComplianceScheme_HaveMatchingOrgNationId_ThenReturnsCorrectData()
     {
         var organisation = CreateOrganisation();
         organisation.NationId = Data.DbConstants.Nation.Wales;
-        
-        _accountContext.Add(organisation);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.Name;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.Wales, 3, 1);
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
     }
-    
+
     [TestMethod]
     public async Task WhenGetOrganisationsByReferenceNumberSearchTermWhichHasNoComplianceScheme_HaveMatchingOrgNationId_ThenReturnsCorrectData()
     {
         var organisation = CreateOrganisation();
         organisation.NationId = Data.DbConstants.Nation.Wales;
-        
-        _accountContext.Add(organisation);
-        _accountContext.SaveChanges(Guid.Empty, Guid.Empty);
-        
+
+        await _accountContext.AddAsync(organisation);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
         var query = organisation.ReferenceNumber;
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.Wales, 3, 1);
         results.Items.Count.Should().Be(1);
         AddAssert(results.Items[0], organisation);
     }
 
-    private Organisation CreateOrganisation(int? nationId = Data.DbConstants.Nation.England)
+    private static Organisation CreateOrganisation(int? nationId = Data.DbConstants.Nation.England)
     {
         return new Organisation
         {
@@ -401,23 +488,23 @@ public class OrganisationServiceSearchTests
             Postcode = "BT44 5QW",
             Country = "Country 8",
             NationId = nationId,
-            IsDeleted= false,
+            IsDeleted = false,
         };
     }
 
-    private ComplianceScheme CreateComplianceScheme(string companiesHouseNumber, int? nationId, bool isDeleted = false)
+    private static ComplianceScheme CreateComplianceScheme(string companiesHouseNumber, int? nationId, bool isDeleted = false)
     {
         return new ComplianceScheme
         {
-            CompaniesHouseNumber = companiesHouseNumber, 
+            CompaniesHouseNumber = companiesHouseNumber,
             NationId = nationId,
-            Name = $"Some name {Guid.NewGuid().ToString()}", 
-            IsDeleted = isDeleted, 
+            Name = $"Some name {Guid.NewGuid()}",
+            IsDeleted = isDeleted,
             ExternalId = Guid.NewGuid()
         };
     }
-    
-    private void AddAssert(OrganisationSearchResult actual, Organisation expected)
+
+    private static void AddAssert(OrganisationSearchResult actual, Organisation expected)
     {
         actual.OrganisationId.Should().Be(expected.ReferenceNumber);
         actual.CompanyHouseNumber.Should().Be(expected.CompaniesHouseNumber);

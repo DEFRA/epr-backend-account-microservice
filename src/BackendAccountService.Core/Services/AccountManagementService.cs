@@ -53,7 +53,7 @@ public class AccountManagementService : IAccountManagementService
                 && enrolment.Connection.Person.Id == user.Person.Id)
             .ToListAsync();
 
-        if (!enrolments.Any())
+        if (enrolments.Count == 0)
         {
             return false;
         }
@@ -68,12 +68,12 @@ public class AccountManagementService : IAccountManagementService
         bool isValid = Validator.TryValidateObject(user.Person, validationContext, validationResults, true);
         if (!isValid)
         {
-            throw new ValidationException(validationResults.First().ErrorMessage);
+            throw new ValidationException(validationResults[0].ErrorMessage);
         }
 
         enrolments.ForEach(x => x.EnrolmentStatusId = Data.DbConstants.EnrolmentStatus.Enrolled);
 
-        await _accountsDbContext.SaveChangesAsync(user.UserId.Value, enrolments.First().Connection.Organisation.ExternalId);
+        await _accountsDbContext.SaveChangesAsync(user.UserId.Value, enrolments[0].Connection.Organisation.ExternalId);
 
         return true;
     }

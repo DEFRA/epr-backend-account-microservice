@@ -1,8 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace BackendAccountService.Core.Models.Exceptions;
 
-[Serializable]
+[ExcludeFromCodeCoverage]
 public class RoleManagementException : Exception
 {
     public RoleManagementException()
@@ -18,10 +18,4 @@ public class RoleManagementException : Exception
         : base(message, innerException)
     {
     }
-
-    protected RoleManagementException(SerializationInfo info, StreamingContext context)
-        : base(info, context)
-    {
-    }
 }
-

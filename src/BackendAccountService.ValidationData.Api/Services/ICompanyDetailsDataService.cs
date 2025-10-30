@@ -14,6 +14,4 @@ public interface ICompanyDetailsDataService
     Task<CompanyDetailsResponse> GetCompanyDetailsByOrganisationReferenceNumberAndComplianceSchemeId(string referenceNumber, Guid? complianceSchemeId);
 
     Task<CompanyDetailsResponse> GetAllProducersCompanyDetails(IEnumerable<string> referenceNumbers);
-
-    Task<CompanyDetailsResponse> GetAllProducersCompanyDetailsAsProducer(OrganisationReferencesRequest organisationReferences);
 }

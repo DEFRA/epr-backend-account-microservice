@@ -179,7 +179,7 @@ public class AccountsManagementControllerTests
         _enrolmentsServiceMock.Setup(x =>
                 x.IsUserEnrolledAsync(request.InvitedUser.Email, request.InvitedUser.OrganisationId))
             .ReturnsAsync(false);
-        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId))
+        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId, false))
             .ReturnsAsync(new Result<UserOrganisationsListModel>(true, new UserOrganisationsListModel
             {
                 User = new UserDetailsModel
@@ -216,7 +216,7 @@ public class AccountsManagementControllerTests
         _enrolmentsServiceMock.Setup(x =>
                 x.IsUserEnrolledAsync(request.InvitedUser.Email, request.InvitedUser.OrganisationId))
             .ReturnsAsync(false);
-        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId))
+        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId, false))
             .ReturnsAsync(new Result<UserOrganisationsListModel>(true, new UserOrganisationsListModel
             {
                 User = new UserDetailsModel
@@ -253,7 +253,7 @@ public class AccountsManagementControllerTests
         _enrolmentsServiceMock.Setup(x =>
                 x.IsUserEnrolledAsync(request.InvitedUser.Email, request.InvitedUser.OrganisationId))
             .ReturnsAsync(false);
-        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId))
+        _userServiceMock.Setup(x => x.GetUserOrganisationAsync(request.InvitingUser.UserId, false))
             .ReturnsAsync(new Result<UserOrganisationsListModel>(true, new UserOrganisationsListModel
             {
                 User = new UserDetailsModel
@@ -310,7 +310,7 @@ public class AccountsManagementControllerTests
     }
 
     [TestMethod]
-    public async Task When_No_Matching_Email_And_Invite_Token_Is_Found_Then_Return_BadRequest()
+    public async Task When_No_Matching_Email_And_Invite_Token_Is_Found_Then_Return_NoContent()
     {
         // Arrange
         var request = new EnrolInvitedUserRequest();
@@ -323,11 +323,16 @@ public class AccountsManagementControllerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        result.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+
+        var problem = result.Value as ProblemDetails;
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("Invite not found");
+        problem.Status.Should().Be((int)HttpStatusCode.NoContent);
     }
     
     [TestMethod]
-    public async Task When_No_Enrolments_Exist_For_User_Return_BadRequest()
+    public async Task When_No_Enrolments_Exist_For_User_Return_NoContent()
     {
         // Arrange
         var request = new EnrolInvitedUserRequest();
@@ -344,7 +349,12 @@ public class AccountsManagementControllerTests
 
         // Assert
         result.Should().NotBeNull();
-        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        result.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+
+        var problem = result.Value as ProblemDetails;
+        problem.Should().NotBeNull();
+        problem!.Detail.Should().Be("No pending enrolments to update");
+        problem.Status.Should().Be((int)HttpStatusCode.NoContent);
     }
     
     [TestMethod]

@@ -8,6 +8,7 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using DbConstants = BackendAccountService.Data.DbConstants;
 using EnrolmentStatus = BackendAccountService.Core.Models.EnrolmentStatus;
@@ -107,24 +108,24 @@ public class RoleManagementService : IRoleManagementService
 
         var activeEnrolments = ExtractActiveEnrolments(connection, serviceKey);
 
-        if (!activeEnrolments.Any())
+        if (activeEnrolments.Count == 0)
         {
             throw new RoleManagementException("Not enrolled user cannot be edited");
         }
 
-        if (activeEnrolments.Any(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Invited))
+        if (activeEnrolments.Exists(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Invited))
         {
             throw new RoleManagementException("Invited user cannot be edited");
         }
 
-        if (activeEnrolments.Any(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+        if (activeEnrolments.Exists(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
         {
             throw new RoleManagementException("Approved person cannot be edited");
         }
 
         List<RemovedServiceRole> removedServiceRoles = null;
 
-        if (activeEnrolments.Any(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.DelegatedPerson.Key))
+        if (activeEnrolments.Exists(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.DelegatedPerson.Key))
         {
             var isAuthorised = await _validationService.IsAuthorisedToManageDelegatedUsersFromOrganisationForService(userId, organisationId, serviceKey);
             if (!isAuthorised)
@@ -209,28 +210,28 @@ public class RoleManagementService : IRoleManagementService
 
         var activeEnrolments = ExtractActiveEnrolments(connection, serviceKey);
 
-        if (!activeEnrolments.Any())
+        if (activeEnrolments.Count == 0)
         {
             return (false, "Not enrolled user cannot be nominated");
         }
 
-        if (activeEnrolments.Any(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Invited))
+        if (activeEnrolments.Exists(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Invited))
         {
             return (false, "Invited user cannot be nominated");
         }
 
-        if (activeEnrolments.Any(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+        if (activeEnrolments.Exists(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
         {
             return (false, "Approved Person cannot be nominated");
         }
 
-        if (activeEnrolments.Any(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.DelegatedPerson.Key))
+        if (activeEnrolments.Exists(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.DelegatedPerson.Key))
         {
             return (false, "Delegated Person cannot be nominated");
         }
 
         // ReSharper disable once SimplifyLinqExpressionUseAll
-        if (!activeEnrolments.Any(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.BasicUser.Key))
+        if (!activeEnrolments.Exists(enrolment => enrolment.ServiceRole.Key == DbConstants.ServiceRole.Packaging.BasicUser.Key))
         {
             return (false, "Only Basic User can be nominated");
         }
@@ -404,7 +405,7 @@ public class RoleManagementService : IRoleManagementService
         {
             enrolment.ApprovedPersonEnrolment.NomineeDeclaration = acceptNominationRequest.DeclarationFullName;
             enrolment.ApprovedPersonEnrolment.NomineeDeclarationTime = (DateTimeOffset)acceptNominationRequest.DeclarationTimeStamp;
-        }        
+        }
 
         var connection = await GetConnectionWithEnrolments(enrolment.Connection.ExternalId, organisationId, serviceKey);
 
@@ -480,6 +481,8 @@ public class RoleManagementService : IRoleManagementService
         {
             connection.JobTitle = nominationRequest.JobTitle;
         }
+
+        connection.PersonRoleId = (int)PersonRole.Admin; 
 
         _accountsDbContext.Enrolments.Add(new Enrolment
         {

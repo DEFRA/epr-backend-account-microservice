@@ -15,7 +15,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
     [TestClass]
     public class UpdatePersonRoleTests
     {
-        private static AzureSqlEdgeDbContainer _database = null!;
+        private static AzureSqlDbContainer _database = null!;
         private static DbContextOptions<AccountsDbContext> _options = null!;
         private AccountsDbContext _writeContext = null!;
         private RoleManagementService _connectionsService = null!;
@@ -23,7 +23,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
         [ClassInitialize]
         public static async Task TestFixtureSetup(TestContext _)
         {
-            _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+            _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
         [ClassCleanup]

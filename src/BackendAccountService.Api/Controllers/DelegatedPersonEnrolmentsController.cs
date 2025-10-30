@@ -1,8 +1,9 @@
-﻿using BackendAccountService.Core.Models.Request;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc;
-using BackendAccountService.Api.Configuration;
+﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 
 namespace BackendAccountService.Api.Controllers
@@ -28,6 +29,7 @@ namespace BackendAccountService.Api.Controllers
         [Route("{enrolmentId:guid}/delegated-person-acceptance")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AcceptNominationToDelegatedPerson(
             Guid enrolmentId,
             [BindRequired, FromQuery] string serviceKey,
@@ -61,7 +63,7 @@ namespace BackendAccountService.Api.Controllers
         
         [HttpGet]
         [Route("{enrolmentId:guid}/delegated-person-nominator")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(DelegatedPersonNominatorResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> GetDelegatedPersonNominator(
             Guid enrolmentId,

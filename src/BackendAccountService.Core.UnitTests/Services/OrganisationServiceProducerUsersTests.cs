@@ -24,8 +24,8 @@ public class OrganisationServiceProducerUsersTests
         _accountsDbContext = new AccountsDbContext(contextOptions);
         _accountsDbContext.Database.EnsureDeleted();
         _accountsDbContext.Database.EnsureCreated();
-        
-        _organisationService = new OrganisationService(_accountsDbContext);
+        _organisationService = new OrganisationService(
+            _accountsDbContext);
     }
     
     [TestMethod]

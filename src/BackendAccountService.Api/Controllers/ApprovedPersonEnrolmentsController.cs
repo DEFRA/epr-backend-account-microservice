@@ -28,6 +28,7 @@ namespace BackendAccountService.Api.Controllers
         [Route("{enrolmentId:guid}/approved-person-acceptance")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AcceptNominationForApprovedPerson(
             Guid enrolmentId,
             [BindRequired, FromQuery] string serviceKey,

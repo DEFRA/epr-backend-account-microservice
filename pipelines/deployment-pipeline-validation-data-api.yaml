@@ -1,6 +1,9 @@
 trigger: none
 pr: none
-pool: DEFRA-COMMON-ubuntu2004-SSV3
+pool: DEFRA-COMMON-ubuntu2204-SSV3
+
+appendCommitMessageToRunName: false
+name: 'Deploy code to $(validationApiServiceName)'
 
 parameters:
   - name: teamName
@@ -16,6 +19,12 @@ parameters:
     - DEV7
     - DEV8
     - DEV9
+    - DEV10
+    - DEV11
+    - DEV12
+    - DEV13
+    - DEV14
+    - DEV16
   - name: envToDeploy
     displayName: 'Target Environment to deploy'
     default: development
@@ -24,7 +33,9 @@ parameters:
       - development
       - tst
       - preprod
+      - preprod2
       - prod
+      - DEV15     
   - name: imageTag
     displayName: Enter Tag for the Image (Docker tag) or Release name (Git repo tag)
     default: ''
@@ -43,10 +54,18 @@ variables:
       - name: env
         value: PRE1
       - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ elseif eq(parameters.envToDeploy, 'preprod2') }}:
+      - name: env
+        value: PRE2
+      - template: vars/${{ parameters.envToDeploy }}.yaml
   - ${{ elseif eq(parameters.envToDeploy, 'prod') }}:
       - name: env
         value: PRD1
       - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ elseif eq(parameters.envToDeploy, 'dev15') }}:
+      - name: env
+        value: DEV15
+      - template: vars/${{ parameters.envToDeploy }}.yaml      
 # Release tags reference
   - template: pipelines/image-tags/${{ parameters.envToDeploy }}.yaml@ReleaseTags
   - ${{ if eq(parameters.envToDeploy, 'development') }}:
@@ -64,6 +83,11 @@ resources:
       name: RWD-CPR-EPR4P-ADO/epr-app-config-settings
       type: git
       ref: ${{ replace(replace(contains(parameters.imageTag, 'RELEASE'),'True',replace('refs/tags/RELEASETAG','RELEASETAG', parameters.imageTag)),'False','main') }}
+    
+    - repository: AutomationTesting #this repo contain the automation testing script
+      name: RWD-CPR-EPR4P-ADO/epr-playwright-bdd
+      type: git
+      ref: main
 
 extends:
   template: epr-funcs-deployment-pipeline.yaml@CommonTemplates

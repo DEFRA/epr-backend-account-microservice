@@ -25,7 +25,7 @@ To add a new migration run the following command in the src directory
 dotnet ef migrations add <Migration Name> --context AccountsDbContext --startup-project BackendAccountService.Api --project BackendAccountService.Data
 ```
 
-To generate the SQL following commad required to run in the src directory
+To generate the SQL run the following command in the src directory
 
 ```
 dotnet ef migrations script --context AccountsDbContext --startup-project BackendAccountService.Api --project BackendAccountService.Data --idempotent --output .\BackendAccountService.Data\Scripts\migrations.sql

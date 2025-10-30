@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace BackendAccountService.Api.Extensions;
 
+[ExcludeFromCodeCoverage]
 internal static class WebApplicationExtensions
 {
-    internal static WebApplication MigrateDbContext<TContext>(this WebApplication app) 
+    internal static WebApplication MigrateDbContext<TContext>(this WebApplication app)
         where TContext : DbContext
     {
         using var scope = app.Services.CreateScope();

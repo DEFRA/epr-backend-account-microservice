@@ -10,13 +10,13 @@ namespace BackendAccountService.Data.IntegrationTests;
 
 public class EnrolmentQueryableExtensionsTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
     private static DbContextOptions<AccountsDbContext> _options = null!;
 
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
             .UseSqlServer(_database.ConnectionString!)
             .LogTo(message => Debug.WriteLine(message))

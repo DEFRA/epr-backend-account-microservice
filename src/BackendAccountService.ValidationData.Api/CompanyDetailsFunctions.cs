@@ -1,4 +1,5 @@
 using BackendAccountService.ValidationData.Api.Extensions;
+using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -6,15 +7,15 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BackendAccountService.ValidationData.Api.Models;
+using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace BackendAccountService.ValidationData.Api;
 
-public class CompanyDetailsFunctions
+public class CompanyDetailsFunctions : FunctionsBase
 {
     private readonly ICompanyDetailsDataService _companyDetailsService;
     private readonly ILogger<CompanyDetailsFunctions> _logger;
@@ -146,14 +147,14 @@ public class CompanyDetailsFunctions
         {
             var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
-            var referenceNumbers = JsonSerializer.Deserialize<OrganisationReferencesRequest>(requestBody);
+            var referenceNumbers = JsonSerializer.Deserialize<IEnumerable<string>>(requestBody);
 
             if (referenceNumbers == null)
             {
                 return Problem("Invalid ReferenceNumbers property in request body", statusCode: StatusCodes.Status400BadRequest);
             }
 
-            var organisations = await _companyDetailsService.GetAllProducersCompanyDetailsAsProducer(referenceNumbers);
+            var organisations = await _companyDetailsService.GetAllProducersCompanyDetails(referenceNumbers);
 
             if (organisations is null)
             {
@@ -171,25 +172,5 @@ public class CompanyDetailsFunctions
         {
             _logger.LogExit();
         }
-    }
-
-    private static ObjectResult Problem(
-        string title,
-        string? type = null,
-        string? detail = null,
-        int statusCode = 500)
-    {
-        var problem = new ProblemDetails
-        {
-            Status = statusCode,
-            Detail = detail,
-            Type = type,
-            Title = title
-        };
-
-        return new ObjectResult(problem)
-        {
-            StatusCode = problem.Status
-        };
     }
 }

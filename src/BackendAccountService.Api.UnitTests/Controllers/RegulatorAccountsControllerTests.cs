@@ -150,7 +150,7 @@ public class RegulatorAccountsControllerTests
 
         // Assert
         result.Should().NotBeNull();
-        Assert.AreEqual(result.StatusCode, (int)HttpStatusCode.OK);
+        Assert.AreEqual((int)HttpStatusCode.OK, result.StatusCode);
         result.Value.Should().BeEquivalentTo(expectedToken);
     }
 
@@ -171,7 +171,7 @@ public class RegulatorAccountsControllerTests
         // Assert
         result.Should().NotBeNull();
         Assert.IsInstanceOfType(result, typeof(ObjectResult));
-        Assert.AreEqual(result.StatusCode, (int)HttpStatusCode.OK);
+        Assert.AreEqual((int)HttpStatusCode.OK, result.StatusCode);
         result.Value.Should().Be(expectedToken);
     }
 }

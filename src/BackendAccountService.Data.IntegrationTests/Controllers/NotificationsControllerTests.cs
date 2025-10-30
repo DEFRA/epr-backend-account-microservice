@@ -20,7 +20,7 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers;
 [TestClass]
 public class NotificationsControllerTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
 
     private static AccountsDbContext _context = null!;
 
@@ -29,7 +29,7 @@ public class NotificationsControllerTests
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
 
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
@@ -38,7 +38,7 @@ public class NotificationsControllerTests
                 .EnableSensitiveDataLogging()
                 .Options);
 
-        await _context.Database.EnsureCreatedAsync();
+        await _context.Database.MigrateAsync();
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
         

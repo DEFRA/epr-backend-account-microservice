@@ -1,3 +1,4 @@
+using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Extensions;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
@@ -5,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Core.Services;
-
 
 public class ValidationService : IValidationService
 {
@@ -70,7 +70,6 @@ public class ValidationService : IValidationService
         }
 
         return false;
-
     }
 
     public bool IsAuthorisedToManageUsers(Guid userId, Guid organisationId, int serviceRoleId)
@@ -93,7 +92,7 @@ public class ValidationService : IValidationService
                 return true;
             }
 
-            var regulatorOrganisation  = _accountsDbContext.Enrolments
+            var regulatorOrganisation = _accountsDbContext.Enrolments
                 .WhereOrganisationIsRegulator()
                 .WhereServiceRoleIn(Data.DbConstants.ServiceRole.Regulator.Admin.Key)
                 .WhereEnrolmentStatusIn(Data.DbConstants.EnrolmentStatus.Pending, Data.DbConstants.EnrolmentStatus.Approved, Data.DbConstants.EnrolmentStatus.Enrolled)
@@ -116,7 +115,6 @@ public class ValidationService : IValidationService
 
     public async Task<bool> IsAuthorisedToManageUsersFromOrganisationForService(Guid userId, Guid organisationId, string serviceKey)
     {
-
         var producerAdmin = await _accountsDbContext.Enrolments
             .WhereOrganisationIsNotRegulator()
             .WhereUserObjectIdIs(userId)
@@ -129,7 +127,7 @@ public class ValidationService : IValidationService
                 Data.DbConstants.EnrolmentStatus.Approved)
             .AnyAsync();
 
-        var regulatorAdmin  = await _accountsDbContext.Enrolments
+        var regulatorAdmin = await _accountsDbContext.Enrolments
             .WhereOrganisationIsRegulator()
             .WhereServiceRoleIn(Data.DbConstants.ServiceRole.Regulator.Admin.Key)
             .WhereServiceIs(serviceKey)
@@ -162,7 +160,7 @@ public class ValidationService : IValidationService
             var loggedInUser = _accountsDbContext.Users.Include(x => x.Person).Single(user => user.UserId == loggedInUserId);
             if (loggedInUser.Person.ExternalId == enrolledPersonId)
             {
-                _logger.LogInformation("User {loggedInUserId} cannot remove their own enrollments (personId {enrolledPersonId}) for the organisation {organisationId}",
+                _logger.LogInformation("User {LoggedInUserId} cannot remove their own enrollments (personId {EnrolledPersonId}) for the organisation {OrganisationId}",
                     loggedInUserId, enrolledPersonId, organisationId);
                 return false;
             }
@@ -176,7 +174,7 @@ public class ValidationService : IValidationService
 
             if (!personEnrolments.Any())
             {
-                _logger.LogInformation("No enrolments to remove for person  {enrolledPersonId} for OrganisationId {organisationId}",
+                _logger.LogInformation("No enrolments to remove for person  {EnrolledPersonId} for OrganisationId {OrganisationId}",
                     enrolledPersonId, organisationId);
                 return false;
             }
@@ -185,9 +183,9 @@ public class ValidationService : IValidationService
             var highestServiceRole = ServiceRoleExtensions.GetHighestServiceRole(personServiceRoles, serviceRole.ServiceId);
             var serviceRolesAuthorized = ServiceRoleExtensions.GetAuthorizedRolesToRemoveUser(highestServiceRole, serviceRole.ServiceId);
 
-            if (!serviceRolesAuthorized.Any())
+            if (serviceRolesAuthorized.Length == 0)
             {
-                _logger.LogInformation("Cannot remove service role {highestServiceRole} from person {enrolledPersonId} as no roles are authorized to do so. User Id {loggedInUserId}. OrganisationId {organisationId}",
+                _logger.LogInformation("Cannot remove service role {HighestServiceRole} from person {EnrolledPersonId} as no roles are authorized to do so. User Id {LoggedInUserId}. OrganisationId {OrganisationId}",
                     highestServiceRole, enrolledPersonId, loggedInUserId, organisationId);
                 return false;
             }
@@ -209,14 +207,14 @@ public class ValidationService : IValidationService
 
             if (loggedInProducerUserEnrollments.Any() || loggedInRegulatorUserEnrollments.Any())
             {
-                _logger.LogInformation("User {loggedInUserId} can remove service role {highestServiceRole} from person {enrolledPersonId} for OrganisationId {organisationId}",
-                    loggedInUserId, enrolledPersonId, highestServiceRole, organisationId);
+                _logger.LogInformation("User {LoggedInUserId} can remove service role {HighestServiceRole} from person {EnrolledPersonId} for OrganisationId {OrganisationId}",
+                    loggedInUserId, highestServiceRole, enrolledPersonId, organisationId);
                 return true;
             }
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error validating the user {loggedInUserId} can remove roles for person {enrolledPersonId} for the organisation {organisationId}",
+            _logger.LogError(e, "Error validating the user {LoggedInUserId} can remove roles for person {EnrolledPersonId} for the organisation {OrganisationId}",
                 loggedInUserId, enrolledPersonId, organisationId);
         }
 
@@ -234,7 +232,7 @@ public class ValidationService : IValidationService
                .Include(o => o.Connection.Organisation)
                .Where(enrolment =>
                    enrolment.EnrolmentStatusId == Data.DbConstants.EnrolmentStatus.Invited
-                   && enrolment.ServiceRole.ServiceId == Data.DbConstants.Service.RegulatorEnrolement
+                   && enrolment.ServiceRole.ServiceId == Data.DbConstants.Service.RegulatorEnrolment
                    && enrolment.Connection.Person.User.UserId == userId
                    && enrolment.Connection.Organisation.OrganisationTypeId == Data.DbConstants.OrganisationType.Regulators
                    && (enrolment.ValidTo > DateTimeOffset.Now || enrolment.ValidTo == null)
@@ -243,13 +241,74 @@ public class ValidationService : IValidationService
 
         if (enrolments != null)
         {
-            _logger.LogInformation($"Enrolment found for {userId}, token = {enrolments}");
-
+            _logger.LogInformation("Enrolment found for {UserId}, token = {Enrolments}", userId, enrolments);
             return enrolments.Connection.Person.User.InviteToken;
         }
 
-        _logger.LogInformation($"Enrolment not found for {userId}");
-
+        _logger.LogInformation("Enrolment not found for {UserId}", userId);
         return string.Empty;
     }
+
+    public async Task<bool> IsAuthorisedToManageSubsidiaries(Guid userId, Guid organisationId, params int[] serviceRoles)
+    {
+        var enrolments = _accountsDbContext
+              .Enrolments
+              .Include(s => s.ServiceRole)
+              .Include(c => c.Connection)
+              .Include(p => p.Connection.Person)
+              .Include(u => u.Connection.Person.User)
+              .Include(o => o.Connection.Organisation)
+              .Where(enrolment =>
+                  serviceRoles.Contains(enrolment.ServiceRole.ServiceId)
+                  && enrolment.Connection.Person.User.UserId == userId
+                  && enrolment.Connection.Organisation.ExternalId == organisationId
+                  && (enrolment.ValidTo > DateTimeOffset.Now || enrolment.ValidTo == null)
+                  && (enrolment.ValidFrom < DateTimeOffset.Now || enrolment.ValidFrom == null)
+               ).FirstOrDefault();
+
+        if (enrolments != null)
+        {
+            _logger.LogInformation("Enrolment found for {UserId}, token = {Enrolments}", userId, enrolments);
+
+            return true;
+        }
+
+        _logger.LogInformation("Enrolment not found for {UserId}", userId);
+
+        return false;
+    }
+
+    public async Task<bool> IsApprovedOrDelegatedUserInEprPackaging(Guid userId, Guid organisationId, string serviceKey)
+    {
+        var approvedOrDelegatedUser = await _accountsDbContext.Enrolments
+            .WhereOrganisationIsNotRegulator()
+            .WhereUserObjectIdIs(userId)
+            .WhereOrganisationIdIs(organisationId)
+            .WhereServiceRoleIn(Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, Data.DbConstants.ServiceRole.Packaging.DelegatedPerson.Key)
+            .WhereServiceIs(serviceKey)
+            .WhereEnrolmentStatusIn(Data.DbConstants.EnrolmentStatus.Enrolled, Data.DbConstants.EnrolmentStatus.Pending, Data.DbConstants.EnrolmentStatus.Approved)
+            .AnyAsync();
+        return approvedOrDelegatedUser;
+    }
+
+    public async Task<bool> IsBasicUserInEprPackaging(Guid userId, Guid organisationId, string serviceKey)
+    {
+        var approvedOrDelegatedUser = await _accountsDbContext.Enrolments
+            .WhereOrganisationIsNotRegulator()
+            .WhereUserObjectIdIs(userId)
+            .WhereOrganisationIdIs(organisationId)
+            .WhereServiceRoleIn(Data.DbConstants.ServiceRole.Packaging.BasicUser.Key)
+            .WhereServiceIs(serviceKey)
+            .WhereEnrolmentStatusIn(Data.DbConstants.EnrolmentStatus.Enrolled, Data.DbConstants.EnrolmentStatus.Pending, Data.DbConstants.EnrolmentStatus.Approved)
+            .AnyAsync();
+        return approvedOrDelegatedUser;
+    }
+
+    public bool IsExternalIdExists(Guid externalId, string entityTypeCode) =>
+        entityTypeCode.ToUpperInvariant() switch
+        {
+            EntityTypeCode.ComplianceScheme => _accountsDbContext.ComplianceSchemes.Any(x => x.ExternalId == externalId),
+            EntityTypeCode.DirectRegistrant => _accountsDbContext.Organisations.Any(x => x.ExternalId == externalId),
+            _ => false
+        };
 }

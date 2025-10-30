@@ -13,7 +13,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 [TestCategory("Nominating Delegated Person")]
 public class NominateToDelegatedPersonTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
     private static DbContextOptions<AccountsDbContext> _options = null!;
     private AccountsDbContext _writeDbContext = null!;
     private RoleManagementService _connectionsService = null!;
@@ -21,7 +21,7 @@ public class NominateToDelegatedPersonTests
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
         
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
             .UseSqlServer(_database.ConnectionString)

@@ -1,5 +1,6 @@
 trigger: none
 pr: none
+appendCommitMessageToRunName: false
 
 parameters:
   - name: teamName
@@ -16,15 +17,23 @@ parameters:
       - DEV7
       - DEV8
       - DEV9
+      - DEV10
+      - DEV11
+      - DEV12
+      - DEV13
+      - DEV14
+      - DEV16
       - Team-Laps
   - name: envToDeploy
-    displayName: 'Target env to deploy:    (select "development" for dev 1-9)'
+    displayName: 'Target env to deploy:    (select "development" for dev 1-14)'
     type: string
     values:
       - development
       - tst
       - preprod
+      - preprod2
       - prod
+      - DEV15    
     default: development
 
   - name: solutionFolder
@@ -49,8 +58,12 @@ variables:
       - template: vars/${{ parameters.teamName }}-${{ parameters.envToDeploy }}.yaml
   - ${{ if eq(parameters.envToDeploy, 'preprod') }}:
     - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ if eq(parameters.envToDeploy, 'preprod2') }}:
+    - template: vars/${{ parameters.envToDeploy }}.yaml
   - ${{ if eq(parameters.envToDeploy, 'prod') }}:
     - template: vars/${{ parameters.envToDeploy }}.yaml
+  - ${{ if eq(parameters.envToDeploy, 'dev15') }}:
+    - template: vars/${{ parameters.envToDeploy }}.yaml   
 
 resources:
   repositories:

@@ -99,4 +99,46 @@ public class EnrolmentControllerTests
         var problemDetails = (result as ObjectResult).Value as ProblemDetails;
         Assert.AreEqual($"{_baseProblemTypePath}failed to remove person", problemDetails.Type);
     }
+    
+    [TestMethod]
+    public async Task RemoveEnrolmentById_WhenAuthorisedAndSuccessful_ReturnsNoContent()
+    {
+        // Arrange
+        int enrolmentId = 100;
+
+        _enrolmentServiceMock
+            .Setup(x => x.DeletePersonOrgConnectionOrEnrolmentAsync(_loggedInUserId, _personId, _organisationId, enrolmentId))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await enrolmentController.RemovePersonConnectionAndEnrolment(
+            _personId, _loggedInUserId, _organisationId, enrolmentId);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(NoContentResult));
+    }
+    
+    [TestMethod]
+    public async Task RemoveEnrolmentById_WhenAuthorisedButFails_Returns500Problem()
+    {
+        // Arrange
+        int enrolmentId = 100;
+        
+        _enrolmentServiceMock
+            .Setup(x => x.DeletePersonOrgConnectionOrEnrolmentAsync(_loggedInUserId, _personId, _organisationId, enrolmentId))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await enrolmentController.RemovePersonConnectionAndEnrolment(
+            _personId, _loggedInUserId, _organisationId, enrolmentId);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(ObjectResult));
+        var objectResult = (ObjectResult)result;
+        Assert.AreEqual(StatusCodes.Status500InternalServerError, objectResult.StatusCode);
+
+        var problemDetails = objectResult.Value as ProblemDetails;
+        Assert.IsNotNull(problemDetails);
+        Assert.AreEqual($"{_baseProblemTypePath}failed-to-remove-enrolment", problemDetails.Type);
+    }
 }

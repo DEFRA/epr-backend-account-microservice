@@ -1,25 +1,26 @@
-using System.Diagnostics;
-using BackendAccountService.Core.Models;
+using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Moq;
+using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
 [TestClass]
 public class AccountServiceTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
 
     private AccountsDbContext _context = null!;
 
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
     }
 
     [ClassCleanup]
@@ -38,6 +39,7 @@ public class AccountServiceTests
                 .EnableSensitiveDataLogging()
                 .Options);
 
+        //todo: this should be await _context.Database.MigrateAsync(), but switching it over fails the integration tests
         await _context.Database.EnsureCreatedAsync();
     }
 
@@ -46,8 +48,7 @@ public class AccountServiceTests
     {
         await using var context = _context;
 
-        var accountService = new AccountService(_context);
-
+        var accountService = new AccountService(_context, new Mock<ITokenService>().Object, new Mock<IReExEnrolmentMaps>().Object);
 
         // First account data
         var account1 = RandomModelData.GetAccountModel(DbConstants.ServiceRole.Packaging.ApprovedPerson.Key);

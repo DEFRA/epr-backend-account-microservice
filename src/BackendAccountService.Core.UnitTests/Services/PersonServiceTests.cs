@@ -1,7 +1,6 @@
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -29,20 +28,15 @@ public class PersonServiceTests
             .Options;
 
         SetUpDatabase(contextOptions);
-
         _accountContext = new AccountsDbContext(contextOptions);
         _personService = new PersonService(_accountContext);
     }
 
-
-
     [TestMethod]
     public async Task GetPersonByUserIdAsync_WhenValidId_ThenReturnPerson()
     {
-        var person = await _personService.GetPersonByUserIdAsync(UserId);
-
+        var person = await _personService.GetPersonResponseByUserId(UserId);
         var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId);
-
         person.Should().NotBeNull();
         person?.FirstName.Should().Be(expectedPerson?.FirstName);
         person?.LastName.Should().Be(expectedPerson?.LastName);
@@ -54,24 +48,48 @@ public class PersonServiceTests
     [TestMethod]
     public async Task GetPersonByUserIdAsync_WhenInvalidId_ThenReturnNull()
     {
-        var person = await _personService.GetPersonByUserIdAsync(NoneExistentUserId);
-
+        var person = await _personService.GetPersonResponseByUserId(NoneExistentUserId);
         person.Should().BeNull();
     }
 
     [TestMethod]
     public async Task GetPersonByUserIdAsync_WhenDeletedUserId_ThenReturnNull()
     {
-        var person = await _personService.GetPersonByUserIdAsync(DeletedUserId);
-
+        var person = await _personService.GetPersonResponseByUserId(DeletedUserId);
         person.Should().BeNull();
     }
-    
+
+    [TestMethod]
+    public async Task GetAllPersonByUserIdAsync_WhenInvalidId_ThenReturnNull()
+    {
+        var person = await _personService.GetAllPersonByUserIdAsync(NoneExistentUserId);
+        person.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task GetAllPersonByUserIdAsync_WhenDeletedUserId_ThenReturnsUser()
+    {
+        var person = await _personService.GetAllPersonByUserIdAsync(DeletedUserId);
+        person.Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public async Task GetAllPersonByUserIdAsync_WhenValidId_ThenReturnPerson()
+    {
+        var person = await _personService.GetAllPersonByUserIdAsync(UserId);
+        var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId);
+        person.Should().NotBeNull();
+        person?.FirstName.Should().Be(expectedPerson?.FirstName);
+        person?.LastName.Should().Be(expectedPerson?.LastName);
+        person?.ContactEmail.Should().Be(expectedPerson?.Email);
+        person?.TelephoneNumber.Should().Be(expectedPerson?.Telephone);
+        person?.CreatedOn.Should().Be(expectedPerson?.CreatedOn);
+    }
+
     [TestMethod]
     public async Task GetPersonByExternalIdAsync_WhenValid_ThenReturnPerson()
     {
         var person = await _personService.GetPersonByExternalIdAsync(ExternalId);
-
         var expectedPerson = await _accountContext.Persons
             .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.ExternalId == ExternalId);
@@ -184,10 +202,6 @@ public class PersonServiceTests
             }
         };
         setupContext.Persons.Add(externalIdPerson);
-
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
-    
-    
-   
 }

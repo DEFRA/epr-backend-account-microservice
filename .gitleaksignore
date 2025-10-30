@@ -6,3 +6,82 @@ src/BackendAccountService.Data.LaTestSeeder/appsettings.json:CSCAN0092 / CSCAN00
 src/docker-compose.laps.yml:CSCAN0092 / CSCAN0043:25
 55545c04aa8f4eb5fb8bb8caaf1ef4a551c1731e:src/docker-compose.yml:CSCAN0092 / CSCAN0043:13
 src/docker-compose.yml:CSCAN0092 / CSCAN0043:13
+
+7b088f5a9a66ca05ad3ac15fb4c2797c4b989809:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:174
+28f1f2a962d805529ce343d7122c55e431189784:pipelines/vars/DEV16-development.yaml:generic-api-key:10
+0dd64b4834865fbabcc309ca1a30bf374e184731:pipelines/vars/DEV16-development.yaml:generic-api-key:10
+313baae58ba625a262cc50601f3ce56a57fb20ff:src/BackendAccountService.Api/appsettings.json:generic-api-key:16
+49771617d7a9f1f6f0817f04a55173f086250d11:pipelines/vars/DEV12-development.yaml:generic-api-key:10
+d3f8e29e03c11d1277a24397c27b49c27c8321c2:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+89b04a7e30f687b2712612866ce5b9c79ba077c3:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+189b62b5b1e01bea42626e423f672b5a56279a1b:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+5d58de1a0cb990d35734891c383f034b4a3a0f0b:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+5aad9ed580aa922a611712ea09ea814edf9f98bf:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+70b6a161f0bb7ee9a339fc43720a7bd86b52e2f8:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+cd882d1c0ae35979f34141901265875dbe0795e1:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+db242bcdc8f90d02e05a128d548dd6c3a34508e2:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+389ac29b0dfc06c19a9f93a297a6fd0f42cfba40:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+f1aff071ccb05f296c2be347a87e551c88fba58c:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:108
+6b7caade1cfd04c96dc8760bd60411ee776617c1:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+3b59e5b295ac082a5fdb45f9864eeab2e3f1a16b:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:106
+560938a73d54ec14efa18b8a5ef975936b6a5b32:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+456614da9262fc838e0e14636c8bf97a24f7689b:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+ae072afbb5c7bba672a2c4d39376afa2be8f56fa:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+15ff5d984a25a05279390663e2085db34fe08879:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+acc65059a9bcbd6d18596f041a1568eb04606f3a:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+88497e4fbd622901c69d9eeeb99b9f0f9f15cc3a:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+835013835bc7d2c928f83eb94635c27f9e8babd3:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+b10808ef3da50eb7d143fab89955a9466a97e46c:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+b10808ef3da50eb7d143fab89955a9466a97e46c:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:10
+3f4fea5d1a872c6e0101534ebcc26b840d5996be:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+03a480106ef81e8ca4134ffa1c889f3390963bfb:src/BackendAccountService.GovUkNotify.Api/local.settings.json:azure-database-connection-string-account-key:5
+03a480106ef81e8ca4134ffa1c889f3390963bfb:src/BackendAccountService.GovUkNotify.Api/local.settings.json:azure-database-connection-string-account-key:8
+6133eafc904446a7b475d0be624f0f97f2b1bf8a:src/docker-compose.yml:azure-database-connection-string-account-key:33
+ab58e27e8f392f73229914117a60718934e9c4cc:src/BackendAccountService.GovUkNotify.Api/local.settings.json:CSCAN0092 / CSCAN0043:14
+7f1dcb6c6709adeeb7db9703298d00cd3dead7d1:src/BackendAccountService.GovUkNotify.Api/local.settings.json:CSCAN0092 / CSCAN0043:14
+79ca67f375b1d8e866f118c87670307bb52d1c14:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+07f72f4b8b029283fe0f3b9d4eb4a7018c25aa12:src/BackendAccountService.Api.UnitTests/Controllers/AccountsManagementControllerTests.cs:generic-api-key:24
+07f72f4b8b029283fe0f3b9d4eb4a7018c25aa12:src/BackendAccountService.Api.UnitTests/Controllers/AccountsManagementControllerTests.cs:generic-api-key:25
+91b8159b9ea98a0100ef6149c971bfa1fd8c127f:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+ed1f0b3d146e2fcee79c889d6db0c3f84482aa27:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+9c8d22a7d45240436915c9f2dc9c2efbac0d4ec5:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+fda3c47810efce600b30d3dde744eac52d3d4bd3:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+78d4c28aeb2132655e71fa10b538f703d0f730b2:src/BackendAccountService.Data.LaTestSeeder/appsettings.json:CSCAN0092 / CSCAN0043:3
+78d4c28aeb2132655e71fa10b538f703d0f730b2:src/docker-compose.laps.yml:CSCAN0092 / CSCAN0043:25
+5b1757c445b0cc03e063ed9210ac2032e68bc2cb:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+d9406fdbc58bc0491b9fa93bfd954a014ef363aa:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+6a64edfa5a699eace9334c8a61d7324c8481af39:src/BackendAccountService.Api.UnitTests/Controllers/RegulatorAccountsControllerTests.cs:generic-api-key:20
+6a64edfa5a699eace9334c8a61d7324c8481af39:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+bd169c3bf72a768ab391cc8a032734aef0bdf33d:src/BackendAccountService.Data.TestSeeder/appsettings.json:CSCAN0092 / CSCAN0043:3
+bd169c3bf72a768ab391cc8a032734aef0bdf33d:src/docker-compose.laps.yml:CSCAN0092 / CSCAN0043:18
+86ace3ff8e589ad438d6cef5f321459cbecae894:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+77e9f476b5cb00f3eedee337f2a2d81272face6b:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+082cb168648de7a0ddb6086be5fac84f1c7f0278:src/docker-compose.yml:CSCAN0092 / CSCAN0043:12
+af040b14927956a39518d956bc470e1c75092f9d:src/BackendAccountService.Api.UnitTests/Controllers/AccountsManagementControllerTests.cs:generic-api-key:21
+9e84117ea430195438a10f65a97e2f6e8ed7aca6:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+16f4982ed78875ac692a426c75af7213a746e69f:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+0751525816cefd1b3bf27504c41b5ca8da65c586:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+5c5a31c1a4d8a92bc3fae1cc511d8fe7245b4251:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+93c9facca2b703916699705d2d4d88481b026a03:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+4173f397d9e20b656e9ebd4ed47fe47460780d11:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+6f1700b5d4653a59b0bdcd6e2b7153f9a149fe8c:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+ba63ca6143bdebb530848c5c8c169808ade91193:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+587256d03f0202bd368ada42e869f00b612e7364:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:10
+639e1e1284b5f377d3e52a882c586a451ed666e9:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:10
+72309eb8de66812f1095559dbec26f435cfe4e84:src/.idea/.idea.BackendAccount/.idea/efCoreCommonOptions.xml:generic-api-key:6
+72309eb8de66812f1095559dbec26f435cfe4e84:src/.idea/.idea.BackendAccount/.idea/efCoreCommonOptions.xml:generic-api-key:11
+69a9a775a9061a97cc7b177d2d63c8dc2429c264:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188
+8283607e1413ea3fc39fe3dbd3cf71e3183bef14:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188
+94336eaf7b9926f75aed1bd8b0ccc232fb340891:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+e62b7dc62c67196806831a8312a036ffa18e2e19:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+6dbae20b22b20cc4fcb58acf232d8976fd845248:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+6df1370657c88b9e184f5f98571d03321d60c97a:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+2789bcea8d89f1da0f31469e3be0ca5d456c2b98:src/BackendAccountService.Api/appsettings.development.json:CSCAN0092 / CSCAN0043:9
+6bacd8b7acacca1fa3d0aa55874bcac70612a2ed:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:108
+95800907629fceb5ea361de948c4e84108b0ddea:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+6dfd24cc83f900e82973db466f26c70d5e711307:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+6dfd24cc83f900e82973db466f26c70d5e711307:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:10
+87610026ac13680a1c2a29d56105719e8aae141f:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+D:/a/1/s/ado-source/pipelines/vars/DEV12-development.yaml:generic-api-key:10
+D:/a/1/s/ado-source/pipelines/vars/DEV16-development.yaml:generic-api-key:10
+D:/a/1/s/ado-source/src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188

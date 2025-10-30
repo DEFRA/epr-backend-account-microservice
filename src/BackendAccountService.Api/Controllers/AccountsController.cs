@@ -1,9 +1,7 @@
 ﻿using BackendAccountService.Api.Configuration;
-using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
-using BackendAccountService.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
@@ -34,8 +32,9 @@ public class AccountsController : ApiControllerBase
 
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> CreateAccount(AccountModel account)
     {
         var serviceRole = await _accountService.GetServiceRoleAsync(account.Connection.ServiceRole);
@@ -52,7 +51,7 @@ public class AccountsController : ApiControllerBase
         if (!string.IsNullOrEmpty(account.Organisation.CompaniesHouseNumber))
         {
             var organisationList = await _organisationService.GetOrganisationsByCompaniesHouseNumberAsync(account.Organisation.CompaniesHouseNumber);
-            if (organisationList.Any())
+            if (organisationList.Count > 0)
             {
                 ModelState.AddModelError(nameof(account.Organisation.CompaniesHouseNumber),
                     $"Organisation with the same Companies House number '{account.Organisation.CompaniesHouseNumber}' already exists");
@@ -64,7 +63,7 @@ public class AccountsController : ApiControllerBase
             }
         }
         
-        var existingPerson = await _personsService.GetPersonByUserIdAsync(account.User.UserId.Value);
+        var existingPerson = await _personsService.GetPersonResponseByUserId(account.User.UserId.Value);
         if (existingPerson != null)
         {
             ModelState.AddModelError(nameof(account.User.UserId),
@@ -84,11 +83,11 @@ public class AccountsController : ApiControllerBase
             OrganisationId = enrolment.Connection.Organisation.ExternalId
         });
     }
-    
+
     [HttpPost]
     [Route("ApprovedUser")]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CreateAccountResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateApprovedUserAccount(ApprovedUserAccountModel account)
     {
@@ -114,12 +113,13 @@ public class AccountsController : ApiControllerBase
                 type: "create-account/invalid-service-role");
         }
         
-        var enrolment = await _accountService.AddApprovedUserAccountAsync(account, serviceRole, user);
+        await _accountService.AddApprovedUserAccountAsync(account, serviceRole, user);
 
         return Ok(new CreateAccountResponse
         {
-            ReferenceNumber = enrolment.Connection.Organisation.ReferenceNumber!,
-            OrganisationId = enrolment.Connection.Organisation.ExternalId
+            // these aren't used by the calling code (and have always returned null/Guid.Empty)
+            ReferenceNumber = null!,
+            OrganisationId = Guid.Empty
         });
     }
 }

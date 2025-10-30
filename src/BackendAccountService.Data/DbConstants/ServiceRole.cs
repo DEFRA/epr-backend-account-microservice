@@ -51,5 +51,38 @@ public static class ServiceRole
 			public const int Id = 7;
 			public const string Key = "LaPayment.BasicUser";
 		}
-	}
+    }
+
+    public static class ReprocessorExporter
+    {
+        public static class ApprovedPerson
+        {
+            public const int Id = 8;
+            public const string Key = "Re-Ex.ApprovedPerson";
+        }
+
+        public static class DelegatedPerson
+        {
+            public const int Id = 9;
+            public const string Key = "Re-Ex.DelegatedPerson";
+        }
+
+        public static class BasicUser
+        {
+            public const int Id = 10;
+            public const string Key = "Re-Ex.BasicUser";
+        }
+
+        public static class AdminUser
+        {
+            public const int Id = 11;
+            public const string Key = "Re-Ex.AdminUser";
+        }
+
+        public static class StandardUser
+        {
+            public const int Id = 12;
+            public const string Key = "Re-Ex.StandardUser";
+        }
+    }
 }

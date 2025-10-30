@@ -6,7 +6,6 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Service = BackendAccountService.Data.Entities.Service;
 using ServiceRole = BackendAccountService.Data.Entities.ServiceRole;
 

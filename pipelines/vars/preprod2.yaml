@@ -1,0 +1,11 @@
+variables:
+  azureSubscription: 'AZR-RWD-PRE2'
+  docker.imageName: 'backendaccountserviceregistry'
+  acr.azureContainerRegistryName: 'prerwdinfac2401'
+  acr.repositoryName: 'backendaccountserviceregistry'
+  serviceName: 'PRERWDWEBWA2407'
+  kvName: PRERWDINFKV2401
+  sqlDBserver: prerwddbssq2401.database.windows.net
+  sqlDB: 'pre2_accounts'
+  validationApiServiceName: 'PRERWDWEBFA2407'
+  validationApiRepository: 'validationdataapiregistry'

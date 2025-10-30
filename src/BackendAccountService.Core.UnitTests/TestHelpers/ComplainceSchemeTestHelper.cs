@@ -14,6 +14,7 @@ public static class ComplainceSchemeTestHelper
         var csOrg1 = new Organisation
         {
             Name = "Org 1",
+            Id = 10000,
             OrganisationTypeId = 1,
             ExternalId = new Guid("00000000-0000-0000-0000-000000000001"),
             CompaniesHouseNumber = "111111",
@@ -24,6 +25,7 @@ public static class ComplainceSchemeTestHelper
         var csOrg2 = new Organisation
         {
             Name = "Org 2",
+            Id = 10001,
             OrganisationTypeId = 1,
             ExternalId = new Guid("00000000-0000-0000-0000-000000000002"),
             CompaniesHouseNumber = "222222",
@@ -192,8 +194,57 @@ public static class ComplainceSchemeTestHelper
         setupContext.SelectedSchemes.Add(selectedScheme5);
         setupContext.SelectedSchemes.Add(selectedScheme6);
         setupContext.SelectedSchemes.Add(selectedScheme7);
-        
+
+        var organisation10 = new Organisation
+        {
+            Id = 10100,
+            OrganisationTypeId = Data.DbConstants.OrganisationType.CompaniesHouseCompany,
+            ProducerTypeId = Data.DbConstants.ProducerType.NotSet,
+            CompaniesHouseNumber = "Rel100124",
+            IsComplianceScheme = true,
+            ValidatedWithCompaniesHouse = true,
+            Name = "Org Second Test Relationship Organisation2",
+            SubBuildingName = "Sub building 1",
+            BuildingName = "Building 1",
+            BuildingNumber = "1",
+            Street = "Street 1",
+            Locality = "Locality 1",
+            DependentLocality = "Dependent Locality 1",
+            Town = "Town 1",
+            County = "County 1",
+            Postcode = "BT44 5QW",
+            Country = "Country 1",
+            NationId = Data.DbConstants.Nation.England,
+            ExternalId = new Guid("00000000-0000-0000-0000-000000000010"),
+            ReferenceNumber = "1000010",
+        };
+        setupContext.Organisations.Add(organisation10);
+
+        var relationship1 = new OrganisationRelationship
+        {
+            FirstOrganisationId = 10000,
+            SecondOrganisationId = 10100,
+            OrganisationRelationshipTypeId = 10007
+        };
+        setupContext.OrganisationRelationships.Add(relationship1);
+
+        var relationship2 = new OrganisationRelationship
+        {
+            FirstOrganisationId = 10001,
+            SecondOrganisationId = 10001,
+            OrganisationRelationshipTypeId = 10007
+        };
+        setupContext.OrganisationRelationships.Add(relationship2);
+
+        var relationshipType1 = new Data.Entities.OrganisationRelationshipType
+        {
+            Id = 10007,
+            Name = "Parent"
+        };
+        setupContext.OrganisationRelationshipTypes.Add(relationshipType1);
+
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
+
     }
     
     public static Organisation AddOrganisation(this AccountsDbContext dbContext, Organisation organisation)

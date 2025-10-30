@@ -2,6 +2,7 @@ namespace BackendAccountService.Api.UnitTests.Controllers;
 
 using AutoFixture;
 using AutoFixture.AutoMoq;
+using BackendAccountService.Api.Controllers;
 using BackendAccountService.Core.Models;
 using Configuration;
 using Core.Models;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Globalization;
 
 [TestClass]
 public class ComplianceSchemesControllerTests
@@ -63,7 +65,7 @@ public class ComplianceSchemesControllerTests
         var complianceSchemeId = _fixture.Create<Guid>();
         var userId = _fixture.Create<Guid>();
         var response = Result<ComplianceSchemeMembershipResponse>.SuccessResult(_fixture.Create<ComplianceSchemeMembershipResponse>());
-        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page)).ReturnsAsync(response);
+        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page, false)).ReturnsAsync(response);
         _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisatonId)).ReturnsAsync(true);
 
         var result = await _complianceSchemeController.GetComplianceSchemeMembers(organisatonId, complianceSchemeId, pageSize, userId, query, page) as OkObjectResult;
@@ -82,7 +84,7 @@ public class ComplianceSchemesControllerTests
         var complianceSchemeId = _fixture.Create<Guid>();
         var userId = _fixture.Create<Guid>();
         var response = Result<ComplianceSchemeMembershipResponse>.SuccessResult(_fixture.Create<ComplianceSchemeMembershipResponse>());
-        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page)).ReturnsAsync(response);
+        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page, false)).ReturnsAsync(response);
         _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisatonId)).ReturnsAsync(false);
 
         var result = await _complianceSchemeController.GetComplianceSchemeMembers(organisatonId, complianceSchemeId, pageSize, userId, query, page) as ActionResult;
@@ -101,7 +103,7 @@ public class ComplianceSchemesControllerTests
         var complianceSchemeId = _fixture.Create<Guid>();
         var userId = _fixture.Create<Guid>();
         var response = Result<ComplianceSchemeMembershipResponse>.FailedResult("BadRequest", HttpStatusCode.BadRequest);
-        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page)).ReturnsAsync(response);
+        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page, false)).ReturnsAsync(response);
         _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisatonId)).ReturnsAsync(true);
 
         var result = await _complianceSchemeController.GetComplianceSchemeMembers(organisatonId, complianceSchemeId, pageSize, userId, query, page) as ActionResult;
@@ -120,7 +122,7 @@ public class ComplianceSchemesControllerTests
         var complianceSchemeId = _fixture.Create<Guid>();
         var userId = _fixture.Create<Guid>();
         var response = Result<ComplianceSchemeMembershipResponse>.FailedResult("NotFound", HttpStatusCode.NotFound);
-        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page)).ReturnsAsync(response);
+        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page, false)).ReturnsAsync(response);
         _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisatonId)).ReturnsAsync(true);
 
         var result = await _complianceSchemeController.GetComplianceSchemeMembers(organisatonId, complianceSchemeId, pageSize, userId, query, page) as ActionResult;
@@ -138,7 +140,7 @@ public class ComplianceSchemesControllerTests
         var organisatonId = _fixture.Create<Guid>();
         var complianceSchemeId = _fixture.Create<Guid>();
         var userId = _fixture.Create<Guid>();
-        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page)).ThrowsAsync(new Exception());
+        _complianceSchemeServiceMock.Setup(service => service.GetComplianceSchemeMembersAsync(organisatonId, complianceSchemeId, query, pageSize, page, false)).ThrowsAsync(new Exception());
         _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisatonId)).ReturnsAsync(true);
 
         var result = async () => await _complianceSchemeController.GetComplianceSchemeMembers(organisatonId, complianceSchemeId, pageSize, userId, query, page) as ActionResult;
@@ -890,5 +892,53 @@ public class ComplianceSchemesControllerTests
         result?.StatusCode.Should().Be((int)HttpStatusCode.OK);
         result?.Value.Should().BeOfType<List<ComplianceSchemeRemovalReasonResponse>>();
         (result?.Value).Should().BeEquivalentTo(expectedResponse);
+    }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ReturnsOk_WhenDataExists()
+    {
+        // Arrange
+        var organisationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var complianceSchemeId = Guid.NewGuid();
+        var expectedData = new List<ExportOrganisationSubsidiariesResponseModel>
+        {
+            new() { OrganisationId = "1", SubsidiaryId = null, OrganisationName = "ABC", CompaniesHouseNumber = "CH1", JoinerDate = DateTime.Parse("2025-02-01", CultureInfo.InvariantCulture), ReportingType = "Individual" },
+            new() { OrganisationId = "1", SubsidiaryId = "2", OrganisationName = "ABC", CompaniesHouseNumber = "CH2", JoinerDate = DateTime.Parse("2025-02-01", CultureInfo.InvariantCulture), ReportingType = "Individual" }
+        };
+        _complianceSchemeServiceMock
+            .Setup(service => service.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId))
+            .ReturnsAsync(expectedData);
+
+        // Act
+        var result = await _complianceSchemeController.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().NotBeNull();
+        Assert.IsInstanceOfType(result, typeof(OkObjectResult));
+        var okResult = result as OkObjectResult;
+        Assert.AreEqual(expectedData, okResult.Value);
+    }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ReturnsNoContent_WhenNoDataExists()
+    {
+        // Arrange
+        var organisationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var complianceSchemeId = Guid.NewGuid();
+        var expectedData = new List<ExportOrganisationSubsidiariesResponseModel>();
+        expectedData = null;
+
+        _complianceSchemeServiceMock
+            .Setup(service => service.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId))
+            .ReturnsAsync(expectedData);
+
+        // Act
+        var result = await _complianceSchemeController.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().NotBeNull();
+        Assert.IsInstanceOfType(result, typeof(NoContentResult));
     }
 }

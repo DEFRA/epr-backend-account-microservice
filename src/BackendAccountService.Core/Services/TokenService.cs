@@ -7,6 +7,7 @@ public class TokenService : ITokenService
 {
     public string GenerateInviteToken()
     {
+        // what a load of baloney. a simple guid would do
         var secureRandomString =  Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         
         return ToSHA512(secureRandomString);

@@ -12,6 +12,8 @@ public static class ResultHelper
         {
             case HttpStatusCode.BadRequest:
                 return new BadRequestObjectResult(result.ErrorMessage);
+            case HttpStatusCode.NoContent:
+                return new NoContentResult(); // No body/message allowed
             case HttpStatusCode.NotFound:
                 return new NotFoundObjectResult(result.ErrorMessage);
             default:

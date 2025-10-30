@@ -4,6 +4,7 @@ using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
@@ -11,7 +12,7 @@ public static class DatabaseDataGenerator
 {
     public static async Task<Enrolment> InsertRandomEnrolment(AccountsDbContext context, Guid organisationId, string serviceRoleKey, int personInOrganisationRole, int enrolmentStatus, bool isComplianceScheme = false)
     {
-        var accountService = new AccountService(context);
+        var accountService = new AccountService(context, new Mock<ITokenService>().Object, new Mock<IReExEnrolmentMaps>().Object);
 
         var approvedPersonAccount = RandomModelData.GetAccountModel(serviceRoleKey, isComplianceScheme);
         

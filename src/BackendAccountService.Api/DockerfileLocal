@@ -1,7 +1,7 @@
 ﻿# This is for building the docker base on a host machine behind a Corporate proxy or VPN
 # we need to add in the corporate certificate chain
 # e.g. Kainos developers will need the Kainos ZScaler trusted certificate
-FROM defradigital/dotnetcore:dotnet6.0 AS base
+FROM defradigital/dotnetcore:dotnet8.0 AS base
 USER root
 
 ARG TRUSTED_CERT
@@ -18,7 +18,7 @@ ARG PORT=80
 ENV ASPNETCORE_URLS=http://*:${PORT}
 EXPOSE ${PORT}
 
-FROM defradigital/dotnetcore-development:dotnet6.0 AS build
+FROM defradigital/dotnetcore-development:dotnet8.0 AS build
 USER root
 WORKDIR /src
 COPY ["BackendAccountService.Api/BackendAccountService.Api.csproj", "BackendAccountService.Api/"]

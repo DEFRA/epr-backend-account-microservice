@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Models;
+﻿using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
@@ -7,16 +7,14 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
 using System.Diagnostics;
-using System.Threading.Tasks;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
     [TestClass]
     public class IsAuthorisedToManageUsersFromOrganisationForServiceTests
     {
-        private static AzureSqlEdgeDbContainer _database = null!;
+        private static AzureSqlDbContainer _database = null!;
 
         private AccountsDbContext _context = null!;
         private ValidationService _validationService = null!;
@@ -24,7 +22,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
         [ClassInitialize]
         public static async Task TestFixtureSetup(TestContext _)
         {
-            _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+            _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
         [ClassCleanup]
@@ -43,7 +41,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                     .EnableSensitiveDataLogging()
                     .Options);
 
-            await _context.Database.EnsureCreatedAsync();
+            await _context.Database.MigrateAsync();
 
             _validationService = new ValidationService(_context, new Mock<ILogger<ValidationService>>().Object);
         }
@@ -152,7 +150,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
         private async Task<Enrolment> GenerateRandomPendingEnrolment(string serviceRoleKey)
         {
-            var accountService = new AccountService(_context);
+            var accountService = new AccountService(_context, new Mock<ITokenService>().Object, new Mock<IReExEnrolmentMaps>().Object);
 
             var approvedPersonAccount = RandomModelData.GetAccountModel(serviceRoleKey);
             var serviceRole = await accountService.GetServiceRoleAsync(approvedPersonAccount.Connection.ServiceRole);

@@ -69,7 +69,7 @@ public class AccountsControllerTests
             .ReturnsAsync(new Collection<OrganisationResponseModel>());
         
         _personServiceMock
-            .Setup(service => service.GetPersonByUserIdAsync(Guid.NewGuid()))
+            .Setup(service => service.GetPersonResponseByUserId(Guid.NewGuid()))
             .ReturnsAsync((PersonResponseModel?)null);
 
         _accountServiceMock
@@ -153,7 +153,7 @@ public class AccountsControllerTests
             .ReturnsAsync(new Collection<OrganisationResponseModel>());
         
         _personServiceMock
-            .Setup(service => service.GetPersonByUserIdAsync(account.User.UserId!.Value))
+            .Setup(service => service.GetPersonResponseByUserId(account.User.UserId!.Value))
             .ReturnsAsync(new PersonResponseModel());
 
         _accountServiceMock
@@ -190,7 +190,7 @@ public class AccountsControllerTests
         account.Connection.ServiceRole = InvalidServiceRole;
 
         _personServiceMock
-            .Setup(service => service.GetPersonByUserIdAsync(account.User.UserId!.Value))
+            .Setup(service => service.GetPersonResponseByUserId(account.User.UserId!.Value))
             .ReturnsAsync(new PersonResponseModel());
 
         _accountServiceMock.Setup(service => service.GetServiceRoleAsync(InvalidServiceRole))
@@ -218,16 +218,7 @@ public class AccountsControllerTests
             Connection = new ConnectionModel()};
         _accountServiceMock.Setup(m => m.GetServiceRoleAsync(It.IsAny<string>())).ReturnsAsync(new ServiceRole());
         _userServiceMock.Setup(m => m.GetApprovedUserUserByEmailAsync(It.IsAny<string>())).ReturnsAsync(new UserModel());
-        _accountServiceMock.Setup(m => m.AddApprovedUserAccountAsync(
-            It.IsAny<ApprovedUserAccountModel>(),
-            It.IsAny<ServiceRole>(),
-            It.IsAny<UserModel>()))
-            .ReturnsAsync(new Enrolment
-            {
-                Connection = new PersonOrganisationConnection { Organisation = new Organisation() },
-                ApprovedPersonEnrolment = new ApprovedPersonEnrolment()
-            });
-        
+
         // act
         var result = await _accountsController.CreateApprovedUserAccount(request);
         
@@ -244,11 +235,6 @@ public class AccountsControllerTests
             Person = new PersonModel(),
             Connection = new ConnectionModel()};
         _accountServiceMock.Setup(m => m.GetServiceRoleAsync(It.IsAny<string>())).ReturnsAsync((ServiceRole)null);
-        _accountServiceMock.Setup(m => m.AddApprovedUserAccountAsync(
-                It.IsAny<ApprovedUserAccountModel>(),
-                It.IsAny<ServiceRole>(),
-                It.IsAny<UserModel>()))
-            .ReturnsAsync(new Enrolment{Connection = new PersonOrganisationConnection{Organisation = new Organisation()}, ApprovedPersonEnrolment = new ApprovedPersonEnrolment() });
         
         // act
         var result = await _accountsController.CreateApprovedUserAccount(request);
@@ -258,7 +244,7 @@ public class AccountsControllerTests
         (result as BadRequestObjectResult).Value.Should().BeOfType<ValidationProblemDetails>();
     }
 
-    private AccountModel GetAccountRecord()
+    private static AccountModel GetAccountRecord()
     {
         return new AccountModel
         {

@@ -14,14 +14,14 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
     [TestClass]
     public class GettingConnectionWithEnrolmentsFromOrganisationForServiceTests
     {
-        private static AzureSqlEdgeDbContainer _database = null!;
+        private static AzureSqlDbContainer _database = null!;
         private AccountsDbContext _context = null!;
         private RoleManagementService _connectionsService = null!;
 
         [ClassInitialize]
         public static async Task TestFixtureSetup(TestContext _)
         {
-            _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+            _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
         [ClassCleanup]
@@ -40,7 +40,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                     .EnableSensitiveDataLogging()
                     .Options);
 
-            await _context.Database.EnsureCreatedAsync();
+            await _context.Database.MigrateAsync();
 
             _connectionsService = new RoleManagementService(_context, 
                 new ValidationService(_context, NullLogger<ValidationService>.Instance));

@@ -373,3 +373,4 @@ FodyWeavers.xsd
 
 # Local SonarQube results
 **/.sonarqube
+/src/BackendAccountService.Api/appsettings.Development.json

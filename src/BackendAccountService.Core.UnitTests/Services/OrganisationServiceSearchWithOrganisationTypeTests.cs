@@ -1,20 +1,19 @@
-﻿using BackendAccountService.Core.Extensions;
-using BackendAccountService.Core.Models;
+﻿using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+
 
 namespace BackendAccountService.Core.UnitTests.Services;
 
 [TestClass]
 public class OrganisationServiceSearchWithOrganisationTypeTests
 {
-    private AccountsDbContext _accountContext= null!;
+    private AccountsDbContext _accountContext = null!;
     private OrganisationService _organisationService = null!;
-    
+
     [TestInitialize]
     public void Setup()
     {
@@ -24,7 +23,8 @@ public class OrganisationServiceSearchWithOrganisationTypeTests
             .Options;
 
         _accountContext = new AccountsDbContext(contextOptions);
-        _organisationService = new OrganisationService(_accountContext);
+        _organisationService = new OrganisationService(
+            _accountContext);
         SetUpDatabase(_accountContext);
     }
 
@@ -36,6 +36,7 @@ public class OrganisationServiceSearchWithOrganisationTypeTests
         results.Items.Count.Should().Be(1);
         results.Items.Should().Contain(item => item.OrganisationName == "Test Compliance Scheme Org");
         results.Items.Should().Contain(item => item.OrganisationType == OrganisationSchemeType.ComplianceScheme.ToString());
+        results.Items.Should().Contain(item => item.MemberOfComplianceSchemeName == null);
     }
     
     [TestMethod]
@@ -46,6 +47,7 @@ public class OrganisationServiceSearchWithOrganisationTypeTests
         results.Items.Count.Should().Be(1);
         results.Items.Should().Contain(item => item.OrganisationName == "Direct Producer Org");
         results.Items.Should().Contain(item => item.OrganisationType == OrganisationSchemeType.DirectProducer.ToString());
+        results.Items.Should().Contain(item => item.MemberOfComplianceSchemeName == null);
     }
     
     [TestMethod]
@@ -56,7 +58,7 @@ public class OrganisationServiceSearchWithOrganisationTypeTests
         results.Items.Count.Should().Be(1);
         results.Items.Should().Contain(item => item.OrganisationName == "Producer Indirect Org");
         results.Items.Should().Contain(item => item.OrganisationType == OrganisationSchemeType.InDirectProducer.ToString());
-        
+        results.Items.Should().Contain(item => item.MemberOfComplianceSchemeName == null);
     }
 
     private static void SetUpDatabase(AccountsDbContext setupContext)

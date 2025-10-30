@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Models;
 using Models.Request;
 using Models.Result;
+using Moq;
 using TestHelpers;
 using InterOrganisationRole = Data.DbConstants.InterOrganisationRole;
 
@@ -51,27 +52,27 @@ public class ComplianceSchemeServiceTests
 
         _complianceSchemeService = new ComplianceSchemeService(_dbContext, _logger);
     }
-    
+
     [TestMethod]
     public async Task WhenExistingComplianceSchemeIsRequestedToBeRemoved_ThenSetIsDeletedToTrue()
     {
         //Arrange
         var removeCompliance = new RemoveComplianceSchemeRequest
         {
-            SelectedSchemeId =_existingSelectedSchemeId,
+            SelectedSchemeId = _existingSelectedSchemeId,
             OrganisationId = Guid.NewGuid(),
             UserOId = Guid.NewGuid()
         };
 
         //Act
         var result = await _complianceSchemeService.RemoveComplianceSchemeAsync(removeCompliance);
-       
+
         //Assert
-        
+
         result.Should().BeOfType(typeof(Result));
         result.IsSuccess.Should().BeTrue();
     }
-    
+
     [TestMethod]
     public async Task WhenExistingComplianceSchemeIsNotFound_ThenReturnNotFound()
     {
@@ -80,7 +81,7 @@ public class ComplianceSchemeServiceTests
         {
             SelectedSchemeId = _selectedSchemeId,
             OrganisationId = _organisationId,
-            UserOId =_userOId
+            UserOId = _userOId
         };
 
         //Act
@@ -92,7 +93,7 @@ public class ComplianceSchemeServiceTests
         result.Should().BeOfType(typeof(Result));
         result.Should().BeEquivalentTo(expectedResult);
     }
-    
+
     [TestMethod]
     public async Task WhenNoActiveConnectionFoundForOrganisation_ThenReturnInternalServerError()
     {
@@ -124,7 +125,7 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var existingOrgConnections = _dbContext.OrganisationsConnections.Count();
-        
+
         var newProducerOrg = _dbContext.AddOrganisation(new Organisation
         {
             Name = _fixture.Create<string>(),
@@ -155,7 +156,7 @@ public class ComplianceSchemeServiceTests
             ToOrganisationRoleId = InterOrganisationRole.ComplianceScheme,
             IsDeleted = false
         };
-        
+
         var preRunDateTime = DateTimeOffset.Now;
 
         //Act
@@ -173,7 +174,7 @@ public class ComplianceSchemeServiceTests
         var orgConnection = _dbContext.OrganisationsConnections.Single(x => x.LastUpdatedOn > preRunDateTime);
         orgConnection.Should().BeEquivalentTo(expectedOrganisationsConnection);
     }
-    
+
     [TestMethod]
     [DataRow("00000000-0000-0000-0000-000000000021")]
     [DataRow("00000000-0000-0000-0000-000000000022")]
@@ -181,7 +182,7 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var existingOrgConnections = _dbContext.OrganisationsConnections.Count();
-        
+
         var newProducerOrg = _dbContext.AddOrganisation(new Organisation
         {
             Name = _fixture.Create<string>(),
@@ -198,7 +199,7 @@ public class ComplianceSchemeServiceTests
             ProducerOrganisationId = newProducerOrg.ExternalId,
             UserOId = _fixture.Create<Guid>(),
         };
-        
+
         var request2 = new SelectComplianceSchemeRequest
         {
             ComplianceSchemeId = complianceScheme.ExternalId,
@@ -220,7 +221,7 @@ public class ComplianceSchemeServiceTests
             ToOrganisationRoleId = InterOrganisationRole.ComplianceScheme,
             IsDeleted = false
         };
-        
+
         var preRunDateTime = DateTimeOffset.Now;
 
         //Act
@@ -241,7 +242,7 @@ public class ComplianceSchemeServiceTests
         var orgConnection = _dbContext.OrganisationsConnections.Single(x => x.LastUpdatedOn > preRunDateTime);
         _dbContext.SelectedSchemes.Count(x =>
             x.OrganisationConnection.FromOrganisation.ExternalId == newProducerOrg.ExternalId).Should().Be(1);
-        
+
         orgConnection.Should().BeEquivalentTo(expectedOrganisationsConnection);
     }
 
@@ -282,7 +283,7 @@ public class ComplianceSchemeServiceTests
             _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.LastUpdatedOn > preRunDateTime && !x.IsDeleted);
         newOrgConnection.Should().BeNull();
     }
-    
+
     [TestMethod]
     public async Task WhenUpdateComplianceSchemeIsRequested_AndSelectedSchemeNotFound_ReturnsNotFound()
     {
@@ -294,13 +295,13 @@ public class ComplianceSchemeServiceTests
             ProducerOrganisationId = _existingProducerWithSelectedSchemeId,
             UserOid = _userOId
         };
-        
+
         var expectedResult = Result<SelectedScheme>.FailedResult("Existing selected scheme not found", HttpStatusCode.NotFound);
         var preRunDateTime = DateTimeOffset.Now;
-        
+
         //Act
         var result = await _complianceSchemeService.UpdateSelectedComplianceSchemeAsync(request);
-        
+
         //Assert
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
@@ -320,7 +321,7 @@ public class ComplianceSchemeServiceTests
             _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.LastUpdatedOn > preRunDateTime && !x.IsDeleted);
         newOrgConnection.Should().BeNull();
     }
-    
+
     [TestMethod]
     public async Task WhenSelectComplianceSchemeIsRequested_AndComplianceSchemeNotFound_NotFoundIsReturned()
     {
@@ -331,7 +332,7 @@ public class ComplianceSchemeServiceTests
             ProducerOrganisationId = _existingProducerWithSelectedSchemeId,
             UserOId = _userOId
         };
-        
+
         var expectedResult = Result<SelectedScheme>.FailedResult("Compliance scheme not found", HttpStatusCode.NotFound);
 
         var preRunDateTime = DateTimeOffset.Now;
@@ -342,7 +343,7 @@ public class ComplianceSchemeServiceTests
         //Assert
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
-        
+
         //Assert
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
@@ -356,7 +357,7 @@ public class ComplianceSchemeServiceTests
             _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.LastUpdatedOn > preRunDateTime && !x.IsDeleted);
         newOrgConnection.Should().BeNull();
     }
-    
+
     [TestMethod]
     public async Task WhenSelectComplianceSchemeIsRequested_AndProducerNotFound_NotFoundIsReturned()
     {
@@ -378,7 +379,7 @@ public class ComplianceSchemeServiceTests
         //Assert
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
-        
+
         // hasn't soft deleted previous org connection
         var previousOrgConnection = _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.Id == 1);
         previousOrgConnection?.IsDeleted.Should().BeFalse();
@@ -388,7 +389,7 @@ public class ComplianceSchemeServiceTests
             _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.LastUpdatedOn > preRunDateTime && !x.IsDeleted);
         newOrgConnection.Should().BeNull();
     }
-    
+
     [TestMethod]
     public async Task WhenUpdateComplianceSchemeIsRequested_AndComplianceSchemeNotFound_NotFoundIsReturned()
     {
@@ -400,7 +401,7 @@ public class ComplianceSchemeServiceTests
             ProducerOrganisationId = _existingProducerWithSelectedSchemeId,
             UserOid = _userOId
         };
-        
+
         var expectedResult = Result<SelectedScheme>.FailedResult("Compliance scheme not found", HttpStatusCode.NotFound);
 
         //Act
@@ -410,29 +411,29 @@ public class ComplianceSchemeServiceTests
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
     }
-    
+
     [TestMethod]
     public async Task WhenUpdateComplianceSchemeIsRequested_AndProducerNotFound_NotFoundIsReturned()
     {
         //Arrange
         var request = new UpdateSelectedComplianceSchemeRequest
-        {   
+        {
             SelectedSchemeId = _existingSelectedSchemeId,
             ComplianceSchemeId = _existingComplianceSchemeId,
             ProducerOrganisationId = _organisationId, // doesnt exist
             UserOid = _userOId
         };
-        
+
         var expectedResult = Result<SelectedScheme>.FailedResult("Producer organisation not found", HttpStatusCode.NotFound);
         var preRunDateTime = DateTimeOffset.Now;
-        
+
         //Act
         var result = await _complianceSchemeService.UpdateSelectedComplianceSchemeAsync(request);
 
         //Assert
         result.Should().BeOfType(typeof(Result<SelectedScheme>));
         result.Should().BeEquivalentTo(expectedResult);
-        
+
         // hasn't soft deleted previous org connection or scheme
         var previousSelectedScheme = _dbContext.SelectedSchemes.AsNoTracking().FirstOrDefault(x => x.ExternalId == request.SelectedSchemeId);
         previousSelectedScheme?.IsDeleted.Should().BeFalse();
@@ -448,37 +449,40 @@ public class ComplianceSchemeServiceTests
             _dbContext.OrganisationsConnections.AsNoTracking().FirstOrDefault(x => x.LastUpdatedOn > preRunDateTime && !x.IsDeleted);
         newOrgConnection.Should().BeNull();
     }
-    
+
     [TestMethod]
     public async Task WhenSelectedComplianceSchemeIsRequestedForTheProducer_AndSelectedSchemeIsAvailable_ThenGetTheSelectedSchemeDetails()
     {
         //Act
         var result = await _complianceSchemeService.GetComplianceSchemeForProducer(_existingProducerWithSelectedSchemeId);
-       
+
         //Assert
         result.Should().BeOfType(typeof(Result<ProducerComplianceSchemeDto>));
         result.IsSuccess.Should().BeTrue();
         result.Value.ComplianceSchemeName.Should().NotBe(null);
     }
-    
+
     [TestMethod]
     public async Task WhenSelectedComplianceSchemeIsRequestedForTheProducer_AndNoComplianceSchemeHasBeenSelected_ThenNotFoundIsReturned()
     {
         //Act
         var result = await _complianceSchemeService.GetComplianceSchemeForProducer(_organisationId);
-       
+
         //Assert
-        var expectedResult = Result<SelectedScheme>.FailedResult("Organisation does not currently have a compliance scheme selected", HttpStatusCode.NotFound);
+        var expectedResult = Result<SelectedScheme>.FailedResult("Organisation does not currently have a compliance scheme selected", HttpStatusCode.NoContent);
         result.Should().BeOfType(typeof(Result<ProducerComplianceSchemeDto>));
         result.Should().BeEquivalentTo(expectedResult);
+        result.IsSuccess.Should().BeFalse();
+        result.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        result.ErrorMessage.Should().Be("Organisation does not currently have a compliance scheme selected");
     }
-    
+
     [TestMethod]
     public async Task WhenSelectedComplianceSchemeIsRequestedForTheProducer_AndMultipleSelectedSchemeFoundForProducer_ThenReturnInternalServerError()
     {
         //Act
         var result = await _complianceSchemeService.GetComplianceSchemeForProducer(_existingProducerWithMultipleSchemesId);
-       
+
         //Assert
         result.Should().BeOfType(typeof(Result<ProducerComplianceSchemeDto>));
         result.IsSuccess.Should().BeFalse();
@@ -489,17 +493,17 @@ public class ComplianceSchemeServiceTests
     public async Task When_Get_All_Compliance_Schemes_Is_Called_Then_Return_All_Compliance_Schemes()
     {
         //Arrange
-        var csOrgsCompaniesHouseNumbers = _dbContext.Organisations
+        var csOrgsCompaniesHouseNumbers = await _dbContext.Organisations
             .Where(x => x.IsComplianceScheme)
             .AsNoTracking()
             .Select(x => x.CompaniesHouseNumber)
-            .ToList();
-        
-        var expectedResult = _dbContext
+            .ToListAsync();
+
+        var expectedResult = await _dbContext
             .ComplianceSchemes
             .Where(cs => csOrgsCompaniesHouseNumbers.Contains(cs.CompaniesHouseNumber))
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
-            .ToList();
+            .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
+            .ToListAsync();
 
         //Act
         var result = await _complianceSchemeService.GetAllComplianceSchemesAsync();
@@ -507,22 +511,22 @@ public class ComplianceSchemeServiceTests
         //Assert
         result.Should().BeEquivalentTo(expectedResult);
     }
-        
+
     [TestMethod]
     public async Task When_Get_Compliance_Schemes_For_Operator_Is_Called_Then_Return_Its_Compliance_Schemes()
     {
         //Arrange
-        var organisation = _dbContext.Organisations.FirstOrDefault(x => x.ExternalId == _existingProducerWithSelectedSchemeId);
-        
-        var expectedResult = _dbContext
+        var organisation = await _dbContext.Organisations.FirstOrDefaultAsync(x => x.ExternalId == _existingProducerWithSelectedSchemeId);
+
+        var expectedResult = await _dbContext
             .ComplianceSchemes
             .Where(x => x.CompaniesHouseNumber == organisation.CompaniesHouseNumber)
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
-            .ToList();
+            .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
+            .ToListAsync();
 
         //Act
         var result = await _complianceSchemeService.GetComplianceSchemesForOperatorAsync(_existingProducerWithSelectedSchemeId);
-       
+
         //Assert
         result.Should().BeOfType(typeof(List<ComplianceSchemeDto>));
         result.Should().BeEquivalentTo(expectedResult);
@@ -536,7 +540,7 @@ public class ComplianceSchemeServiceTests
         var selectedSchemeId = new Guid("00000000-0000-0000-0000-000000000037");
 
         //Act
-        var result = await _complianceSchemeService.GetComplianceSchemeMemberDetailsAsync(validComplianceSchemeId, selectedSchemeId );
+        var result = await _complianceSchemeService.GetComplianceSchemeMemberDetailsAsync(validComplianceSchemeId, selectedSchemeId);
 
         //Assert
         result.Should().BeOfType(typeof(Result<ComplianceSchemeMemberDetailDto>));
@@ -552,7 +556,7 @@ public class ComplianceSchemeServiceTests
         var selectedSchemeId = new Guid("00000000-0000-0000-0000-000000000037");
 
         //Act
-        var result = await _complianceSchemeService.GetComplianceSchemeMemberDetailsAsync(validComplianceSchemeId, selectedSchemeId );
+        var result = await _complianceSchemeService.GetComplianceSchemeMemberDetailsAsync(validComplianceSchemeId, selectedSchemeId);
 
         //Assert
         result.Should().BeOfType(typeof(Result<ComplianceSchemeMemberDetailDto>));
@@ -687,7 +691,7 @@ public class ComplianceSchemeServiceTests
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
         await dbContext.Database.EnsureCreatedAsync();
-        
+
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
         var complianceScheme1 = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.England);
@@ -712,7 +716,7 @@ public class ComplianceSchemeServiceTests
         summary2.MemberCount.Should().Be(0);
         summary2.Name.Should().Be(complianceScheme2.Name);
         summary2.Nation.Should().Be(Models.Nation.Scotland);
-   }
+    }
 
     [TestMethod]
     public async Task GetComplianceSchemeSummary_WhenThereAreMultipleComplianceSchemesWithMembers_ThenReturnSummaryWithNonZeroCounts()
@@ -748,7 +752,7 @@ public class ComplianceSchemeServiceTests
         summary2.MemberCount.Should().Be(97);
         summary2.Name.Should().Be(complianceScheme2.Name);
         summary2.Nation.Should().Be(Models.Nation.England);
-   }
+    }
 
     [TestMethod]
     public async Task GetComplianceSchemeReasonsForRemoval_ReasonsFound_ReturnOkResultWithListOfReasons()
@@ -774,5 +778,67 @@ public class ComplianceSchemeServiceTests
         result.Should().BeOfType(typeof(List<ComplianceSchemeRemovalReasonResponse>));
         result.Should().BeEquivalentTo(expectedResult);
     }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ShouldReturnNul_WhenComplianceSchemeDoesnotExist()
+    {
+        // Arrange
+        var organisationId = new Guid("00000000-0000-0000-0000-000000000001");
+        var complianceSchemeId = new Guid("00000000-0000-0000-0000-000000000011");
+        var userId = new Guid();
+
+        // Act
+        var result = await _complianceSchemeService.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ShouldReturnNull_WhenRelationshipDoesnotExist()
+    {
+        // Arrange
+        var organisationId = new Guid("00000000-0000-0000-0000-000000000001");
+        var complianceSchemeId = new Guid("00000000-0000-0000-0000-000000000031");
+        var userId = new Guid();
+
+        // Act
+        var result = await _complianceSchemeService.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ShouldReturnNull_WhenComplianceSchemeDoesnotExist()
+    {
+        // Arrange
+        var organisationId = new Guid("00000000-0000-0000-0000-000000000001");
+        var complianceSchemeId = new Guid("00000000-0000-0000-0000-000000000099");
+        var userId = new Guid();
+
+        // Act
+        var result = await _complianceSchemeService.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task ExportComplianceSchemeSubsidiaries_ShouldReturnValue_WhenRelationshipExist()
+    {
+        // Arrange
+        var organisationId = new Guid("00000000-0000-0000-0000-000000000001");
+        var complianceSchemeId = new Guid("00000000-0000-0000-0000-000000000021");
+        var userId = new Guid();
+
+        // Act
+        var result = await _complianceSchemeService.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+
 }
-        
+

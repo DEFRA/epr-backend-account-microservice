@@ -1,10 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+
 namespace BackendAccountService.Core.Models.Request;
 
-using System.ComponentModel.DataAnnotations;
-
+[ExcludeFromCodeCoverage]
 public class GetComplianceSchemeRequest
 {
     [Required]
     public int SelectedSchemeId { get; set; }
 }
-

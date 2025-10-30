@@ -28,8 +28,9 @@ namespace BackendAccountService.Api.Controllers
 
         [HttpPost]
         [Route("invite-user")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> InviteUser(AddInviteUserRequest request)
         {
             var isUserInvited = await _validateDataService.IsUserInvitedAsync(request.InvitedUser.Email);
@@ -49,7 +50,7 @@ namespace BackendAccountService.Api.Controllers
 
             if (string.IsNullOrWhiteSpace(result))
             {
-                _logger.LogError($"Failed to add the invited user {request.InvitedUser.UserId}");
+                _logger.LogError("Failed to add the invited user {UserId}", request.InvitedUser.UserId);
                 return Problem(statusCode: StatusCodes.Status500InternalServerError, type: "Token not generated");
             }
 
@@ -58,13 +59,13 @@ namespace BackendAccountService.Api.Controllers
 
         [HttpGet]
         [Route("invited-user")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> InvitedUser(Guid userId, string email)
         {
             var invitedUserToken = await _validateDataService.UserInvitedTokenAsync(userId);
-            _logger.LogInformation($"Returning invite token {invitedUserToken}");
+            _logger.LogInformation("Returning invite token {InvitedUserToken}", invitedUserToken);
             return new OkObjectResult(invitedUserToken);
         }
     }

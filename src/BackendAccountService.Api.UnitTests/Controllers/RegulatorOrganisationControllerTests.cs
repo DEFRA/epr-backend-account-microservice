@@ -1,4 +1,5 @@
-﻿using BackendAccountService.Api.Configuration;
+﻿using Azure.Core;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Models.Result;
@@ -141,27 +142,32 @@ namespace BackendAccountService.Api.UnitTests.Controllers
         [TestMethod]
         public async Task GetNationIdFromOrganisationId_WhenOrganisationNotExist_ReturnOkWithResultValueToBeZero()
         {
+            var expectedResponse = new List<OrganisationNationResponseModel> { new() { Id = 0 } };
             // Arrange
             _regulatorServiceMock
-                .Setup(service => service.GetOrganisationNationIds(It.IsAny<Guid>()))
-                .ReturnsAsync(new List<int>{0});
+            .Setup(service => service.GetOrganisationNationsAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(expectedResponse);
 
             // Act
             var result = await _regulatorOrganisationController
                 .GetNationIdsFromOrganisationId(It.IsAny<Guid>()) as OkObjectResult;
 
             // Assert
-            (result.Value as List<int>).Should().BeEquivalentTo(new List<int>{0});
+            var expectedResult = expectedResponse.Select(x => x.Id).ToList();
+
+            (result.Value as List<int>).Should().BeEquivalentTo(expectedResult);
             result.StatusCode.Should().Be((int)HttpStatusCode.OK);
         }
         
         [TestMethod]
         public async Task GetRegulatorOrganisationByNation_WhenOrganisationExists_ReturnOk()
         {
+            var expectedResponse = new List<OrganisationNationResponseModel>();
             // Arrange
-            _regulatorServiceMock.Setup(service => service.GetOrganisationNationIds(It.IsAny<Guid>()))
-                .ReturnsAsync(new List<int>());
-            
+            _regulatorServiceMock
+            .Setup(service => service.GetOrganisationNationsAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(expectedResponse);
+
             // Act
             var result = await _regulatorOrganisationController
                 .GetNationIdsFromOrganisationId(It.IsAny<Guid>()) as OkObjectResult;

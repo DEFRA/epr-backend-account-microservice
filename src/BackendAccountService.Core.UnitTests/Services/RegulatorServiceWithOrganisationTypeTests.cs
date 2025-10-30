@@ -22,7 +22,7 @@ public class RegulatorServiceWithOrganisationTypeTests
     private static readonly Guid ComplianceSchemeOrg = new Guid("00000000-0000-0000-0000-000000000010");
     private static readonly Guid DirectProducerOrg = new Guid("11111111-0000-0000-0000-000000000001");
     private static readonly Guid IndirectProducerOrg = new Guid("22222222-0000-0000-0000-000000000001");
-    
+
     [TestInitialize]
     public void Setup()
     {

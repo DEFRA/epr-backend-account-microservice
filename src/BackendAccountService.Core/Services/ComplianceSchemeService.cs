@@ -2,7 +2,6 @@ using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Data.Extensions;
 
 namespace BackendAccountService.Core.Services;
-
 using System.Net;
 using Models.Responses;
 using Data.Entities;
@@ -15,6 +14,8 @@ using Models.Result;
 using InterOrganisationRole = Data.DbConstants.InterOrganisationRole;
 using Extensions;
 using System.Linq;
+using BackendAccountService.Data.DbConstants;
+using System.Collections.Generic;
 
 public class ComplianceSchemeService : IComplianceSchemeService
 {
@@ -28,7 +29,8 @@ public class ComplianceSchemeService : IComplianceSchemeService
         _accountsDbContext = accountsDbContext;
         _logger = logger;
     }
-    public async Task<Result<ComplianceSchemeMembershipResponse>> GetComplianceSchemeMembersAsync(Guid organisationId, Guid complianceSchemeId, string? query, int pageSize, int page)
+
+    public async Task<Result<ComplianceSchemeMembershipResponse>> GetComplianceSchemeMembersAsync(Guid organisationId, Guid complianceSchemeId, string? query, int pageSize, int page, bool hideNoSubsidiaries)
     {
         query ??= string.Empty;
 
@@ -37,14 +39,11 @@ public class ComplianceSchemeService : IComplianceSchemeService
             var message = $"Length {query.Length} of parameter 'query' exceeds max length {MaxQueryLength}";
             return Result<ComplianceSchemeMembershipResponse>.FailedResult(message, HttpStatusCode.BadRequest);
         }
-        
-        if(pageSize > MaxPageSize) 
-        {
-            pageSize = MaxPageSize;
-        }
+
+        pageSize = Math.Min(pageSize, MaxPageSize);
 
         query = query.Trim().ToLower();
-        
+
         string? referenceNumber = query.TryExtractReferenceNumberFromQuery();
         var searchReferenceNumberNotRequired = query.Length == 0 || referenceNumber is null;
         var searchOrganisationNameNotRequired = query.Length == 0 || referenceNumber is not null;
@@ -54,24 +53,25 @@ public class ComplianceSchemeService : IComplianceSchemeService
             var complianceScheme = _accountsDbContext.ComplianceSchemes.FirstOrDefault(complianceScheme => complianceScheme.ExternalId == complianceSchemeId);
             if (complianceScheme == null)
             {
-                _logger.LogError("Compliance scheme id {complianceSchemeId} is not found for the organisation Id {organisationId}}", complianceSchemeId, organisationId);
+                _logger.LogError("Compliance scheme id {complianceSchemeId} is not found for the organisation Id {organisationId}", complianceSchemeId, organisationId);
                 return Result<ComplianceSchemeMembershipResponse>.FailedResult($"Compliance scheme id {complianceSchemeId} is not found for the organisation Id {organisationId}", HttpStatusCode.NotFound);
             }
 
             var isOperatorForThisScheme = await _accountsDbContext.Organisations.Where(o =>
-                o.ExternalId == organisationId && o.CompaniesHouseNumber == complianceScheme.CompaniesHouseNumber).AnyAsync();
-            if(!isOperatorForThisScheme)
+                  o.ExternalId == organisationId && o.CompaniesHouseNumber == complianceScheme.CompaniesHouseNumber).AnyAsync();
+            if (!isOperatorForThisScheme)
             {
-                _logger.LogError("Compliance scheme id {complianceSchemeId} is not the operator for the organisation Id {organisationId}}", complianceSchemeId, organisationId);
+                _logger.LogError("Compliance scheme id {complianceSchemeId} is not the operator for the organisation Id {organisationId}", complianceSchemeId, organisationId);
                 return Result<ComplianceSchemeMembershipResponse>.FailedResult($"Compliance scheme id {complianceSchemeId} is not found for the organisation Id {organisationId}", HttpStatusCode.NotFound);
             }
-            
+
             var fullProducerQuery = _accountsDbContext.SelectedSchemes
-            .Where(selectedScheme =>
-                selectedScheme.ComplianceSchemeId == complianceScheme.Id &&
-                selectedScheme.OrganisationConnection.FromOrganisationRoleId == InterOrganisationRole.Producer &&
-                selectedScheme.OrganisationConnection.ToOrganisation.ExternalId == organisationId &&
-                selectedScheme.OrganisationConnection.ToOrganisationRoleId == InterOrganisationRole.ComplianceScheme);
+                .Where(selectedScheme =>
+                    selectedScheme.ComplianceSchemeId == complianceScheme.Id &&
+                    selectedScheme.OrganisationConnection.FromOrganisationRoleId == InterOrganisationRole.Producer &&
+                    selectedScheme.OrganisationConnection.ToOrganisation.ExternalId == organisationId &&
+                    selectedScheme.OrganisationConnection.ToOrganisationRoleId == InterOrganisationRole.ComplianceScheme);
+
             
             var linkedOrganisationCount = await fullProducerQuery.CountAsync();
             if (linkedOrganisationCount == 0)
@@ -84,11 +84,11 @@ public class ComplianceSchemeService : IComplianceSchemeService
                 _logger.LogInformation("Compliance scheme id {complianceSchemeId} found which has 0 members for the organisation Id {organisationId}", complianceSchemeId, organisationId);
                 return Result<ComplianceSchemeMembershipResponse>.SuccessResult(complianceSchemeMembershipEmptyResponse);
             }
-                    
+
             var lastUpdatedDate = await fullProducerQuery.IgnoreQueryFilters()
                 .MaxAsync(selectedScheme => selectedScheme.OrganisationConnection.LastUpdatedOn);
 
-            var producerList = fullProducerQuery
+            var producerList = await fullProducerQuery
                 .Where(selectedScheme =>
                     (searchReferenceNumberNotRequired ||
                         selectedScheme.OrganisationConnection.FromOrganisation.ReferenceNumber == referenceNumber ||
@@ -98,21 +98,50 @@ public class ComplianceSchemeService : IComplianceSchemeService
                 .OrderBy(selectedScheme => selectedScheme.OrganisationConnection.FromOrganisation.Name)
                 .Select(selectedScheme => new ComplianceSchemeMemberDto
                 {
+                    SelectedSchemeOrganisationExternalId = selectedScheme.OrganisationConnection.FromOrganisation.ExternalId,
                     SelectedSchemeId = selectedScheme.ExternalId,
                     OrganisationName = selectedScheme.OrganisationConnection.FromOrganisation.Name,
+                    CompaniesHouseNumber = selectedScheme.OrganisationConnection.FromOrganisation.CompaniesHouseNumber,
                     OrganisationNumber = selectedScheme.OrganisationConnection.FromOrganisation.ReferenceNumber
+                }).ToListAsync();
 
-                });
+            foreach (var member in producerList)
+            {
+                var relationshipQuery = from o in _accountsDbContext.Organisations
+                                        join rel in _accountsDbContext.OrganisationRelationships on o.Id equals rel.FirstOrganisationId
+                                        join sub in _accountsDbContext.Organisations on rel.SecondOrganisationId equals sub.Id
+                                        join ort in _accountsDbContext.OrganisationRelationshipTypes on rel.OrganisationRelationshipTypeId equals ort.Id
+                                        join subOrg in _accountsDbContext.SubsidiaryOrganisations on rel.SecondOrganisationId equals subOrg.OrganisationId into subOrgGroup
+                                        from subOrg in subOrgGroup.DefaultIfEmpty()
+                                        where o.ReferenceNumber == member.OrganisationNumber && rel.RelationToDate == null
+                                        select new RelationshipResponseModel()
+                                        {
+                                            OrganisationName = sub.Name,
+                                            OrganisationNumber = sub.ReferenceNumber,
+                                            RelationshipType = ort.Name,
+                                            CompaniesHouseNumber = sub.CompaniesHouseNumber,
+                                            JoinerDate = rel.JoinerDate  
+                                        };
+
+                member.Relationships = await relationshipQuery.ToListAsync();
+            }
+
+            if (hideNoSubsidiaries)
+            {
+                producerList = producerList.Where(_ => _.Relationships.Count > 0).ToList();
+            }
 
             var pagedResults = await PaginatedResponse<ComplianceSchemeMemberDto>.CreateAsync(producerList, page, pageSize);
+
             var complianceSchemeMembershipResponse = new ComplianceSchemeMembershipResponse
             {
                 PagedResult = pagedResults,
                 SchemeName = complianceScheme.Name,
                 LastUpdated = lastUpdatedDate,
-                LinkedOrganisationCount = linkedOrganisationCount
+                LinkedOrganisationCount = linkedOrganisationCount,
+                SubsidiariesCount = producerList.Sum(producer => producer.Relationships?.Count ?? 0)
             };
-            
+
             return Result<ComplianceSchemeMembershipResponse>.SuccessResult(complianceSchemeMembershipResponse);
         }
         catch (Exception e)
@@ -122,7 +151,6 @@ public class ComplianceSchemeService : IComplianceSchemeService
             return Result<ComplianceSchemeMembershipResponse>.FailedResult(message, HttpStatusCode.InternalServerError);
         }
     }
-
 
     public async Task<IEnumerable<ComplianceSchemeDto>> GetAllComplianceSchemesAsync()
     {
@@ -135,7 +163,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .ComplianceSchemes
             .Where(cs => csOperatorCompaniesHouseNumbers.Contains(cs.CompaniesHouseNumber))
             .AsNoTracking()
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
+            .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
             .ToListAsync();
 
         return complianceSchemes;
@@ -386,7 +414,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
             if (selectedScheme == null)
             {
                 _logger.LogError("No current selected compliance scheme found for organisationId {organisationId}", organisationId);
-                return Result<ProducerComplianceSchemeDto>.FailedResult("Organisation does not currently have a compliance scheme selected", HttpStatusCode.NotFound);
+                return Result<ProducerComplianceSchemeDto>.FailedResult("Organisation does not currently have a compliance scheme selected", HttpStatusCode.NoContent);
             }
             
             var complianceSchemeModel = new ProducerComplianceSchemeDto
@@ -457,11 +485,11 @@ public class ComplianceSchemeService : IComplianceSchemeService
             .AsNoTracking()
             .Where(x => x.CompaniesHouseNumber == organisation.CompaniesHouseNumber)
             .AsNoTracking()
-            .Select(cs => new ComplianceSchemeDto(cs.ExternalId, cs.Name, cs.CreatedOn,cs.NationId))
+            .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn,cs.NationId))
             .ToListAsync();
 
         return complianceSchemes;
-    }    
+    }
 
     public async Task<ComplianceSchemeSummary?> GetComplianceSchemeSummary(Guid organisationId, Guid complianceSchemeId)
     {
@@ -532,6 +560,55 @@ public class ComplianceSchemeService : IComplianceSchemeService
         return RemovalForReasons;
     }
 
+    public async Task<List<ExportOrganisationSubsidiariesResponseModel>> ExportComplianceSchemeSubsidiaries(Guid userId, Guid organisationId, Guid complianceSchemeId)
+    {
+        var complianceScheme = await _accountsDbContext.ComplianceSchemes.FirstOrDefaultAsync(complianceScheme => complianceScheme.ExternalId == complianceSchemeId);
+
+        if (complianceScheme == null)
+        {
+            _logger.LogError("Compliance Scheme Id {ComplianceSchemeId} is not found for the Organisation Id {OrganisationId}", complianceSchemeId, organisationId);
+            return null;
+        }
+
+        var complianceSchemeSubsidiaries = GetComplianceSchemeSubsidiaries(organisationId, complianceScheme.Id).OrderBy(r => r.OrganisationId);
+        
+        if (!await complianceSchemeSubsidiaries.AnyAsync())
+        {
+            return null;
+        }
+
+        return await complianceSchemeSubsidiaries.ToListAsync();
+    }
+
+    private IQueryable<ExportOrganisationSubsidiariesResponseModel> GetComplianceSchemeSubsidiaries(Guid organisationId, int complianceSchemeId)
+    {
+        var parentChildDetails =
+            from ss in _accountsDbContext.SelectedSchemes
+            join cs in _accountsDbContext.ComplianceSchemes on ss.ComplianceSchemeId equals cs.Id
+            join oc in _accountsDbContext.OrganisationsConnections on ss.OrganisationConnectionId equals oc.Id
+            join ofrom in _accountsDbContext.Organisations on oc.FromOrganisationId equals ofrom.Id
+            join oto in _accountsDbContext.Organisations on oc.ToOrganisationId equals oto.Id
+            join rel in _accountsDbContext.OrganisationRelationships on ofrom.Id equals rel.FirstOrganisationId
+            join sub in _accountsDbContext.Organisations on rel.SecondOrganisationId equals sub.Id
+            join ort in _accountsDbContext.OrganisationRelationshipTypes on rel.OrganisationRelationshipTypeId equals ort.Id
+            where oto.ExternalId == organisationId && ss.ComplianceSchemeId == complianceSchemeId &&
+                  (rel.RelationToDate == null || rel.RelationToDate >= DateTime.Now) &&
+                   oc.FromOrganisationRoleId == InterOrganisationRole.Producer &&
+                   oc.ToOrganisationRoleId == InterOrganisationRole.ComplianceScheme
+            select new ExportOrganisationSubsidiariesQueryModel
+            {
+                OrganisationId = ofrom.ReferenceNumber,
+                SubsidiaryId = sub.ReferenceNumber,
+                ParentOrganisationName = ofrom.Name,
+                ChildOrganisationName = sub.Name,
+                ChildCompaniesHouseNumber = sub.CompaniesHouseNumber,
+                ChildJoinerDate = rel.JoinerDate,
+                ParentCompaniesHouseNumber = ofrom.CompaniesHouseNumber
+            };
+
+        return parentChildDetails.GetCombinedParentChildQuery();
+    }
+
     private async Task<SelectedScheme?> GetSelectedSchemeAndOrganisationConnectionAsync(Guid selectedSchemeId)
     {
         return await _accountsDbContext.SelectedSchemes
@@ -549,7 +626,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
         organisationConnection!.IsDeleted = true;
     }
 
-    private async Task RemoveOrganisationsConnectionAsync(OrganisationsConnection organisationsConnection)
+    private static async Task RemoveOrganisationsConnectionAsync(OrganisationsConnection organisationsConnection)
     {
         organisationsConnection.IsDeleted = true;
     }
@@ -640,4 +717,5 @@ public class ComplianceSchemeService : IComplianceSchemeService
                 selectedScheme.OrganisationConnection.FromOrganisationRoleId == InterOrganisationRole.Producer &&
                 selectedScheme.OrganisationConnection.ToOrganisationRoleId == InterOrganisationRole.ComplianceScheme);
     }
+
 }

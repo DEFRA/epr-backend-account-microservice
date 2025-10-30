@@ -1,5 +1,8 @@
-﻿namespace BackendAccountService.Core.Models.Responses;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace BackendAccountService.Core.Models.Responses;
+
+[ExcludeFromCodeCoverage]
 public class InfoForSelectedSchemeRemoval
 {
     public string ComplianceSchemeName { get; set; }

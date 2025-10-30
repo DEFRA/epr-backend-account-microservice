@@ -1,6 +1,7 @@
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Core.Models.Result;
 
 namespace BackendAccountService.Core.Services;
 
@@ -12,7 +13,9 @@ public interface IRegulatorService
 
     int GetRegulatorNationId(Guid userId);
 
-    Task<List<int>> GetOrganisationNationIds(Guid organisationId);
+    Task<List<OrganisationNationResponseModel>> GetOrganisationNationsAsync(Guid organisationId);
+
+    Task<List<OrganisationNationResponseModel>> GetCSOrganisationNationsAsync(Guid complianceSchemeId);
 
     Task<ApplicationEnrolmentDetails> GetOrganisationEnrolmentDetails(Guid organisationId);
 
@@ -29,4 +32,15 @@ public interface IRegulatorService
     Task<AddRemoveApprovedPersonResponseModel> AddRemoveApprovedPerson(AddRemoveApprovedUserRequest request);
     
     Task<CompanySearchDetailsModel> GetCompanyDetailsById(Guid organisationId);
+
+    Task<Result<RegulatorUserDetailsUpdateResponse>> AcceptOrRejectUserDetailsChangeRequestAsync(ManageUserDetailsChangeModel request);
+
+    Task<PaginatedResponse<OrganisationUserDetailChangeRequest>> GetPendingUserDetailChangeRequestsAsync(int nationId, int currentPage, int pageSize, string? organisationName, string applicationType);
+
+    Task<Result<ChangeHistoryModel>> GetUserDetailChangeRequestAsync(Guid externalId);
+
+    Task<Result<RegulatorUserDetailsUpdateByServiceResponse>> AcceptOrRejectUserDetailsChangeRequestByServiceAsync(ManageUserDetailsChangeRequestByService request);
+
+    Task<Result<RegulatorOrganisationUpdateResponse>> UpdateNonCompaniesHouseCompanyByServiceAsync(ManageNonCompaniesHouseCompanyByService request);
+    
 }

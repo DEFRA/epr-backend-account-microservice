@@ -1,13 +1,13 @@
-﻿using BackendAccountService.Core.Models.Request;
+﻿using BackendAccountService.Core.Models.Mappings;
+using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Models.Result;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Net;
-using BackendAccountService.Core.Models.Mappings;
-using Microsoft.Data.SqlClient;
 
 namespace BackendAccountService.Core.Services
 {
@@ -31,11 +31,11 @@ namespace BackendAccountService.Core.Services
                 var localAuthority = BuildLocalAuthority(request);
 
                 _accountsDbContext.Add(organisation);
-                await _accountsDbContext.SaveChangesAsync(request.UserId,Guid.Empty);
+                await _accountsDbContext.SaveChangesAsync(request.UserId, Guid.Empty);
 
                 localAuthority.OrganisationId = organisation.Id;
                 _accountsDbContext.Add(localAuthority);
-                await _accountsDbContext.SaveChangesAsync(request.UserId,Guid.Empty);
+                await _accountsDbContext.SaveChangesAsync(request.UserId, Guid.Empty);
 
                 var response = LaOrganisationMappings.GetLaOrganisationModelFromOrganisation(organisation, localAuthority);
                 return Result<LocalAuthorityResponseModel>.SuccessResult(response);
@@ -75,8 +75,7 @@ namespace BackendAccountService.Core.Services
             return organisationResponseList;
         }
 
-        public async Task<IList<LocalAuthorityResponseModel>>
-            GetLocalAuthorityOrganisationByOrganisationTypeIdAsync(int id)
+        public async Task<IList<LocalAuthorityResponseModel>> GetLocalAuthorityOrganisationByOrganisationTypeIdAsync(int id)
         {
             var organisationList = _accountsDbContext.Organisations
                 .Join(_accountsDbContext.LaOrganisations, o => o.Id, a => a.OrganisationId, (o, a) => new { o, a })
@@ -106,15 +105,13 @@ namespace BackendAccountService.Core.Services
                     return Result<LocalAuthorityResponseModel>.SuccessResult(response);
                 }
 
-                var message = $"selected local authority with external id: {id}, was not found";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.NotFound);
+                _logger.LogError("Selected local authority with external id: {Id}, was not found", id);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with external id: {id}, was not found", HttpStatusCode.NotFound);
             }
             catch (Exception e)
             {
-                var message = $"selected local authority with external id: {id} was not found, {e.Message}";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.InternalServerError);
+                _logger.LogError("Selected local authority with external id: {Id} was not found, {Message}", id, e.Message);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with external id: {id} was not found, {e.Message}", HttpStatusCode.InternalServerError);
             }
         }
 
@@ -131,16 +128,14 @@ namespace BackendAccountService.Core.Services
                     var response = LaOrganisationMappings.GetLaOrganisationModelFromOrganisation(organisationResult.o, organisationResult.a);
                     return Result<LocalAuthorityResponseModel>.SuccessResult(response);
                 }
-             
-                var message = $"selected local authority with district code: {districtCode}, was not found";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.NotFound);
+
+                _logger.LogError("Selected local authority with district code: {DistrictCode}, was not found", districtCode);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with district code: {districtCode}, was not found", HttpStatusCode.NotFound);
             }
             catch (Exception e)
             {
-                var message = $"selected local authority with district code: {districtCode} was not found, {e.Message}";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.InternalServerError);
+                _logger.LogError("Selected local authority with district code: {DistrictCode} was not found, {Message}", districtCode, e.Message);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with district code: {districtCode} was not found, {e.Message}", HttpStatusCode.InternalServerError);
             }
         }
 
@@ -160,20 +155,17 @@ namespace BackendAccountService.Core.Services
                     return Result<LocalAuthorityResponseModel>.SuccessResult(response);
                 }
 
-                var message = $"selected local authority with name: {name}, was not found";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.NotFound);
+                _logger.LogError("Selected local authority with name: {Name}, was not found", name);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with name: {name}, was not found", HttpStatusCode.NotFound);
             }
             catch (Exception e)
             {
-                var message = $"selected local authority with name: {name} was not found, {e.Message}";
-                _logger.LogError(message);
-                return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.InternalServerError);
+                _logger.LogError("Selected local authority with name: {Name} was not found, {Message}", name, e.Message);
+                return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with name: {name} was not found, {e.Message}", HttpStatusCode.InternalServerError);
             }
         }
 
-        public async Task<Result<LocalAuthorityResponseModel>> UpdateLocalAuthorityByDistrictCodeAsync(
-            UpdateLocalAuthorityRequest request)
+        public async Task<Result<LocalAuthorityResponseModel>> UpdateLocalAuthorityByDistrictCodeAsync(UpdateLocalAuthorityRequest request)
         {
             var organisationResult = await _accountsDbContext.Organisations
                 .Join(_accountsDbContext.LaOrganisations, o => o.Id, a => a.OrganisationId, (o, a) => new { o, a })
@@ -184,13 +176,11 @@ namespace BackendAccountService.Core.Services
                 return await UpdateLocalAuthorityAsync(organisationResult.o, organisationResult.a, request);
             }
 
-            var message = $"selected local authority with District Code: {request.DistrictCode}, was not found";
-            _logger.LogError(message);
-            return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.NotFound);
+            _logger.LogError("Selected local authority with District Code: {DistrictCode}, was not found", request.DistrictCode);
+            return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with District Code: {request.DistrictCode}, was not found", HttpStatusCode.NotFound);
         }
 
-        public async Task<Result<LocalAuthorityResponseModel>> UpdateLocalAuthorityByExternalIdAsync(
-            UpdateLocalAuthorityRequest request)
+        public async Task<Result<LocalAuthorityResponseModel>> UpdateLocalAuthorityByExternalIdAsync(UpdateLocalAuthorityRequest request)
         {
             var organisationResult = await _accountsDbContext.Organisations
                 .Join(_accountsDbContext.LaOrganisations, o => o.Id, a => a.OrganisationId, (o, a) => new { o, a })
@@ -202,9 +192,8 @@ namespace BackendAccountService.Core.Services
                 return await UpdateLocalAuthorityAsync(organisationResult.o, organisationResult.a, request);
             }
 
-            var message = $"selected local authority with External Id: {request.ExternalId}, was not found";
-            _logger.LogError(message);
-            return Result<LocalAuthorityResponseModel>.FailedResult(message, HttpStatusCode.NotFound);
+            _logger.LogError("Selected local authority with External Id: {ExternalId}, was not found", request.ExternalId);
+            return Result<LocalAuthorityResponseModel>.FailedResult($"Selected local authority with External Id: {request.ExternalId}, was not found", HttpStatusCode.NotFound);
         }
 
         public async Task<Result> RemoveLocalAuthorityByDistrictCodeAsync(RemoveLocalAuthorityRequest request)
@@ -219,9 +208,8 @@ namespace BackendAccountService.Core.Services
                 return await RemoveLocalAuthorityAsync(organisationResult.o, organisationResult.a, request);
             }
 
-            var message = $"selected local authority with District Code: {request.DistrictCode}, was not found";
-            _logger.LogError(message);
-            return Result.FailedResult(message, HttpStatusCode.NotFound);
+            _logger.LogError("Selected local authority with District Code: {DistrictCode}, was not found", request.DistrictCode);
+            return Result.FailedResult($"Selected local authority with District Code: {request.DistrictCode}, was not found", HttpStatusCode.NotFound);
         }
 
         public async Task<Result> RemoveLocalAuthorityByExternalIdAsync(RemoveLocalAuthorityRequest request)
@@ -236,9 +224,8 @@ namespace BackendAccountService.Core.Services
                 return await RemoveLocalAuthorityAsync(organisationResult.o, organisationResult.a, request);
             }
 
-            var message = $"selected local authority with External Id: {request.ExternalId}, was not found";
-            _logger.LogError(message);
-            return Result.FailedResult(message, HttpStatusCode.NotFound);
+            _logger.LogError("Selected local authority with External Id: {ExternalId}, was not found", request.ExternalId);
+            return Result.FailedResult($"Selected local authority with External Id: {request.ExternalId}, was not found", HttpStatusCode.NotFound);
         }
 
         public async Task<Result> GetLocalAuthorityOrganisationNationAsync(string nationName)
@@ -252,15 +239,13 @@ namespace BackendAccountService.Core.Services
                     return Result.SuccessResult();
                 }
 
-                var message = $"Nation with name: {nationName}, was not found";
-                _logger.LogError(message);
-                return Result.FailedResult(message, HttpStatusCode.NotFound);
+                _logger.LogError("Nation with name: {NationName}, was not found", nationName);
+                return Result.FailedResult($"Nation with name: {nationName}, was not found", HttpStatusCode.NotFound);
             }
             catch (Exception e)
             {
-                var message = $"Nation with name: {nationName}, was not found";
-                _logger.LogError(message);
-                return Result.FailedResult(message, HttpStatusCode.InternalServerError);
+                _logger.LogError("Nation with name: {NationName}, was not found", nationName);
+                return Result.FailedResult($"Nation with name: {nationName}, was not found", HttpStatusCode.InternalServerError);
             }
         }
 
@@ -275,15 +260,13 @@ namespace BackendAccountService.Core.Services
                     return Result.SuccessResult();
                 }
 
-                var message = $"Organisation Type with name: {organisationTypeName}, was not found";
-                _logger.LogError(message);
-                return Result.FailedResult(message, HttpStatusCode.NotFound);
+                _logger.LogError("Organisation Type with name: {OrganisationTypeName}, was not found", organisationTypeName);
+                return Result.FailedResult($"Organisation Type with name: {organisationTypeName}, was not found", HttpStatusCode.NotFound);
             }
             catch (Exception e)
             {
-                var message = $"Organisation Type with name: {organisationTypeName}, was not found";
-                _logger.LogError(message);
-                return Result.FailedResult(message, HttpStatusCode.InternalServerError);
+                _logger.LogError("Organisation Type with name: {OrganisationTypeName}, was not found", organisationTypeName);
+                return Result.FailedResult($"Organisation Type with name: {organisationTypeName}, was not found", HttpStatusCode.InternalServerError);
             }
         }
 
@@ -292,7 +275,7 @@ namespace BackendAccountService.Core.Services
         {
             await RemoveSelectedLocalAuthorityAsync(laOrganisation);
             await RemoveSelectedOrganisationAsync(organisation);
-            await _accountsDbContext.SaveChangesAsync(request.UserId,Guid.Empty);
+            await _accountsDbContext.SaveChangesAsync(request.UserId, Guid.Empty);
             return Result.SuccessResult();
         }
 
@@ -301,25 +284,24 @@ namespace BackendAccountService.Core.Services
         {
             await UpdateSelectedLocalAuthorityAsync(laOrganisations, request);
             await UpdateSelectedOrganisationAsync(organisation, request);
-            await _accountsDbContext.SaveChangesAsync(request.UserId,Guid.Empty);
-                
+            await _accountsDbContext.SaveChangesAsync(request.UserId, Guid.Empty);
+
             var response = LaOrganisationMappings.GetLaOrganisationModelFromOrganisation(organisation, laOrganisations);
 
             return Result<LocalAuthorityResponseModel>.SuccessResult(response);
         }
 
-        private async Task RemoveSelectedLocalAuthorityAsync(LaOrganisation laOrganisations)
+        private static async Task RemoveSelectedLocalAuthorityAsync(LaOrganisation laOrganisations)
         {
             laOrganisations.IsDeleted = true;
         }
 
-        private async Task RemoveSelectedOrganisationAsync(Organisation organisation)
+        private static async Task RemoveSelectedOrganisationAsync(Organisation organisation)
         {
             organisation.IsDeleted = true;
         }
 
-        private async Task UpdateSelectedLocalAuthorityAsync(LaOrganisation laOrganisations,
-            UpdateLocalAuthorityRequest request)
+        private static async Task UpdateSelectedLocalAuthorityAsync(LaOrganisation laOrganisations, UpdateLocalAuthorityRequest request)
         {
             if (request.DistrictCode != string.Empty && request.DistrictCode.Length > 0)
             {
@@ -327,8 +309,7 @@ namespace BackendAccountService.Core.Services
             }
         }
 
-        private async Task UpdateSelectedOrganisationAsync(Organisation organisation,
-            UpdateLocalAuthorityRequest request)
+        private async Task UpdateSelectedOrganisationAsync(Organisation organisation, UpdateLocalAuthorityRequest request)
         {
             var nation = await _accountsDbContext.Nations
                 .Where(n => n.Name == request.Nation).FirstOrDefaultAsync();
@@ -386,7 +367,7 @@ namespace BackendAccountService.Core.Services
             };
         }
 
-        private LaOrganisation BuildLocalAuthority(CreateLocalAuthorityRequest request)
+        private static LaOrganisation BuildLocalAuthority(CreateLocalAuthorityRequest request)
         {
             return new LaOrganisation
             {

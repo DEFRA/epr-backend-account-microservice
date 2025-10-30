@@ -1,5 +1,6 @@
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -17,9 +18,9 @@ public class ComplianceSchemesController : ApiControllerBase
     private readonly IComplianceSchemeService _complianceSchemeService;
     private readonly ILogger<ComplianceSchemesController> _logger;
     private readonly IValidationService _validationService;
-    
+
     public ComplianceSchemesController(
-        IComplianceSchemeService complianceSchemeService, 
+        IComplianceSchemeService complianceSchemeService,
         IOptions<ApiConfig> baseApiConfigOptions,
         ILogger<ComplianceSchemesController> logger,
         IValidationService validateDataService)
@@ -31,7 +32,7 @@ public class ComplianceSchemesController : ApiControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAllComplianceSchemes()
     {
@@ -43,8 +44,9 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("{organisationId:guid}/schemes/{complianceSchemeId:guid}/scheme-members")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ComplianceSchemeMembershipResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetComplianceSchemeMembers(
         Guid organisationId,
@@ -52,20 +54,21 @@ public class ComplianceSchemesController : ApiControllerBase
         [BindRequired, FromQuery] int pageSize,
         [BindRequired, FromHeader(Name = "X-EPR-User")] Guid userId,
         string? query,
-        int page = 1 )
+        int page = 1,
+        bool hideNoSubsidiaries = false)
     {
         return await ExecuteProtectedComplianceSchemeAction(userId, organisationId, async () =>
         {
-            _logger.LogInformation($"Filtering the members for the compliance scheme id {organisationId}");
+            _logger.LogInformation("Filtering the members for the compliance scheme id {OrganisationId}", organisationId);
 
-            var result = await _complianceSchemeService.GetComplianceSchemeMembersAsync(organisationId, complianceSchemeId, query, pageSize, page);
+            var result = await _complianceSchemeService.GetComplianceSchemeMembersAsync(organisationId, complianceSchemeId, query, pageSize, page, hideNoSubsidiaries);
             if (!result.IsSuccess)
             {
-                _logger.LogInformation("Error getting members for the compliance scheme id {complianceSchemeId}", complianceSchemeId);
+                _logger.LogInformation("Error getting members for the compliance scheme id {ComplianceSchemeId}", complianceSchemeId);
                 return result.BuildErrorResponse();
             }
 
-            _logger.LogInformation("Members fetched successfully for the compliance scheme id {complianceSchemeId}", complianceSchemeId);
+            _logger.LogInformation("Members fetched successfully for the compliance scheme id {ComplianceSchemeId}", complianceSchemeId);
             return Ok(result.Value);
         });
     }
@@ -75,11 +78,12 @@ public class ComplianceSchemesController : ApiControllerBase
     [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveComplianceScheme(RemoveComplianceSchemeRequest removeComplianceScheme)
     {
         return await ExecuteProtectedAction(removeComplianceScheme.UserOId, removeComplianceScheme.OrganisationId, async () =>
         {
-            _logger.LogInformation($"Removing the selected scheme id {removeComplianceScheme.SelectedSchemeId}");
+            _logger.LogInformation("Removing the selected scheme id {SchemeId}", removeComplianceScheme.SelectedSchemeId);
 
             var result = await _complianceSchemeService.RemoveComplianceSchemeAsync(removeComplianceScheme);
 
@@ -93,21 +97,22 @@ public class ComplianceSchemesController : ApiControllerBase
             return Ok();
         });
     }
-    
+
     [Route("select")]
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SelectedSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SelectComplianceScheme(SelectComplianceSchemeRequest request)
     {
         return await ExecuteProtectedAction(request.UserOId, request.ProducerOrganisationId, async () =>
-        { 
+        {
             var result = await _complianceSchemeService.SelectComplianceSchemeAsync(request);
 
             if (!result.IsSuccess)
             {
-                _logger.LogError("Failed to select compliance scheme {ModelComplianceSchemeId} for user {ModelUserOid}", 
+                _logger.LogError("Failed to select compliance scheme {ModelComplianceSchemeId} for user {ModelUserOid}",
                     request.ComplianceSchemeId, request.UserOId);
                 return result.BuildErrorResponse();
             }
@@ -119,18 +124,19 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("update")]
     [HttpPost]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SelectedSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateSelectedComplianceScheme(UpdateSelectedComplianceSchemeRequest request)
     {
-        return await ExecuteProtectedAction(request.UserOid, request.ProducerOrganisationId, async () => 
+        return await ExecuteProtectedAction(request.UserOid, request.ProducerOrganisationId, async () =>
         {
             var result = await _complianceSchemeService.UpdateSelectedComplianceSchemeAsync(request);
 
             if (!result.IsSuccess)
             {
-                _logger.LogError("Failed to select compliance scheme {ModelComplianceSchemeId} for user {ModelUserOid}", 
-                    request.ComplianceSchemeId, request.UserOid);    
+                _logger.LogError("Failed to select compliance scheme {ModelComplianceSchemeId} for user {ModelUserOid}",
+                    request.ComplianceSchemeId, request.UserOid);
                 return result.BuildErrorResponse();
             }
 
@@ -141,30 +147,28 @@ public class ComplianceSchemesController : ApiControllerBase
     [Route("get-for-producer")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProducerComplianceSchemeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemeForProducer(Guid userOid, Guid organisationId)
     {
-        _logger.LogInformation($"Fetching the selected scheme for the organsiation id {organisationId}");
+        _logger.LogInformation("Fetching the selected scheme for the organisation id {OrganisationId}", organisationId);
 
         var result = await _complianceSchemeService.GetComplianceSchemeForProducer(organisationId);
 
         if (!result.IsSuccess)
         {
-            _logger.LogInformation("error getting selected scheme for the organisation id {organisationId}",
-                organisationId);
+            _logger.LogInformation("error getting selected scheme for the organisation id {organisationId}", organisationId);
             return result.BuildErrorResponse();
         }
 
-        _logger.LogInformation("selected scheme fetched successfully for the organisation id {organisationId}",
-            organisationId);
+        _logger.LogInformation("selected scheme fetched successfully for the organisation id {organisationId}", organisationId);
         return new OkObjectResult(result.Value);
     }
 
     [Route("get-for-operator")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemesForOperator(Guid organisationId)
     {
@@ -172,12 +176,13 @@ public class ComplianceSchemesController : ApiControllerBase
 
         return Ok(result);
     }
-    
+
     [Route("{organisationId:guid}/scheme-members/{selectedSchemeId:guid}")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ComplianceSchemeMemberDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetComplianceSchemeMemberDetails(
         Guid organisationId,
@@ -186,7 +191,6 @@ public class ComplianceSchemesController : ApiControllerBase
     {
         return await ExecuteProtectedComplianceSchemeAction(userId, organisationId, async () =>
         {
-
             var result = await _complianceSchemeService.GetComplianceSchemeMemberDetailsAsync(organisationId, selectedSchemeId);
 
             if (!result.IsSuccess)
@@ -205,6 +209,7 @@ public class ComplianceSchemesController : ApiControllerBase
     [Consumes("application/json")]
     [ProducesResponseType(typeof(InfoForSelectedSchemeRemoval), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveComplianceSchemeMember(
         [BindRequired, FromRoute] Guid organisationId,
         [BindRequired, FromRoute] Guid selectedSchemeId,
@@ -223,13 +228,14 @@ public class ComplianceSchemesController : ApiControllerBase
 
             return result.BuildErrorResponse();
         });
-    }    
-    
+    }
+
     [Route("{organisationId:guid}/scheme-members/{selectedSchemeId:guid}/removed")]
     [HttpPost]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(RemoveComplianceSchemeMemberResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveComplianceSchemeMember(
         [BindRequired, FromRoute] Guid organisationId,
         [BindRequired, FromRoute] Guid selectedSchemeId,
@@ -246,7 +252,7 @@ public class ComplianceSchemesController : ApiControllerBase
             }
 
             _logger.LogInformation("Removed the selected scheme id {selectedSchemeId}", selectedSchemeId);
-            
+
             return Ok(result.Value);
         });
     }
@@ -274,42 +280,67 @@ public class ComplianceSchemesController : ApiControllerBase
 
             _logger.LogInformation(
                 "Failed to get compliance scheme {ComplianceSchemeId} summary for user {UserId} in organisation {OrganisationId} ",
-                complianceSchemeId, userId, organisationId);                    
-                    
+                complianceSchemeId, userId, organisationId);
+
             return NotFound();
-        });        
+        });
     }
-    
-    private async Task<IActionResult> ExecuteProtectedAction(Guid userId, Guid organisationId, Func<Task<IActionResult>> action) 
+
+    [Route("{organisationId:guid}/schemes/{complianceSchemeId:guid}/export-subsidiaries")]
+    [HttpGet]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(List<ExportOrganisationSubsidiariesResponseModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ExportComplianceSchemeSubsidiaries(
+        [BindRequired, FromHeader(Name = "X-EPR-User")] Guid userId,
+        Guid organisationId,
+        Guid complianceSchemeId
+        )
+    {
+        var complianceSchemeSubsidiaries = await _complianceSchemeService.ExportComplianceSchemeSubsidiaries(userId, organisationId, complianceSchemeId);
+
+        if (complianceSchemeSubsidiaries != null)
+        {
+            return Ok(complianceSchemeSubsidiaries);
+        }
+        else
+        {
+            return NoContent();
+        }
+    }
+
+    private async Task<IActionResult> ExecuteProtectedAction(Guid userId, Guid organisationId, Func<Task<IActionResult>> action)
     {
         var isUserAuthorised = _validationService.IsAuthorisedToManageComplianceScheme(userId, organisationId);
 
         if (!isUserAuthorised)
         {
-            _logger.LogError($"User {userId} unauthorised to perform an action on behalf of organisation {organisationId}.");
+            _logger.LogError("User {UserId} unauthorised to perform an action on behalf of organisation {OrganisationId}.", userId, organisationId);
             return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();
     }
-    
+
     private async Task<IActionResult> ExecuteProtectedComplianceSchemeAction(Guid userId, Guid organisationId, Func<Task<IActionResult>> action)
     {
         var isUserAuthorised = await _validationService.IsAuthorisedToViewComplianceSchemeMembers(userId, organisationId);
 
         if (!isUserAuthorised)
         {
-            _logger.LogError($"User {userId} unauthorised to perform an action on behalf of compliance scheme organisation {organisationId}.");
+            _logger.LogError("User {UserId} unauthorised to perform an action on behalf of compliance scheme organisation {OrganisationId}.", userId, organisationId);
             return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();
     }
-    
+
     [Route("member-removal-reasons")]
     [HttpGet]
     [Consumes("application/json")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<ComplianceSchemeRemovalReasonResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetComplianceSchemeReasonsForRemoval()
     {

@@ -76,4 +76,21 @@ public class ResultHelpersTests
         response.Should().BeOfType<StatusCodeResult>();
         response.As<StatusCodeResult>().StatusCode.Should().Be((int) HttpStatusCode.InternalServerError);
     }
+
+    [TestMethod]
+    public void Build_error_response_should_return_no_content_result_when_no_content_failure()
+    {
+        // Arrange
+        var errorMessage = _fixture.Create<string>();
+        var result = Result<string>.FailedResult(errorMessage, HttpStatusCode.NoContent);
+
+        // Act
+        var response = result.BuildErrorResponse();
+
+        // Assert
+        response.Should().BeOfType<NoContentResult>();
+        var noContentResult = response as NoContentResult;
+        noContentResult.Should().NotBeNull();
+        noContentResult!.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+    }
 }

@@ -12,12 +12,17 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Net;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using EnrolmentStatus = BackendAccountService.Data.DbConstants.EnrolmentStatus;
 using Nation = BackendAccountService.Data.DbConstants.Nation;
 using OrganisationType = BackendAccountService.Data.DbConstants.OrganisationType;
 using PersonRole = BackendAccountService.Data.DbConstants.PersonRole;
 using ProducerType = BackendAccountService.Data.DbConstants.ProducerType;
 using ServiceRole = BackendAccountService.Data.DbConstants.ServiceRole;
+using System.Text.Json;
+using AutoFixture;
+using BackendAccountService.Core.Constants;
 
 namespace BackendAccountService.Core.UnitTests.Services;
 
@@ -27,7 +32,6 @@ public class RegulatorServiceTests
     private AccountsDbContext _dbContext;
     private RegulatorService _regulatorService;
     private OrganisationService _organisationService;
-    //private ComplianceSchemeService _complianceSchemeService;
     private static readonly Guid RegulatorUserId = new Guid("00000000-0000-0000-0000-000000000001");
     private static readonly Guid OrganisationId = new Guid("00000000-0000-0000-0000-000000000010");
     private static readonly Guid TransferredOrganisationId = new Guid("00000000-0000-0000-0000-000000000100");
@@ -64,7 +68,7 @@ public class RegulatorServiceTests
     private const string InvalidEnrolmentMessage = "Enrolment not found";
     private const string InvalidEnrolmentStatusMessage = "Unsupported enrolment status";
     private const string ApprovedUser2ProducerEmail = "producer.user4@test.com";
-    private Mock<ILogger<RegulatorService>> _logger;
+    private Mock<ILogger<RegulatorService>> _mockRegulatorServiceLogger;
     private Mock<ILogger<ComplianceSchemeService>> _complianceSchemeServiceLogger = null;
     private Mock<ITokenService> _tokenService;
     private Mock<IComplianceSchemeService> _complianceSchemeService;
@@ -80,15 +84,20 @@ public class RegulatorServiceTests
 
         SetUpDatabase(_dbContext);
 
-        _logger = new Mock<ILogger<RegulatorService>>();
+        _mockRegulatorServiceLogger = new Mock<ILogger<RegulatorService>>();
         _complianceSchemeServiceLogger = new Mock<ILogger<ComplianceSchemeService>>();
         _tokenService = new Mock<ITokenService>();
 
         _organisationService = new OrganisationService(_dbContext);
-        //_complianceSchemeService = new ComplianceSchemeService(_dbContext, _complianceSchemeServiceLogger.Object);
-        _complianceSchemeService = new  Mock<IComplianceSchemeService>();
-        _regulatorService = new RegulatorService(_dbContext, _organisationService, _tokenService.Object, _logger.Object, _complianceSchemeService.Object);
 
+        _complianceSchemeService = new Mock<IComplianceSchemeService>();
+
+        _regulatorService = new RegulatorService(
+            _dbContext,
+            _organisationService,
+            _tokenService.Object,
+            _mockRegulatorServiceLogger.Object,
+            _complianceSchemeService.Object);
     }
 
     [TestMethod]
@@ -331,7 +340,7 @@ public class RegulatorServiceTests
         //Arrange
         var regulatorUserId = new Guid("00000000-0000-0000-0000-000000000011");
 
-        ProducerComplianceSchemeDto producerComplianceSchemeDto = new ProducerComplianceSchemeDto {  ComplianceSchemeNationId = null };
+        ProducerComplianceSchemeDto producerComplianceSchemeDto = new ProducerComplianceSchemeDto { ComplianceSchemeNationId = null };
         Result<ProducerComplianceSchemeDto> value = new Result<ProducerComplianceSchemeDto>(true, producerComplianceSchemeDto, string.Empty, System.Net.HttpStatusCode.Found);
         _complianceSchemeService.Setup(service => service.GetComplianceSchemeForProducer(It.IsAny<Guid>()))
             .ReturnsAsync(value);
@@ -589,7 +598,7 @@ public class RegulatorServiceTests
         var user = _dbContext.Users.IgnoreQueryFilters().SingleOrDefault(e => e.UserId == Guid.Empty);
 
         Assert.IsNotNull(user);
-        Assert.AreSame(user.Email, ApprovedUser2ProducerEmail);
+        Assert.AreSame(ApprovedUser2ProducerEmail, user.Email);
         _dbContext.Users.Any(user1 => user1.UserId == ApprovedUserId2).Should().BeFalse();
         _dbContext.Users.Any(user1 => user1.UserId == RegulatorUserId).Should().BeTrue();
     }
@@ -682,7 +691,7 @@ public class RegulatorServiceTests
     [TestMethod]
     public async Task When_Organisation_Data_Requested_Then_Return_Object_With_Organisation_Details()
     {
-        // act 
+        // act
         var organisationData = await _regulatorService.GetCompanyDetailsById(OrganisationId);
 
         // Assert
@@ -694,7 +703,7 @@ public class RegulatorServiceTests
     [TestMethod]
     public async Task When_Organisation_Data_Requested_Then_Do_Not_Include_Users_With_Wrong_Status()
     {
-        // act 
+        // act
         var organisationData = await _regulatorService.GetCompanyDetailsById(OrganisationId);
 
         // Assert
@@ -705,6 +714,7 @@ public class RegulatorServiceTests
     }
 
     /* Remove only */
+
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyRemoveNoPromote_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
     {
@@ -761,7 +771,6 @@ public class RegulatorServiceTests
         var approvedUser = organisation.PersonOrganisationConnections.FirstOrDefault();
         approvedUser.IsDeleted.Should().BeTrue();
         approvedUser.Enrolments.FirstOrDefault().IsDeleted.Should().BeTrue();
-
     }
 
     [TestMethod]
@@ -793,6 +802,7 @@ public class RegulatorServiceTests
     }
 
     /* Promote only */
+
     [TestMethod]
     public async Task RemoveApprovedPerson_OnlyPromoteNoRemove_When_Different_Org_ShouldNot_Delete_ApprovedUsers_And_Return_Fail()
     {
@@ -883,6 +893,7 @@ public class RegulatorServiceTests
     }
 
     /* Remove and Promote */
+
     [TestMethod]
     public async Task RemoveApprovedPerson_RemoveApAndPromoteExistingUser_When_Valid_Data_Passed_PromotedUser_Should_Be_Added_As_ApprovedUser()
     {
@@ -921,6 +932,7 @@ public class RegulatorServiceTests
         organisation.PersonOrganisationConnections.LastOrDefault().Enrolments.LastOrDefault().EnrolmentStatusId.Should()
             .Be(EnrolmentStatus.Nominated);
     }
+
     [TestMethod]
     public async Task WhenApprovedPersonIsRemoved_AnyEnrolementForANominatedDelegatedPersonShouldBeSoftDeleted()
     {
@@ -1156,20 +1168,20 @@ public class RegulatorServiceTests
         var result = await _regulatorService.AddRemoveApprovedPerson(request);
 
         // Assert
-        var approvedUser = GetEnrolmentQuery()
-            .Single(x => x.Id == approvedPersonEnrolment.Id);
+        var approvedUser = await GetEnrolmentQuery()
+            .SingleAsync(x => x.Id == approvedPersonEnrolment.Id);
 
         approvedUser.Connection.PersonRoleId.Should().Be(PersonRole.Admin);
         approvedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
 
-        var delegatedPersonEnrolment1 = GetEnrolmentQuery()
-            .Single(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
+        var delegatedPersonEnrolment1 = await GetEnrolmentQuery()
+            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
 
         delegatedPersonEnrolment1.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment1.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
 
-        var delegatedPersonEnrolment2 = GetEnrolmentQuery()
-            .Single(x => x.Connection.Person.Id == existingDelegatedPerson2.Id);
+        var delegatedPersonEnrolment2 = await GetEnrolmentQuery()
+            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson2.Id);
 
         delegatedPersonEnrolment2.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment2.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
@@ -1222,6 +1234,20 @@ public class RegulatorServiceTests
         deletedApprovedUserEnrolment.Connection.IsDeleted.Should().BeFalse();
     }
 
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_Return_BadRequest()
+    {
+        //Arrange
+        var request = new ManageUserDetailsChangeModel { UserId = RegulatorUserId };
+
+        //Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        //Assert
+        result.ErrorMessage.Should().NotBeNullOrEmpty();
+        result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
     private IIncludableQueryable<Enrolment, Person> GetEnrolmentQuery()
     {
         return _dbContext
@@ -1258,7 +1284,8 @@ public class RegulatorServiceTests
                 {
                     Name = "Regulator",
                     OrganisationTypeId = OrganisationType.Regulators,
-                    NationId = Nation.England
+                    NationId = Nation.England,
+                    ReferenceNumber = "Org123"
                 },
                 Person = new()
                 {
@@ -1807,6 +1834,7 @@ public class RegulatorServiceTests
         setupContext.ComplianceSchemes.Add(complianceScheme2);
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
+
     private static Organisation SetUpOrganisation(AccountsDbContext setupContext)
     {
         var organisation1 = new Organisation
@@ -1835,6 +1863,7 @@ public class RegulatorServiceTests
 
         return organisation1;
     }
+
     private Person SetUpPersonEnrolment(int organisationId, int serviceRoleId, int enrolmentStatus = EnrolmentStatus.Approved)
     {
         var user1 = new User()
@@ -1870,6 +1899,7 @@ public class RegulatorServiceTests
         _dbContext.Add(enrolment1);
         return person1;
     }
+
     private Person SetUpDelegatedPersonWithoutFirstNameEnrolment(int organisationId)
     {
         var userAnother = new User()
@@ -1908,5 +1938,1385 @@ public class RegulatorServiceTests
         _dbContext.Add(enrolmentAnother);
 
         return personAnother;
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_ChangeHistoryNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = Guid.NewGuid(),
+            UserId = Guid.NewGuid(),
+            HasRegulatorAccepted = true
+        };
+
+        var errorMessage = $"Accept Or Reject User Details Change Request for externalId {request.ChangeHistoryExternalId} not found or is not active.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(errorMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_PersonOrganisationConnectionNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 1,
+            PersonId = 1,
+            OrganisationId = 1,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow
+        };
+
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = userId,
+            HasRegulatorAccepted = true
+        };
+
+        var errorMessage = $"Organisation connection not found to update user details for person id {changeHistory.PersonId} and organisation Id {changeHistory.OrganisationId}.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.NotFound, result.StatusCode);
+        Assert.AreEqual(errorMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_RegulatorNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 1,
+            PersonId = 1,
+            OrganisationId = 1,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 999,
+            PersonId = changeHistory.PersonId,
+            OrganisationId = changeHistory.OrganisationId
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = Guid.NewGuid(),
+            HasRegulatorAccepted = true
+        };
+
+        var errorMessage = $"UserId {request.UserId} is not regulator to Accept Or Reject User Details Change Request for externalId {request.ChangeHistoryExternalId}.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(errorMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_AcceptRequest_UpdatesChangeHistory()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var person = new Person
+        {
+            Id = 999,
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Telephone = "",
+            User = new User
+            {
+                UserId = Guid.NewGuid()
+            }
+        };
+
+        var organisation = new Organisation
+        {
+            Id = 999,
+            Name = ""
+        };
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 998,
+            PersonId = person.Id,
+            OrganisationId = organisation.Id,
+            Person = person,
+            Organisation = organisation
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var approvedPersonEnrolment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = poc.Id,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false
+        };
+        _dbContext.Enrolments.Add(approvedPersonEnrolment);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 2,
+            PersonId = 999,
+            OrganisationId = 999,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                JobTitle = "Developer"
+            }),
+            OldValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John 1",
+                LastName = "Doe 1",
+                JobTitle = "Developer 1"
+            })
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = RegulatorUserId,
+            HasRegulatorAccepted = true
+        };
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        Assert.IsNotNull(updatedChangeHistory);
+        Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
+        Assert.AreEqual(person.User.Id, updatedChangeHistory.Person.UserId);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_AcceptRequestWithEmptyNewValues_UpdatesChangeHistory()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var person = new Person
+        {
+            Id = 999,
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Telephone = "",
+            User = new User
+            {
+                UserId = Guid.NewGuid()
+            }
+        };
+
+        var organisation = new Organisation
+        {
+            Id = 999,
+            Name = ""
+        };
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 998,
+            PersonId = person.Id,
+            OrganisationId = organisation.Id,
+            Person = person,
+            Organisation = organisation
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var approvedPersonEnrolment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = poc.Id,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false
+        };
+        _dbContext.Enrolments.Add(approvedPersonEnrolment);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 2,
+            PersonId = 999,
+            OrganisationId = 999,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                JobTitle = null
+            }),
+            OldValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John 1",
+                LastName = "Doe 1",
+                JobTitle = "Developer 1"
+            })
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = RegulatorUserId,
+            HasRegulatorAccepted = true
+        };
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        Assert.IsNotNull(updatedChangeHistory);
+        Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
+        Assert.AreEqual(person.User.Id, updatedChangeHistory.Person.UserId);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_RejectRequest_UpdatesChangeHistory()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var person = new Person
+        {
+            Id = 999,
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Telephone = "",
+            User = new User
+            {
+                UserId = Guid.NewGuid()
+            }
+        };
+
+        var organisation = new Organisation
+        {
+            Id = 999,
+            Name = ""
+        };
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 998,
+            PersonId = person.Id,
+            OrganisationId = organisation.Id,
+            Person = person,
+            Organisation = organisation
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var approvedPersonEnrolment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = poc.Id,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false
+        };
+        _dbContext.Enrolments.Add(approvedPersonEnrolment);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 2,
+            PersonId = 999,
+            OrganisationId = 999,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                JobTitle = "Developer"
+            }),
+            OldValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John 1",
+                LastName = "Doe 1",
+                JobTitle = "Developer 1"
+            })
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = RegulatorUserId,
+            HasRegulatorAccepted = false,
+            RegulatorComment = "I don't accept this."
+        };
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        Assert.IsNotNull(updatedChangeHistory);
+        Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
+        Assert.AreEqual("I don't accept this.", updatedChangeHistory.ApproverComments);
+        Assert.AreEqual(person.User.Id, updatedChangeHistory.Person.UserId);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_ReturnsBadRequest_WhenRequestIsRejectedWithoutComment()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var person = new Person
+        {
+            Id = 999,
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Telephone = "",
+            User = new User
+            {
+                UserId = Guid.NewGuid()
+            }
+        };
+
+        var organisation = new Organisation
+        {
+            Id = 999,
+            Name = ""
+        };
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 998,
+            PersonId = person.Id,
+            OrganisationId = organisation.Id,
+            Person = person,
+            Organisation = organisation
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var approvedPersonEnrolment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = poc.Id,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false
+        };
+        _dbContext.Enrolments.Add(approvedPersonEnrolment);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 2,
+            PersonId = 999,
+            OrganisationId = 999,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John",
+                LastName = "Doe",
+                JobTitle = "Developer"
+            }),
+            OldValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "John 1",
+                LastName = "Doe 1",
+                JobTitle = "Developer 1"
+            })
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = RegulatorUserId,
+            HasRegulatorAccepted = false
+        };
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        var errorMessage = $"To Reject User Details Change Request Regulator Comment is required for externalId {request.ChangeHistoryExternalId}.";
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(errorMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestAsync_ReturnsInternalServerError()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisationId = Guid.NewGuid();
+
+        var person = new Person
+        {
+            Id = 999,
+            FirstName = "",
+            LastName = "",
+            Email = "",
+            Telephone = "",
+            User = new User
+            {
+                UserId = Guid.NewGuid()
+            }
+        };
+
+        var organisation = new Organisation
+        {
+            Id = 999,
+            Name = ""
+        };
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 998,
+            PersonId = person.Id,
+            OrganisationId = organisation.Id,
+            Person = person,
+            Organisation = organisation
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var approvedPersonEnrolment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = poc.Id,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false
+        };
+        _dbContext.Enrolments.Add(approvedPersonEnrolment);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var changeHistory = new ChangeHistory
+        {
+            ExternalId = Guid.NewGuid(),
+            Id = 2,
+            PersonId = 999,
+            OrganisationId = 999,
+            IsActive = true,
+            DeclarationDate = DateTimeOffset.UtcNow
+        };
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(userId, organisationId);
+
+        var request = new ManageUserDetailsChangeModel
+        {
+            ChangeHistoryExternalId = changeHistory.ExternalId,
+            UserId = RegulatorUserId,
+            HasRegulatorAccepted = true
+        };
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestAsync(request);
+
+        var errorMessage = $"Error in Accept Or Reject User Details Change Request for externalId {request.ChangeHistoryExternalId}";
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
+        Assert.AreEqual(errorMessage, result.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Check that an HTTP status code "200 - OK" is returned when the request is successful.
+    /// </summary>
+    [TestMethod]
+    public async Task GetUserDetailChangeRequestAsync()
+    {
+        _dbContext.ChangeHistory.Add(new ChangeHistory
+        {
+            ExternalId = new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"),
+            PersonId = 12345,
+            OrganisationId = 54321,
+            IsActive = true,
+            OldValues = JsonSerializer.Serialize(new Fixture().Create<UserDetailsChangeModel>()),
+            NewValues = JsonSerializer.Serialize(new Fixture().Create<UserDetailsChangeModel>()),
+        });
+
+        _dbContext.Persons.Add(new Person
+        {
+            Id = 12345,
+            FirstName = "Bob",
+            LastName = "McPlaceholder",
+            Telephone = "1234123123",
+            Email = "bob@notarealaddress.placeholder",
+        });
+
+        _dbContext.Organisations.Add(new Organisation
+        {
+            Name = "Acme",
+            Id = 54321,
+        });
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 09876,
+            PersonId = 12345,
+            OrganisationId = 54321,
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+
+        var enrollment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = 09876,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false,
+        };
+        _dbContext.Enrolments.Add(enrollment);
+
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.GetUserDetailChangeRequestAsync(new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"));
+
+        // Assert
+        Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+    }
+
+    /// <summary>
+    /// Check that when the change history couldn't be retrieved from the database,
+    /// an "Error 400 - Bad Request" is returned.
+    /// </summary>
+    [TestMethod]
+    public async Task GetUserDetailChangeRequestAsync_ChangeHistoryNotFound_ReturnsBadRequest()
+    {
+        // Act
+        var result = await _regulatorService.GetUserDetailChangeRequestAsync(new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"));
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<ChangeHistoryModel>));
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+    }
+
+    /// <summary>
+    /// Check that when an organisation connection record couldn't be found for the given request,
+    /// an "Error 400 - Bad Request" is returned.
+    /// </summary>
+    [TestMethod]
+    public async Task GetUserDetailChangeRequestAsync_OrganisationConectionNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        _dbContext.ChangeHistory.Add(new ChangeHistory
+        {
+            ExternalId = new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"),
+            IsActive = true,
+        });
+
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.GetUserDetailChangeRequestAsync(new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"));
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<ChangeHistoryModel>));
+        Assert.AreEqual(HttpStatusCode.NotFound, result.StatusCode);
+    }
+
+    private async Task ArrangeDatabaseMockData(Guid changeId, int serviceRole)
+    {
+        _dbContext.Persons.Add(new Person
+        {
+            Id = 12345,
+            FirstName = "Eldon",
+            LastName = "Tyrel",
+            Email = "test@placeholder-email.com",
+            Telephone = "1234567890",
+            User = new User
+            {
+                UserId = Guid.Empty,
+            }
+        });
+
+        _dbContext.ChangeHistory.Add(new ChangeHistory
+        {
+            ExternalId = changeId,
+            PersonId = 12345,
+            OrganisationId = 54321,
+            IsActive = true,
+            OldValues = JsonSerializer.Serialize(new Fixture().Create<UserDetailsChangeModel>()),
+            NewValues = JsonSerializer.Serialize(new Fixture().Create<UserDetailsChangeModel>()),
+        });
+
+        _dbContext.Organisations.Add(new Organisation
+        {
+            Name = "Tyrell Corporation",
+            Id = 54321,
+            OrganisationTypeId = OrganisationType.NonCompaniesHouseCompany,
+            ReferenceNumber = "12345",
+            NationId = 1
+        });
+
+        var poc = new PersonOrganisationConnection
+        {
+            Id = 09876,
+            PersonId = 12345,
+            OrganisationId = 54321,
+        };
+        _dbContext.PersonOrganisationConnections.Add(poc);
+
+        var enrollment = new Enrolment
+        {
+            Id = 999,
+            ConnectionId = 09876,
+            ServiceRoleId = serviceRole,
+            EnrolmentStatusId = EnrolmentStatus.Approved,
+            Connection = poc,
+            IsDeleted = false,
+        };
+        _dbContext.Enrolments.Add(enrollment);
+    }
+
+    /// <summary>
+    /// Check that the method succeeds in fetching user details for basic users people.
+    /// </summary>
+    [TestMethod]
+    public async Task GetPendingUserDetailChangeRequestsAsync_BasicUser_Succeeds()
+    {
+        // Arrange
+        var changeId = new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b");
+
+        await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.BasicUser.Id);
+
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
+            nationId: 1,
+            currentPage: default,
+            pageSize: 1,
+            organisationName: "Tyrell Corporation",
+            applicationType: string.Empty);
+
+        // Assert
+        Assert.AreEqual(changeId, result.Items.Single().ChangeHistoryExternalId);
+        Assert.AreEqual(ServiceRole.Packaging.BasicUser.Key, result.Items.Single().ServiceRole);
+    }
+
+    /// <summary>
+    /// Check that the method succeeds in fetching user details for approved people.
+    /// </summary>
+    [TestMethod]
+    public async Task GetPendingUserDetailChangeRequestsAsync_ApprovedPerson_Succeeds()
+    {
+        // Arrange
+        var changeId = new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b");
+
+        await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.ApprovedPerson.Id);
+
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
+            nationId: 1,
+            currentPage: default,
+            pageSize: 1,
+            organisationName: "Tyrell Corporation",
+            applicationType: ServiceRoles.ApprovedPerson);
+
+        // Assert
+        Assert.AreEqual(changeId, result.Items.Single().ChangeHistoryExternalId);
+        Assert.AreEqual(ServiceRole.Packaging.ApprovedPerson.Key, result.Items.Single().ServiceRole);
+    }
+
+    /// <summary>
+    /// Check that the method succeeds in fetching user details for delegated people.
+    /// </summary>
+    [TestMethod]
+    public async Task GetPendingUserDetailChangeRequestsAsync_DelegatedPerson_Succeeds()
+    {
+        // Arrange
+        var changeId = new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b");
+
+        await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.DelegatedPerson.Id);
+
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
+            nationId: 1,
+            currentPage: default,
+            pageSize: 1,
+            organisationName: "Tyrell Corporation",
+            applicationType: ServiceRoles.DelegatedPerson);
+
+        // Assert
+        Assert.AreEqual(changeId, result.Items.Single().ChangeHistoryExternalId);
+        Assert.AreEqual(ServiceRole.Packaging.DelegatedPerson.Key, result.Items.Single().ServiceRole);
+    }
+
+    [TestMethod]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation")]
+    public async Task UpdateNonCompaniesHouseCompanyByServiceAsync_FailWhenRequestNull(
+        string organisationReference,
+        string userEmail,
+        string organisationName)
+    {
+        // Act
+        var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(null);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual("request to update non companies house company is not valid.", result.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Test that an error is returned when one of the required request fields is empty.
+    /// </summary>
+    [TestMethod]
+    [DataRow("", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "a building", "a street")]
+    [DataRow("12345", "", "an organisation", "a town", "a postcode", "a building", "a street")]
+    [DataRow("12345", "test@placeholder-email.com", "", "a town", "a postcode", "a building", "a street")]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "", "a postcode", "a building", "a street")]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "", "a building", "a street")]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "", "a street")]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "a building", "")]
+    public async Task UpdateNonCompaniesHouseCompanyByServiceAsync_FailWhenRequestFieldEmpty(
+        string organisationReference,
+        string userEmail,
+        string organisationName,
+        string town,
+        string postcode,
+        string buildingNumber,
+        string street)
+    {
+        // Arrange
+        var request = new ManageNonCompaniesHouseCompanyByService
+        {
+            OrganisationReference = organisationReference,
+            UserEmail = userEmail,
+            OrganisationName = organisationName,
+            Town = town,
+            Postcode = postcode,
+            BuildingNumber = buildingNumber,
+            Street = street,
+        };
+
+        // Act
+        var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.IsTrue(result.ErrorMessage.Contains("request to update non companies house company with details"));
+    }
+
+    /// <summary>
+    /// Test that an error is returned when one of the required request fields is empty.
+    /// </summary>
+    [TestMethod]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "a building", "a street")]
+    public async Task UpdateNonCompaniesHouseCompanyByServiceAsync_FailWhenOrganisationReferenceNotFound(
+        string organisationReference,
+        string userEmail,
+        string organisationName,
+        string town,
+        string postcode,
+        string buildingNumber,
+        string street)
+    {
+        // Arrange
+        var request = new ManageNonCompaniesHouseCompanyByService
+        {
+            OrganisationReference = organisationReference,
+            UserEmail = userEmail,
+            OrganisationName = organisationName,
+            Town = town,
+            Postcode = postcode,
+            BuildingNumber = buildingNumber,
+            Street = street,
+        };
+
+        // Act
+        var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.IsTrue(result.ErrorMessage.Contains("not found or is not NonCompaniesHouseCompany."));
+    }
+
+    /// <summary>
+    /// Test that an error is returned when one of the required request fields is empty.
+    /// </summary>
+    [TestMethod]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "a building", "a street")]
+    public async Task UpdateNonCompaniesHouseCompanyByServiceAsync_FailWhenExceptionThrown(
+        string organisationReference,
+        string userEmail,
+        string organisationName,
+        string town,
+        string postcode,
+        string buildingNumber,
+        string street)
+    {
+        // Arrange
+        var request = new ManageNonCompaniesHouseCompanyByService
+        {
+            OrganisationReference = organisationReference,
+            UserEmail = userEmail,
+            OrganisationName = organisationName,
+            Town = town,
+            Postcode = postcode,
+            BuildingNumber = buildingNumber,
+            Street = street,
+        };
+
+        await ArrangeDatabaseMockData(Guid.Empty, ServiceRole.Packaging.BasicUser.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        (await _dbContext.Persons.LastAsync()).User = null; // Set a required value to null so that an exception gets thrown.
+
+        // Act
+        var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
+        Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
+        Assert.IsTrue(result.ErrorMessage.Contains("error in request to update non companies house company"));
+    }
+
+    /// <summary>
+    /// Test that an error is returned when one of the required request fields is empty.
+    /// </summary>
+    [TestMethod]
+    [DataRow("12345", "test@placeholder-email.com", "an organisation", "a town", "a postcode", "a building", "a street")]
+    public async Task UpdateNonCompaniesHouseCompanyByServiceAsync_Success(
+        string organisationReference,
+        string userEmail,
+        string organisationName,
+        string town,
+        string postcode,
+        string buildingNumber,
+        string street)
+    {
+        // Arrange
+        var request = new ManageNonCompaniesHouseCompanyByService
+        {
+            OrganisationReference = organisationReference,
+            UserEmail = userEmail,
+            OrganisationName = organisationName,
+            Town = town,
+            Postcode = postcode,
+            BuildingNumber = buildingNumber,
+            Street = street,
+        };
+
+        await ArrangeDatabaseMockData(Guid.Empty, ServiceRole.Packaging.BasicUser.Id);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
+
+        // Assert
+        Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
+        Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_InvalidRequest_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "", // Invalid data
+            UserEmail = "", // Invalid data
+            RegulatorEmail = "", // Invalid data
+            HasRegulatorAccepted = false, // Invalid data with no comment
+            RegulatorComment = "" // Missing comment when rejection
+        };
+
+        var expectedMessage = $"Accept Or Reject User Details Change Request with details " +
+                              $"OrganisationReference : '{request.OrganisationReference}' " +
+                              $"UserEmail : '{request.UserEmail}' " +
+                              $"RegulatorEmail : '{request.RegulatorEmail}' " +
+                              $"HasRegulatorAccepted : '{request.HasRegulatorAccepted}' " +
+                              $"RegulatorComment : '{request.RegulatorComment}' " +
+                              $"is not valid.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(expectedMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_RegulatorFromEmailNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "user@example.com",
+            RegulatorEmail = "regulator@example.com",
+            HasRegulatorAccepted = true
+        };
+
+        _dbContext.Persons.Add(new Person
+        {
+            FirstName = "testName",
+            LastName = "testLastName",
+            Telephone = "0778972343",
+            Email = "other.regulator@example.com"
+        }); // Adding a different regulator
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var expectedMessage = $"Accept Or Reject User Details Change Request by RegulatorEmail {request.RegulatorEmail} is not valid.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(expectedMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_RegulatorNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "user@example.com",
+            RegulatorEmail = "testuser7@abc.com",
+            HasRegulatorAccepted = true
+        };
+
+        _dbContext.Persons.Add(new Person
+        {
+            FirstName = "testName",
+            LastName = "testLastName",
+            Telephone = "0778972343",
+            Email = "other.regulator@example.com"
+        }); // Adding a different regulator
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var expectedMessage = $"is not regulator to Accept Or Reject User Details Change Request for user email {request.UserEmail}.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.IsTrue(result.ErrorMessage.Contains(expectedMessage));
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_OrganisationConnectionNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "regulator@test.com",
+            RegulatorEmail = "regulator@abc.com",
+            HasRegulatorAccepted = true
+        };
+        var expectedMessage = "Organisation connection not found to update user details for user email regulator@test.com and OrganisationReference  Org123.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.NotFound, result.StatusCode);
+        Assert.AreEqual(expectedMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_ChangeHistoryNotFound_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "regulator@abc.com",
+            RegulatorEmail = "regulator@abc.com",
+            HasRegulatorAccepted = true
+        };
+
+        // Remove ChangeHistory to simulate the condition where it's not found
+        _dbContext.ChangeHistory.RemoveRange(_dbContext.ChangeHistory);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        var expectedMessage = "Accept Or Reject User Details Change Request for PersonId: 2 and OrganisationId: 1 not found or is not active.";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
+        Assert.AreEqual(expectedMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_SuccessfulAcceptance_ReturnsOk()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "regulator@abc.com",
+            RegulatorEmail = "regulator@abc.com",
+            HasRegulatorAccepted = true
+        };
+
+        var changeHistory = new ChangeHistory
+        {
+            PersonId = 2,
+            OrganisationId = 1,
+            IsActive = true,
+            DecisionDate = null,
+            IsDeleted = false,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "testName",
+                LastName = "LastName",
+                JobTitle = "testJob"
+            })
+        };
+
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+        Assert.IsTrue(result.Value.HasUserDetailsChangeAccepted);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_SuccessfulRejection_ReturnsOk()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "regulator@abc.com",
+            RegulatorEmail = "regulator@abc.com",
+            HasRegulatorAccepted = false,
+            RegulatorComment = "Insufficient information provided."
+        };
+
+        var changeHistory = new ChangeHistory
+        {
+            PersonId = 2,
+            OrganisationId = 1,
+            IsActive = true,
+            DecisionDate = null,
+            IsDeleted = false,
+            NewValues = JsonSerializer.Serialize(new UserDetailsChangeModel
+            {
+                FirstName = "testName",
+                LastName = "LastName",
+                JobTitle = "testJob"
+            })
+        };
+
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsTrue(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.OK, result.StatusCode);
+        Assert.IsTrue(result.Value.HasUserDetailsChangeRejected);
+    }
+
+    [TestMethod]
+    public async Task AcceptOrRejectUserDetailsChangeRequestByServiceAsync_ExceptionThrown_ReturnsInternalServerError()
+    {
+        // Arrange
+        var request = new ManageUserDetailsChangeRequestByService
+        {
+            OrganisationReference = "Org123",
+            UserEmail = "regulator@abc.com",
+            RegulatorEmail = "regulator@abc.com",
+            HasRegulatorAccepted = true
+        };
+
+        var changeHistory = new ChangeHistory
+        {
+            PersonId = 2,
+            OrganisationId = 1,
+            IsActive = true,
+            DecisionDate = null,
+            IsDeleted = false
+        };
+
+        _dbContext.ChangeHistory.Add(changeHistory);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        var expectedMessage = $"Error in Accept Or Reject User Details Change Request for OrganisationReference {request.OrganisationReference} and user email {request.UserEmail}";
+
+        // Act
+        var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
+
+        // Assert
+        Assert.IsFalse(result.IsSuccess);
+        Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
+        Assert.AreEqual(expectedMessage, result.ErrorMessage);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationNationsAsync_ShouldReturnZero_WhenOrganisationDoesNotExist()
+    {
+        // Arrange
+        var nonExistentOrganisationId = Guid.NewGuid();
+
+        // Act
+        var result = await _regulatorService.GetOrganisationNationsAsync(nonExistentOrganisationId);
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(0, result[0].Id);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationNationsAsync_ShouldReturnComplianceSchemeNationIds_WhenOrganisationHasComplianceSchemes()
+    {
+        var expectedResponse = new List<OrganisationNationResponseModel> {
+         new() { Id = 2, Name = "Northern Ireland", NationCode = "GB-NIR" },
+         new() { Id = 1, Name = "England", NationCode = "GB-ENG" }
+        };
+        // Arrange
+        var organisationId = Guid.NewGuid();
+        var organisation = new Organisation
+        {
+            Name = "Test",
+            ExternalId = organisationId,
+            CompaniesHouseNumber = "12345678",
+            IsComplianceScheme = true
+        };
+        _dbContext.Organisations.Add(organisation);
+
+        _dbContext.ComplianceSchemes.AddRange(
+            new ComplianceScheme
+            {
+                Name = "Scheme 1",
+                CompaniesHouseNumber = "12345678",
+                NationId = 1
+            },
+            new ComplianceScheme
+            {
+                Name = "Scheme 2",
+                CompaniesHouseNumber = "12345678",
+                NationId = 2
+            }
+        );
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+
+        // Act
+        var result = await _regulatorService.GetOrganisationNationsAsync(organisationId);
+
+        // Assert
+        Assert.AreEqual(2, result.Count);
+        Assert.AreEqual(expectedResponse[0].Id, result[0].Id);
+        Assert.AreEqual(expectedResponse[0].Name, result[0].Name);
+        Assert.AreEqual(expectedResponse[0].NationCode, result[0].NationCode);
+        Assert.AreEqual(expectedResponse[1].Id, result[1].Id);
+        Assert.AreEqual(expectedResponse[1].Name, result[1].Name);
+        Assert.AreEqual(expectedResponse[1].NationCode, result[1].NationCode);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationNationsAsync_ShouldReturnOrganisationNationId_WhenOrganisationHasNationId()
+    {
+        // Arrange
+        var organisationId = Guid.NewGuid();
+        var organisation = new Organisation
+        {
+            Name = "Test",
+            ExternalId = organisationId,
+            NationId = 3
+        };
+        _dbContext.Organisations.Add(organisation);
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+
+        // Act
+        var result = await _regulatorService.GetOrganisationNationsAsync(organisationId);
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(3, result[0].Id);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationNationsAsync_ShouldReturnOrganisationNations()
+    {
+        // Arrange
+        var organisation1 = new Organisation
+        {
+            Name = "Test",
+            ExternalId = Guid.NewGuid(),
+            NationId = 3,
+        };
+        var organisation2 = new Organisation
+        {
+            Name = "Test2",
+            ExternalId = Guid.NewGuid(),
+            NationId = 3,
+        };
+        var organisation3 = new Organisation
+        {
+            Name = "Test3",
+            ExternalId = Guid.NewGuid(),
+            NationId = 4,
+        };
+        var organisation4 = new Organisation
+        {
+            Name = "Test4",
+            ExternalId = Guid.NewGuid(),
+            NationId = 2,
+        };
+
+        var organisations = new List<Organisation>() { organisation1, organisation2, organisation3, organisation4 };
+        var organisationIds = organisations.Select(org => org.ExternalId).ToList();
+
+        _dbContext.Organisations.AddRange(organisations);
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+
+        // Act
+        var result = await _regulatorService.GetOrganisationNationsAsync(organisationIds[0]);
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(Nation.Scotland, result[0].Id);
+        Assert.AreEqual("Scotland", result[0].Name);
+        Assert.AreEqual("GB-SCT", result[0].NationCode);
+    }
+
+    [TestMethod]
+    public async Task GetCSOrganisationNationsAsync_ShouldReturnZero_WhenOrganisationDoesNotExist()
+    {
+        // Arrange
+        var nonExistentOrganisationId = Guid.NewGuid();
+
+        // Act
+        var result = await _regulatorService.GetCSOrganisationNationsAsync(nonExistentOrganisationId);
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(0, result[0].Id);
+    }
+
+    [TestMethod]
+    public async Task GetCSOrganisationNationsAsync_ShouldReturnComplianceSchemeNationIds_WhenOrganisationHasComplianceSchemes()
+    {
+        // Arrange
+        var complianceScheme1ExternalId = Guid.NewGuid();
+        var complianceScheme2ExternalId = Guid.NewGuid();
+
+        _dbContext.ComplianceSchemes.AddRange(
+            new ComplianceScheme
+            {
+                Name = "Scheme 1",
+                CompaniesHouseNumber = "12345678",
+                NationId = 1,
+                ExternalId = complianceScheme1ExternalId
+            },
+            new ComplianceScheme
+            {
+                Name = "Scheme 2",
+                CompaniesHouseNumber = "12345678",
+                NationId = 2,
+                ExternalId = complianceScheme2ExternalId
+            }
+        );
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+
+        var expectedResponse = new List<OrganisationNationResponseModel> {
+         new() { Id = 2, Name = "Northern Ireland", NationCode = "GB-NIR" },
+         new() { Id = 1, Name = "England", NationCode = "GB-ENG" }
+        };
+
+        // Act
+        var result = await _regulatorService.GetCSOrganisationNationsAsync(complianceScheme2ExternalId);
+
+        // Assert
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(expectedResponse[0].Id, result[0].Id);
+        Assert.AreEqual(expectedResponse[0].Name, result[0].Name);
+        Assert.AreEqual(expectedResponse[0].NationCode, result[0].NationCode);
     }
 }

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -11,24 +11,34 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.11.4" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.15">
+    <PackageReference Include="Azure.Identity" Version="1.16.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.15" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.15">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.7">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="7.6.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Migrations\20230425091756_AddLAOrganisationType.cs" />
     <Compile Remove="Migrations\20230425091756_AddLAOrganisationType.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="StoredProcedures\GenerateSubsidiaryData.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="StoredProcedures\GenerateSubsidiaryData.sql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,12 +55,16 @@
 
   <ItemGroup>
     <SonarQubeSetting Include="sonar.exclusions">
-      <Value>**/migrations.sql</Value>
+      <Value>**/migrations.sql,Migrations/*.cs,Scripts/Dockerfile</Value>
     </SonarQubeSetting>
   </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Entities\EntityConfiguration\" />
   </ItemGroup>
-
+  
+  <ItemGroup>
+    <PackageReference Update="SonarAnalyzer.CSharp" Version="10.15.0.120848" />
+  </ItemGroup>
+  
 </Project>

@@ -5,4 +5,6 @@ public class PersonResponseModel : PersonModel
     public DateTimeOffset CreatedOn { get; set; }
 
     public Guid? UserId { get; set; }
+
+    public bool IsDeleted { get; set; }
 }

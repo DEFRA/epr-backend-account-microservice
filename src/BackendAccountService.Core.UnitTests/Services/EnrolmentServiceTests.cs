@@ -12,7 +12,7 @@ public class EnrolmentServiceTests
 {
     private readonly NullLogger<EnrolmentsService> _logger = new();
     private AccountsDbContext _dbContext = null!;
-    private IEnrolmentsService _sut = null!;
+    private EnrolmentsService _sut = null!;
     
     [TestInitialize]
     public void Setup()
@@ -164,5 +164,56 @@ public class EnrolmentServiceTests
         isPersonEnrolmentDeleted.Should().BeTrue();
         isUserEnrolled.Should().BeFalse();
         _dbContext.Enrolments.Where(x => x.Id == enrollment.Id).Should().BeEmpty();
+    }
+    
+    [TestMethod]
+    public async Task DeletePersonOrgConnectionOrEnrolmentAsync_WhenEnrolmentExists_AndIsOnlyOne_RemovesEnrolmentAndConnection()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var organisation = _dbContext.Organisations.Single(x => x.Name == "organisation1");
+        var person = _dbContext.Persons.Single(x => x.Email == "basicuser1@test.com");
+        var connection = person.OrganisationConnections.Single();
+        var enrolment = connection.Enrolments.Single();
+
+        // Act
+        var result = await _sut.DeletePersonOrgConnectionOrEnrolmentAsync(
+            userId,
+            person.ExternalId,
+            organisation.ExternalId,
+            enrolment.Id
+        );
+
+        // Assert
+        result.Should().BeTrue();
+        _dbContext.Enrolments.Any(e => e.Id == enrolment.Id).Should().BeFalse();
+        _dbContext.PersonOrganisationConnections.Any(c => c.Id == connection.Id).Should().BeFalse();
+    }
+    
+    [TestMethod]
+    public async Task DeletePersonOrgConnectionOrEnrolmentAsync_WhenEnrolmentNotFound_ReturnsFalse()
+    {
+        // Act
+        var result = await _sut.DeletePersonOrgConnectionOrEnrolmentAsync(
+            Guid.NewGuid(),
+            Guid.NewGuid(), // invalid person ID
+            Guid.NewGuid(), // invalid org ID
+            9999 // non-existent enrolment ID
+        );
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [TestMethod]
+    public async Task DeletePersonOrgConnectionOrEnrolmentAsync_WhenExceptionThrown_ReturnsFalse()
+    {
+        // Arrange: simulate disposed DB context
+        await _dbContext.DisposeAsync();
+
+        var result = await new EnrolmentsService(_dbContext, _logger)
+            .DeletePersonOrgConnectionOrEnrolmentAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 123);
+
+        result.Should().BeFalse();
     }
 }

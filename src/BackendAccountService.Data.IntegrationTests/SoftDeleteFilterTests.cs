@@ -11,16 +11,25 @@ namespace BackendAccountService.Data.IntegrationTests;
 [TestClass]
 public class SoftDeleteFilterTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
     private static DbContextOptions<AccountsDbContext> _options = null!;
 
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString!)
-            .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
+            .UseSqlServer(_database.ConnectionString!, sqlServerOptionsAction: sqlOptions =>
+                {
+                    // using Polly would give better results, but this is nice and simple
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 5,
+                        maxRetryDelay: TimeSpan
+                            .FromSeconds(30),
+                        errorNumbersToAdd: null
+                    );
+                })
+                .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
 

@@ -23,7 +23,7 @@ public class NotificationsController : ApiControllerBase
 
 
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NotificationsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<NotificationsResponse>> GetNotifications(
@@ -33,7 +33,7 @@ public class NotificationsController : ApiControllerBase
     {
         var response = await _notificationsService.GetNotificationsForServiceAsync(userId, organisationId, serviceKey);
 
-        if (!response.Notifications.Any())
+        if (response.Notifications.Count == 0)
         {
             return new NoContentResult();
         }

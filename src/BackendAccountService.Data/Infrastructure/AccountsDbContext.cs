@@ -2,6 +2,7 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Entities.Conversions;
 using BackendAccountService.Data.Entities.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using EnrolmentStatus = BackendAccountService.Data.Entities.EnrolmentStatus;
 using InterOrganisationRole = BackendAccountService.Data.Entities.InterOrganisationRole;
 
@@ -41,11 +42,15 @@ public class AccountsDbContext : DbContext
 
     public DbSet<OrganisationRegistrationType> OrganisationRegistrationTypes { get; set; } = null!;
 
+    public DbSet<SubsidiaryOrganisation> SubsidiaryOrganisations { get; set; } = null!;
+
     public DbSet<Person> Persons { get; set; } = null!;
 
     public DbSet<PersonInOrganisationRole> PersonInOrganisationRoles { get; set; } = null!;
 
     public DbSet<PersonOrganisationConnection> PersonOrganisationConnections { get; set; } = null!;
+
+    public DbSet<PersonOrganisationConnectionInvite> PersonOrganisationConnectionInvites { get; set; } = null!;
 
     public DbSet<PersonsConnection> PersonsConnections { get; set; } = null!;
 
@@ -71,11 +76,31 @@ public class AccountsDbContext : DbContext
 
     public DbSet<ComplianceSchemeMemberRemovalAuditLog> ComplianceSchemeMemberRemovalAuditLogs { get; set; } = null;
 
-    public DbSet<ComplianceSchemeMemberRemovalAuditLogsReason>ComplianceSchemeMemberRemovalAuditLogsReasons{ get; set; }
+    public DbSet<ComplianceSchemeMemberRemovalAuditLogsReason> ComplianceSchemeMemberRemovalAuditLogsReasons { get; set; }
+
+    public DbSet<ChangeHistory> ChangeHistory { get; set; } = null!;
+
+    public DbSet<LeaverCode> LeaverCodes { get; set; } = null!;
+
+    public DbSet<PartnerRole> PartnerRoles { get; set; } = null!;
+
+    public DbSet<OrganisationToPartnerRole> OrganisationToPartnerRoles { get; set; } = null!;
+
+    public DbSet<CodeClassificationLookup> CodeClassificationLookups { get; set; } = null;
+
+    public DbSet<CodeStatusConfig> CodeStatusConfigs { get; set; } = null;
+
+    public DbSet<ScenarioReference> ScenarioReferences { get; set; } = null;
+
 
     public AccountsDbContext(DbContextOptions<AccountsDbContext> options)
         : base(options)
     {
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.EnableSensitiveDataLogging();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -103,8 +128,8 @@ public class AccountsDbContext : DbContext
         modelBuilder.Entity<ApprovedPersonEnrolment>(entity =>
         {
             entity.HasOne(a => a.Enrolment)
-            .WithOne(enrolment => enrolment.ApprovedPersonEnrolment)
-            .HasForeignKey<ApprovedPersonEnrolment>(e => e.EnrolmentId);
+                .WithOne(enrolment => enrolment.ApprovedPersonEnrolment)
+                .HasForeignKey<ApprovedPersonEnrolment>(e => e.EnrolmentId);
         });
 
         modelBuilder.Entity<OrganisationsConnection>(entity =>
@@ -137,17 +162,62 @@ public class AccountsDbContext : DbContext
                 .HasForeignKey(connection => connection.FirstOrganisationId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(relationtype => relationtype.OrganisationRelationshipType)
+            entity.HasOne(relationshipType => relationshipType.OrganisationRelationshipType)
                 .WithMany()
                 .HasForeignKey(connection => connection.OrganisationRelationshipTypeId)
                 .OnDelete(DeleteBehavior.NoAction);
 
-            entity.HasOne(relationtype => relationtype.OrganisationRegistrationType)
+            entity.HasOne(registrationType => registrationType.OrganisationRegistrationType)
                 .WithMany()
                 .HasForeignKey(connection => connection.OrganisationRegistrationTypeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(leaverCode => leaverCode.LeaverCode)
+                .WithMany()
+                .HasForeignKey(connection => connection.LeaverCodeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(codeStatusConfig => codeStatusConfig.CodeStatusConfig)
+                .WithMany()
+                .HasForeignKey(connection => connection.CodeStatusConfigId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.NoAction);
+
+        });
+
+        modelBuilder.Entity<SubsidiaryOrganisation>(entity =>
+        {
+            entity.HasOne(subsidiaryOrganisation => subsidiaryOrganisation.Organisation)
+                .WithMany(organisation => organisation.SubsidiaryOrganisations)
+                .HasForeignKey(subsidiaryOrganisation => subsidiaryOrganisation.OrganisationId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
-        
+
+        modelBuilder.Entity<PersonOrganisationConnectionInvite>(entity =>
+        {
+            entity.HasOne(connection => connection.Organisation)
+                .WithMany()
+                .HasForeignKey(connection => connection.OrganisationId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(connection => connection.Person)
+                .WithMany()
+                .HasForeignKey(connection => connection.InviteePersonId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(connection => connection.User)
+                .WithMany()
+                .HasForeignKey(connection => connection.InvitedByUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(connection => connection.Service)
+                .WithMany()
+                .HasForeignKey(connection => connection.ServiceId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
         modelBuilder.Entity<PersonsConnection>(entity =>
         {
             entity.HasOne(connection => connection.FromPerson)
@@ -189,7 +259,7 @@ public class AccountsDbContext : DbContext
                 .WithOne(a => a.Enrolment)
                 .HasForeignKey<ApprovedPersonEnrolment>(a => a.EnrolmentId);
         });
-                
+
         modelBuilder.Entity<RegulatorComment>(entity =>
         {
             entity.HasOne<Person>(e => e.Person)
@@ -201,6 +271,43 @@ public class AccountsDbContext : DbContext
                 .WithMany(e => e.RegulatorComments)
                 .HasForeignKey(e => e.EnrolmentId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<OrganisationToPartnerRole>(entity =>
+        {
+            entity.HasOne(otr => otr.Organisation)
+                .WithMany()
+                .HasForeignKey(otr => otr.OrganisationId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(otr => otr.PartnerRole)
+                .WithMany()
+                .HasForeignKey(otr => otr.PartnerRoleId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CodeStatusConfig>(entity =>
+        {
+            entity.HasOne(otr => otr.CodeClassificationLookup)
+            .WithMany()
+            .HasForeignKey(otr => otr.ClassificationId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        modelBuilder.Entity<CodeScenarioMapping>(entity =>
+        {
+            entity.HasOne(otr => otr.CodeStatusConfig)
+            .WithMany()
+            .HasForeignKey(otr => otr.CodeStatusConfigId)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(otr => otr.ScenarioReference)
+            .WithMany()
+            .HasForeignKey(otr => otr.ScenarioReferenceId)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.NoAction);
         });
 
         AddSoftDeleteFilters(modelBuilder);
@@ -259,7 +366,7 @@ public class AccountsDbContext : DbContext
         modelBuilder.Entity<ComplianceSchemeMemberRemovalReason>()
             .HasIndex(ComplianceSchemeMemberRemovalReason => ComplianceSchemeMemberRemovalReason.Code)
             .IsUnique();
-        
+
         modelBuilder.Entity<Organisation>()
             .HasIndex(organisation => new
             {
@@ -367,12 +474,13 @@ public class AccountsDbContext : DbContext
         modelBuilder.Entity<Nation>(entity =>
         {
             entity.Property(nation => nation.Id).ValueGeneratedNever();
+
             entity.HasData(
-                new Nation { Id = DbConstants.Nation.NotSet, Name = "Not Set" },
-                new Nation { Id = DbConstants.Nation.England, Name = "England" },
-                new Nation { Id = DbConstants.Nation.NorthernIreland, Name = "Northern Ireland" },
-                new Nation { Id = DbConstants.Nation.Scotland, Name = "Scotland" },
-                new Nation { Id = DbConstants.Nation.Wales, Name = "Wales" });
+                new Nation { Id = DbConstants.Nation.NotSet, Name = "Not Set", NationCode = "" },
+                new Nation { Id = DbConstants.Nation.England, Name = "England", NationCode = "GB-ENG" },
+                new Nation { Id = DbConstants.Nation.NorthernIreland, Name = "Northern Ireland", NationCode = "GB-NIR" },
+                new Nation { Id = DbConstants.Nation.Scotland, Name = "Scotland", NationCode = "GB-SCT" },
+                new Nation { Id = DbConstants.Nation.Wales, Name = "Wales", NationCode = "GB-WLS" });
         });
 
         modelBuilder.Entity<OrganisationToPersonRole>(entity =>
@@ -387,21 +495,21 @@ public class AccountsDbContext : DbContext
         {
             entity.Property(type => type.Id).ValueGeneratedNever();
             entity.HasData(
-                new OrganisationType {Id = DbConstants.OrganisationType.NotSet, Name = "Not Set"},
+                new OrganisationType { Id = DbConstants.OrganisationType.NotSet, Name = "Not Set" },
                 new OrganisationType
-                    {Id = DbConstants.OrganisationType.CompaniesHouseCompany, Name = "Companies House Company"},
+                { Id = DbConstants.OrganisationType.CompaniesHouseCompany, Name = "Companies House Company" },
                 new OrganisationType
-                    {Id = DbConstants.OrganisationType.NonCompaniesHouseCompany, Name = "Non Companies House Company"},
+                { Id = DbConstants.OrganisationType.NonCompaniesHouseCompany, Name = "Non Companies House Company" },
                 new OrganisationType
-                    {Id = DbConstants.OrganisationType.WasteCollectionAuthority, Name = "Waste Collection Authority"},
+                { Id = DbConstants.OrganisationType.WasteCollectionAuthority, Name = "Waste Collection Authority" },
                 new OrganisationType
-                    {Id = DbConstants.OrganisationType.WasteDisposalAuthority, Name = "Waste Disposal Authority"},
+                { Id = DbConstants.OrganisationType.WasteDisposalAuthority, Name = "Waste Disposal Authority" },
                 new OrganisationType
                 {
                     Id = DbConstants.OrganisationType.WasteCollectionAuthorityWasteDisposalAuthority,
                     Name = "Waste Collection Authority & Waste Disposal Authority"
                 },
-                new OrganisationType {Id = DbConstants.OrganisationType.Regulators, Name = "Regulators"});
+                new OrganisationType { Id = DbConstants.OrganisationType.Regulators, Name = "Regulators" });
         });
 
         modelBuilder.Entity<ProducerType>(entity =>
@@ -413,7 +521,9 @@ public class AccountsDbContext : DbContext
                 new ProducerType { Id = DbConstants.ProducerType.UnincorporatedBody, Name = "Unincorporated body" },
                 new ProducerType { Id = DbConstants.ProducerType.NonUkOrganisation, Name = "Non-UK organisation" },
                 new ProducerType { Id = DbConstants.ProducerType.SoleTrader, Name = "Sole trader" },
-                new ProducerType { Id = DbConstants.ProducerType.Other, Name = "Other" });
+                new ProducerType { Id = DbConstants.ProducerType.Other, Name = "Other" },
+                new ProducerType { Id = DbConstants.ProducerType.LimitedPartnership, Name = "Limited partnership" },
+                new ProducerType { Id = DbConstants.ProducerType.LimitedLiabilityPartnership, Name = "Limited Liability partnership" });
         });
 
         modelBuilder.Entity<PersonInOrganisationRole>(entity =>
@@ -422,7 +532,8 @@ public class AccountsDbContext : DbContext
             entity.HasData(
                 new PersonInOrganisationRole { Id = DbConstants.PersonRole.NotSet, Name = "Not Set" },
                 new PersonInOrganisationRole { Id = DbConstants.PersonRole.Admin, Name = "Admin" },
-                new PersonInOrganisationRole { Id = DbConstants.PersonRole.Employee, Name = "Employee" }
+                new PersonInOrganisationRole { Id = DbConstants.PersonRole.Employee, Name = "Employee" },
+                new PersonInOrganisationRole { Id = DbConstants.PersonRole.Member, Name = "Member" }
             );
         });
 
@@ -436,23 +547,30 @@ public class AccountsDbContext : DbContext
                     Key = "Packaging",
                     Name = "EPR Packaging"
                 },
-				new Service
-				{
-					Id = DbConstants.Service.RegulatorEnrolement,
-					Description = "Extended Producer Responsibility - Regulating",
-					Key = "Regulating",
-					Name = "EPR Regulating"
-				},
+                new Service
+                {
+                    Id = DbConstants.Service.RegulatorEnrolment,
+                    Description = "Extended Producer Responsibility - Regulating",
+                    Key = "Regulating",
+                    Name = "EPR Regulating"
+                },
                 new Service
                 {
                     Id = DbConstants.Service.LaPayment,
                     Description = "Local Authority Payment Service",
                     Key = "LaPayment",
                     Name = "Local Authority Payment Service"
+                },
+                new Service
+                {
+                    Id = DbConstants.Service.ReprocessorExporter,
+                    Description = "Extended Producer Responsibility For Packaging: Reprocessors And Exporters",
+                    Key = "ReprocessorExporter",
+                    Name = "EPR for packaging: reprocessors and exporters"
                 });
-		});
+        });
 
-		modelBuilder.Entity<ServiceRole>(entity =>
+        modelBuilder.Entity<ServiceRole>(entity =>
         {
             entity.HasData(
                 new ServiceRole
@@ -476,22 +594,22 @@ public class AccountsDbContext : DbContext
                     Key = DbConstants.ServiceRole.Packaging.BasicUser.Key,
                     Name = "Basic User"
                 },
-				new ServiceRole
-				{
-					Id = DbConstants.ServiceRole.Regulator.Admin.Id,
-					ServiceId = DbConstants.Service.RegulatorEnrolement,
-					Key = DbConstants.ServiceRole.Regulator.Admin.Key,
-					Name = "Regulator Admin",
-					Description = "Regulator Admin Service Role"
-				},
-				new ServiceRole
-				{
-					Id = DbConstants.ServiceRole.Regulator.Basic.Id,
-					ServiceId = DbConstants.Service.RegulatorEnrolement,
-					Key = DbConstants.ServiceRole.Regulator.Basic.Key,
-					Name = "Regulator Basic",
-					Description = "Regulator Basic Service Role"
-				},
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.Regulator.Admin.Id,
+                    ServiceId = DbConstants.Service.RegulatorEnrolment,
+                    Key = DbConstants.ServiceRole.Regulator.Admin.Key,
+                    Name = "Regulator Admin",
+                    Description = "Regulator Admin Service Role"
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.Regulator.Basic.Id,
+                    ServiceId = DbConstants.Service.RegulatorEnrolment,
+                    Key = DbConstants.ServiceRole.Regulator.Basic.Key,
+                    Name = "Regulator Basic",
+                    Description = "Regulator Basic Service Role"
+                },
                 new ServiceRole
                 {
                     Id = DbConstants.ServiceRole.LaPayment.Admin.Id,
@@ -507,6 +625,46 @@ public class AccountsDbContext : DbContext
                     Key = DbConstants.ServiceRole.LaPayment.BasicUser.Key,
                     Name = "Basic User",
                     Description = null
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.ReprocessorExporter.ApprovedPerson.Id,
+                    ServiceId = DbConstants.Service.ReprocessorExporter,
+                    Key = DbConstants.ServiceRole.ReprocessorExporter.ApprovedPerson.Key,
+                    Name = "Approved Person",
+                    Description = "Manage team, submit registration and accreditation"
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.ReprocessorExporter.DelegatedPerson.Id,
+                    ServiceId = DbConstants.Service.ReprocessorExporter,
+                    Key = DbConstants.ServiceRole.ReprocessorExporter.DelegatedPerson.Key,
+                    Name = "Delegated Person",
+                    Description = null
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.ReprocessorExporter.BasicUser.Id,
+                    ServiceId = DbConstants.Service.ReprocessorExporter,
+                    Key = DbConstants.ServiceRole.ReprocessorExporter.BasicUser.Key,
+                    Name = "Basic User",
+                    Description = "Read only"
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.ReprocessorExporter.AdminUser.Id,
+                    ServiceId = DbConstants.Service.ReprocessorExporter,
+                    Key = DbConstants.ServiceRole.ReprocessorExporter.AdminUser.Key,
+                    Name = "Admin User",
+                    Description = "Manage team, submit registration and accreditation"
+                },
+                new ServiceRole
+                {
+                    Id = DbConstants.ServiceRole.ReprocessorExporter.StandardUser.Id,
+                    ServiceId = DbConstants.Service.ReprocessorExporter,
+                    Key = DbConstants.ServiceRole.ReprocessorExporter.StandardUser.Key,
+                    Name = "Standard User",
+                    Description = "Submit registration and apply for accreditation"
                 });
         });
 
@@ -526,8 +684,7 @@ public class AccountsDbContext : DbContext
             entity.HasData(
                 new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.NotSet, Name = "Not Set" },
                 new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Parent, Name = "Parent" },
-                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Holding, Name = "Holding" },
-                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Subsidary, Name = "Subsidary" });
+                new OrganisationRelationshipType { Id = DbConstants.OrganisationRelationshipType.Child, Name = "Child" });
         });
 
         modelBuilder.Entity<OrganisationRegistrationType>(entity =>
@@ -536,14 +693,402 @@ public class AccountsDbContext : DbContext
             entity.HasData(
                 new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.NotSet, Key = "", Name = "Not Set" },
                 new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Group, Key = "GR", Name = "Group" },
-                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Individual, Key= "IN", Name = "Individual" });
+                new OrganisationRegistrationType { Id = DbConstants.OrganisationRegistrationType.Individual, Key = "IN", Name = "Individual" });
         });
-    }
 
-    [Obsolete("Use the audited version of SaveChanges instead.", true)]
-    public override int SaveChanges()
-    {
-        throw new InvalidOperationException("Use the audited version of SaveChanges instead.");
+        modelBuilder.Entity<LeaverCode>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new LeaverCode { Id = DbConstants.LeaverCode.NotSet, Key = "", ReasonsForLeaving = "Not Set" },
+                new LeaverCode { Id = DbConstants.LeaverCode.A, Key = "A", ReasonsForLeaving = "Administration/Receivership" },
+                new LeaverCode { Id = DbConstants.LeaverCode.B, Key = "B", ReasonsForLeaving = "Liquidation/dissolution" },
+                new LeaverCode { Id = DbConstants.LeaverCode.C, Key = "C", ReasonsForLeaving = "Dropped below turnover threshold" },
+                new LeaverCode { Id = DbConstants.LeaverCode.D, Key = "D", ReasonsForLeaving = "Dropped below tonnage threshold" },
+                new LeaverCode { Id = DbConstants.LeaverCode.E, Key = "E", ReasonsForLeaving = "Resignation (not incapacity related)" },
+                new LeaverCode { Id = DbConstants.LeaverCode.F, Key = "F", ReasonsForLeaving = "Scheme has terminated membership (not incapacity related)" },
+                new LeaverCode { Id = DbConstants.LeaverCode.G, Key = "G", ReasonsForLeaving = "Business closure (not incapacity related)" },
+                new LeaverCode { Id = DbConstants.LeaverCode.H, Key = "H", ReasonsForLeaving = "Bankruptcy" },
+                new LeaverCode { Id = DbConstants.LeaverCode.I, Key = "I", ReasonsForLeaving = "Merged with another company (not incapacity related)" },
+                new LeaverCode { Id = DbConstants.LeaverCode.J, Key = "J", ReasonsForLeaving = "Now a subsidiary of another company (not incapacity related)" },
+                new LeaverCode { Id = DbConstants.LeaverCode.K, Key = "K", ReasonsForLeaving = "Not ready to register by 15th April" },
+                new LeaverCode { Id = DbConstants.LeaverCode.L, Key = "L", ReasonsForLeaving = "No longer obligated (Not threshold related)" });
+        });
+
+
+        modelBuilder.Entity<CodeClassificationLookup>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new CodeClassificationLookup { Id = DbConstants.CodeClassificationLookup.NotSet, CodeClass = "Not Set", Description = "Not Set", GroupType = "Not Set" },
+                new CodeClassificationLookup { Id = DbConstants.CodeClassificationLookup.Joiner, CodeClass = "Joiner", Description = "Joiner scenario", GroupType = "Entry" },
+                new CodeClassificationLookup { Id = DbConstants.CodeClassificationLookup.Leaver, CodeClass = "Leaver", Description = "Leaver scenario", GroupType = "Exit" });
+        });
+
+        modelBuilder.Entity<ScenarioReference>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new ScenarioReference { Id = DbConstants.ScenarioReference.NotSet, ScenarioCode = "Not Set", Description = "Not Set", ObligationFlag = "Not Set", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR1, ScenarioCode = "1b", Description = "Threshold producer joins a group", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR2, ScenarioCode = "5b", Description = "Threshold producer joins a group", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR3, ScenarioCode = "2a", Description = "Below-threshold producer joins group (% obligation)", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR4, ScenarioCode = "2b", Description = "Below-threshold producer joins group (% obligation)", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR5, ScenarioCode = "3b", Description = "Meets thresholds but group responsible for obligation", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR6, ScenarioCode = "4a", Description = "Leaves group, holding company responsible", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR7, ScenarioCode = "4b", Description = "Leaves group, holding company responsible", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR8, ScenarioCode = "5d", Description = "Joined group mid-year, not obligated", ObligationFlag = "Not Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR9, ScenarioCode = "5d", Description = "Left group mid-year, HC still responsible", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR10, ScenarioCode = "5c", Description = "Joined group, not obligated", ObligationFlag = "Not Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR11, ScenarioCode = "5c", Description = "Left group, HC still responsible", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR12, ScenarioCode = "none", Description = "Producer no longer obligated – insolvency or ceased function", ObligationFlag = "Not Obligated – HC", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR13, ScenarioCode = "none", Description = "Resigned from compliance scheme", ObligationFlag = "Not Obligated – CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR14, ScenarioCode = "none", Description = "Compliance scheme terminated membership", ObligationFlag = "Not Obligated – CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR16, ScenarioCode = "none", Description = "Merged with another company – non-incapacity, CS only", ObligationFlag = "Not Obligated – CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR17, ScenarioCode = "none", Description = "Producer data changed (e.g. acquisition of insolvent entity)", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR18, ScenarioCode = "all", Description = "Producer who meets thresholds independently has left group. Holding Company remains responsible for obligation due to Mid Year change", ObligationFlag = "Not Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR19, ScenarioCode = "all", Description = "Producer Registered late.", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR20, ScenarioCode = "all", Description = "Other - Joiner", ObligationFlag = "Obligated", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR21, ScenarioCode = "all", Description = "Other - Leaver", ObligationFlag = "Not Obligated", Active = true });
+    });
+
+        modelBuilder.Entity<CodeStatusConfig>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.A,
+                    Code = "01",
+                    LegacyCode = "A",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer who previously met thresholds has joined a group."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.B,
+                    Code = "02",
+                    LegacyCode = "B",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = true,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer who did not previously meet thresholds has joined a group (% obligation)."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.C,
+                    Code = "03",
+                    LegacyCode = "C",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = true,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer who did not previously meet thresholds has joined a group (% obligation)."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.D,
+                    Code = "04",
+                    LegacyCode = "D",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "C,D",
+                    Enabled = true,
+                    Description = "Producer left group; HC responsible for obligations due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.E,
+                    Code = "05",
+                    LegacyCode = "E",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "C,D",
+                    Enabled = true,
+                    Description = "Producer left group; HC responsible for obligations due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.F,
+                    Code = "06",
+                    LegacyCode = "F",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer meets thresholds; HC still responsible post-MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.G,
+                    Code = "07",
+                    LegacyCode = "G",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer joined group; HC not responsible due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.H,
+                    Code = "08",
+                    LegacyCode = "H",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer left group; HC still responsible due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.I,
+                    Code = "09",
+                    LegacyCode = "I",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Producer joined group; not obligated due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.J,
+                    Code = "10",
+                    LegacyCode = "J",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "Direct",
+                    MappedOldCodes = "J",
+                    Enabled = true,
+                    Description = "Producer left group; HC still responsible due to MYC."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.K,
+                    Code = "11",
+                    LegacyCode = "K",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "A,B,H",
+                    Enabled = true,
+                    Description = "No longer obligated – insolvency event."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.L,
+                    Code = "12",
+                    LegacyCode = "L",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "L",
+                    Enabled = true,
+                    Description = "Ceased performing producer function."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.M,
+                    Code = "13",
+                    LegacyCode = "M",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "E",
+                    Enabled = true,
+                    Description = "Producer resigned from compliance scheme."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.N,
+                    Code = "14",
+                    LegacyCode = "N",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "F",
+                    Enabled = true,
+                    Description = "CS terminated producer’s membership."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.O,
+                    Code = "15",
+                    LegacyCode = "O",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "None",
+                    Enabled = true,
+                    Description = "Became a producer due to mid-year change."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.P,
+                    Code = "16",
+                    LegacyCode = "P",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = true,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "I",
+                    Enabled = true,
+                    Description = "Merged with another company – not incapacity related."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.Q,
+                    Code = "17",
+                    LegacyCode = "Q",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "A,B,H",
+                    Enabled = true,
+                    Description = "Person becomes a producer as a result of carrying on the activities of an incapacitated producer."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.R,
+                    Code = "18",
+                    LegacyCode = "",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = true,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = false,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "",
+                    Enabled = true,
+                    Description = "Producer who meets thresholds independently has left group. Holding company remains responsible for obligation due to mid year change."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.S,
+                    Code = "19",
+                    LegacyCode = "",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = true,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "",
+                    Enabled = true,
+                    Description = "Producer registered late."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.T,
+                    Code = "20",
+                    LegacyCode = "",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Joiner,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "",
+                    Enabled = true,
+                    Description = "Other – Joiner."
+                },
+                new CodeStatusConfig
+                {
+                    Id = DbConstants.CodeStatusConfig.U,
+                    Code = "21",
+                    LegacyCode = "",
+                    ClassificationId = DbConstants.CodeClassificationLookup.Leaver,
+                    RequiresJoinerDate = false,
+                    RequiresLeaverDate = false,
+                    RequiresRegType = true,
+                    MatchType = "ManualReview",
+                    MappedOldCodes = "",
+                    Enabled = true,
+                    Description = "Other - Leaver."
+                });
+        });
+
+
+        modelBuilder.Entity<CodeScenarioMapping>(entity =>
+        {
+            entity.Property(type => type.Id).ValueGeneratedNever();
+            entity.HasData(
+                new CodeScenarioMapping { Id = 1, CodeStatusConfigId = DbConstants.CodeStatusConfig.A, ScenarioReferenceId = DbConstants.ScenarioReference.SR1, Active = true },
+                new CodeScenarioMapping { Id = 2, CodeStatusConfigId = DbConstants.CodeStatusConfig.A, ScenarioReferenceId = DbConstants.ScenarioReference.SR2, Active = true },
+                new CodeScenarioMapping { Id = 3, CodeStatusConfigId = DbConstants.CodeStatusConfig.B, ScenarioReferenceId = DbConstants.ScenarioReference.SR3, Active = true },
+                new CodeScenarioMapping { Id = 4, CodeStatusConfigId = DbConstants.CodeStatusConfig.C, ScenarioReferenceId = DbConstants.ScenarioReference.SR4, Active = true },
+                new CodeScenarioMapping { Id = 5, CodeStatusConfigId = DbConstants.CodeStatusConfig.D, ScenarioReferenceId = DbConstants.ScenarioReference.SR6, Active = true },
+                new CodeScenarioMapping { Id = 6, CodeStatusConfigId = DbConstants.CodeStatusConfig.E, ScenarioReferenceId = DbConstants.ScenarioReference.SR7, Active = true },
+                new CodeScenarioMapping { Id = 7, CodeStatusConfigId = DbConstants.CodeStatusConfig.F, ScenarioReferenceId = DbConstants.ScenarioReference.SR5, Active = true },
+                new CodeScenarioMapping { Id = 8, CodeStatusConfigId = DbConstants.CodeStatusConfig.G, ScenarioReferenceId = DbConstants.ScenarioReference.SR8, Active = true },
+                new CodeScenarioMapping { Id = 9, CodeStatusConfigId = DbConstants.CodeStatusConfig.H, ScenarioReferenceId = DbConstants.ScenarioReference.SR9, Active = true },
+                new CodeScenarioMapping { Id = 10, CodeStatusConfigId = DbConstants.CodeStatusConfig.I, ScenarioReferenceId = DbConstants.ScenarioReference.SR10, Active = true },
+                new CodeScenarioMapping { Id = 11, CodeStatusConfigId = DbConstants.CodeStatusConfig.J, ScenarioReferenceId = DbConstants.ScenarioReference.SR11, Active = true },
+                new CodeScenarioMapping { Id = 12, CodeStatusConfigId = DbConstants.CodeStatusConfig.K, ScenarioReferenceId = DbConstants.ScenarioReference.SR12, Active = true },
+                new CodeScenarioMapping { Id = 13, CodeStatusConfigId = DbConstants.CodeStatusConfig.L, ScenarioReferenceId = DbConstants.ScenarioReference.SR12, Active = true },
+                new CodeScenarioMapping { Id = 14, CodeStatusConfigId = DbConstants.CodeStatusConfig.M, ScenarioReferenceId = DbConstants.ScenarioReference.SR13, Active = true },
+                new CodeScenarioMapping { Id = 15, CodeStatusConfigId = DbConstants.CodeStatusConfig.N, ScenarioReferenceId = DbConstants.ScenarioReference.SR14, Active = true },
+                new CodeScenarioMapping { Id = 16, CodeStatusConfigId = DbConstants.CodeStatusConfig.O, ScenarioReferenceId = DbConstants.ScenarioReference.SR18, Active = true },
+                new CodeScenarioMapping { Id = 17, CodeStatusConfigId = DbConstants.CodeStatusConfig.P, ScenarioReferenceId = DbConstants.ScenarioReference.SR16, Active = true },
+                new CodeScenarioMapping { Id = 18, CodeStatusConfigId = DbConstants.CodeStatusConfig.Q, ScenarioReferenceId = DbConstants.ScenarioReference.SR17, Active = true },
+                new CodeScenarioMapping { Id = 19, CodeStatusConfigId = DbConstants.CodeStatusConfig.R, ScenarioReferenceId = DbConstants.ScenarioReference.SR18, Active = true },
+                new CodeScenarioMapping { Id = 20, CodeStatusConfigId = DbConstants.CodeStatusConfig.S, ScenarioReferenceId = DbConstants.ScenarioReference.SR19, Active = true },
+                new CodeScenarioMapping { Id = 21, CodeStatusConfigId = DbConstants.CodeStatusConfig.T, ScenarioReferenceId = DbConstants.ScenarioReference.SR20, Active = true },
+                new CodeScenarioMapping { Id = 22, CodeStatusConfigId = DbConstants.CodeStatusConfig.U, ScenarioReferenceId = DbConstants.ScenarioReference.SR21, Active = true });
+        });
+
+        modelBuilder.Entity<PartnerRole>(entity =>
+        {
+            entity.Property(s => s.Id).ValueGeneratedNever();
+            entity.HasData(
+                new PartnerRole { Id = DbConstants.PartnerRoleIds.NotSet, Name = "Not Set" },
+                new PartnerRole { Id = DbConstants.PartnerRoleIds.IndividualPartner, Name = "Individual Partner" },
+                new PartnerRole { Id = DbConstants.PartnerRoleIds.CompanyPartner, Name = "Corporate Partner" });
+        });
     }
 
     public int SaveChanges(Guid userId, Guid organisationId)
@@ -567,12 +1112,15 @@ public class AccountsDbContext : DbContext
     {
         if (Database.CurrentTransaction is null)
         {
-            using var transaction = Database.BeginTransaction();
-            var result = TwoPhaseSaveChanges(auditEntries);
-            transaction.Commit();
-            return result;
+            IExecutionStrategy strategy = Database.CreateExecutionStrategy();
+            return strategy.Execute(() =>
+            {
+                using var transaction = Database.BeginTransaction();
+                var result = TwoPhaseSaveChanges(auditEntries);
+                transaction.Commit();
+                return result;
+            });
         }
-
         return TwoPhaseSaveChanges(auditEntries);
     }
 
@@ -590,20 +1138,23 @@ public class AccountsDbContext : DbContext
         throw new InvalidOperationException("Use the audited version of SaveChangesAsync instead.");
     }
 
+    public async Task<int> SaveChangesAsync(Guid userId, string serviceId, CancellationToken cancellationToken = default)
+        => await SaveChangesAsync(userId, null, serviceId, cancellationToken);
+
     public async Task<int> SaveChangesAsync(Guid userId, Guid organisationId, CancellationToken cancellationToken = default)
         => await SaveChangesAsync(userId, organisationId, null, cancellationToken);
 
     public async Task<int> SaveChangesAsync(string serviceId, CancellationToken cancellationToken = default)
         => await SaveChangesAsync(null, null, serviceId, cancellationToken);
 
-    private async Task<int> SaveChangesAsync(Guid? userId, Guid? organisationId, string? serviceId, CancellationToken cancellationToken)
+    public async Task<int> SaveChangesAsync(Guid? userId, Guid? organisationId, string? serviceId, CancellationToken cancellationToken = default)
     {
-        var dynamicAuditEntries = HandleAuditBeforeSave(userId, organisationId, serviceId, DateTimeOffset.Now);
+        var dynamicAuditEntries = HandleAuditBeforeSave(userId, organisationId, serviceId, DateTimeOffset.UtcNow);
         if (dynamicAuditEntries.Count > 0)
         {
             return await TwoPhaseTransactionSaveChangesAsync(dynamicAuditEntries, cancellationToken);
         }
-
+        // if not doing two-phase, this will use the configured retry strategy if no ambient transaction exists
         return await base.SaveChangesAsync(cancellationToken);
     }
 
@@ -611,12 +1162,24 @@ public class AccountsDbContext : DbContext
     {
         if (Database.CurrentTransaction is null)
         {
-            await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
-            var result = await TwoPhaseSaveChangesAsync(auditEntries, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return result;
+            IExecutionStrategy strategy = Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async (cancellationToken) =>
+            {
+                await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    var result = await TwoPhaseSaveChangesAsync(auditEntries, cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return result;
+                }
+                catch
+                {
+                    // explicitly roll back the transaction honoring the cancellation token
+                    await transaction.RollbackAsync(cancellationToken);
+                    throw;
+                }
+            }, cancellationToken);
         }
-
         return await TwoPhaseSaveChangesAsync(auditEntries, cancellationToken);
     }
 

@@ -95,4 +95,22 @@ public static class AccountManagementTestHelper
         setupContext.Enrolments.Add(enrolment);
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
+
+    public static void SetupDatabaseForOrganisations(AccountsDbContext setupContext)
+    {
+        setupContext.ComplianceSchemes.Add(new ComplianceScheme
+        {
+            ExternalId = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            CompaniesHouseNumber = "CH123457",
+            Name = "Test Compliance Scheme2"
+        });
+        setupContext.Organisations.Add(new Organisation
+        {
+            ExternalId = Guid.Parse("00000000-0000-0000-0000-000000000002"),
+            CompaniesHouseNumber = "CH123456",
+            Name = "Test Compliance Scheme"
+        });
+        
+        setupContext.SaveChanges(Guid.Empty, Guid.Empty);
+    }
 }

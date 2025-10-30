@@ -5,6 +5,6 @@ namespace BackendAccountService.ValidationData.Api.Models;
 
 public class CompanyDetailsResponse
 {
-    [JsonProperty("Organisations")]
+    [JsonProperty(nameof(Organisations))]
     public IEnumerable<CompanyDetailResponse> Organisations { get; set; }
 }

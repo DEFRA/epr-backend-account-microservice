@@ -14,7 +14,7 @@ using BackendAccountService.ValidationData.Api.Models;
 
 namespace BackendAccountService.ValidationData.Api;
 
-public class OrganisationFunctions
+public class OrganisationFunctions : FunctionsBase
 {
     private readonly IOrganisationDataService _organisationService;
     private readonly ILogger<OrganisationFunctions> _logger;
@@ -132,25 +132,5 @@ public class OrganisationFunctions
         {
             _logger.LogExit();
         }
-    }
-
-    private static ObjectResult Problem(
-        string title,
-        string? type = null,
-        string? detail = null,
-        int statusCode = 500)
-    {
-        var problem = new ProblemDetails
-        {
-            Status = statusCode,
-            Detail = detail,
-            Type = type,
-            Title = title
-        };
-
-        return new ObjectResult(problem)
-        {
-            StatusCode = problem.Status
-        };
     }
 }

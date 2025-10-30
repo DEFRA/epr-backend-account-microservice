@@ -31,6 +31,7 @@ public class StartUp : FunctionsStartup
             var accountDatabaseOptions = serviceProvider.GetRequiredService<IOptions<AccountsDatabaseConfig>>().Value;
             services.AddScoped<IOrganisationDataService, OrganisationDataService>();
             services.AddScoped<ICompanyDetailsDataService, CompanyDetailsDataService>();
+            services.AddScoped<ISubsidiaryDataService, SubsidiaryDataService>();
             services.AddDbContext<AccountsDbContext>(options =>
                 options.UseSqlServer(accountDatabaseOptions.ConnectionString));
         }

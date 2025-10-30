@@ -1,6 +1,7 @@
 ﻿using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -27,7 +28,7 @@ namespace BackendAccountService.Api.Controllers
         }
 
         [HttpGet(Name = "GetOrganisationIdFromNation")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CheckOrganisationExistResponseModel), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> GetOrganisationIdFromNation([FromQuery] string nation)
         {
@@ -41,32 +42,33 @@ namespace BackendAccountService.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CreateRegulatorOrganisation([FromBody] CreateRegulatorOrganisationRequest request)
         {
-            _logger.LogInformation($"Creating the selected regulator organisation {request.Name}");
+            _logger.LogInformation("Creating the selected regulator organisation {Name}", request.Name);
 
             var result = await _regulatorOrganisationService.CreateNewRegulatorOrganisationAsync(request);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation($"Created the selected regulator organisation Id: {result.Value.ExternalId}");
+                _logger.LogInformation("Created the selected regulator organisation Id: {ExternalId}", result.Value.ExternalId);
 
                 return CreatedAtRoute(nameof(GetOrganisationIdFromNation), new { nation = result.Value.Nation }, null);
             }
 
-            _logger.LogInformation($"Failed to create the selected regulator organisation {request.Name}");
+            _logger.LogInformation("Failed to create the selected regulator organisation {Name}", request.Name);
 
             return result.BuildErrorResponse();
         }
         
         [HttpGet]
         [Route("organisation-nation")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(List<int>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetNationIdsFromOrganisationId([FromQuery] Guid organisationId)
         {
-            _logger.LogInformation($"Retrieving the nation Id for the organisation: {organisationId}");
+            _logger.LogInformation("Retrieving the nation Id for the organisation: {OrganisationId}", organisationId);
             
-            var check = await _regulatorService.GetOrganisationNationIds(organisationId);
+            var response = await _regulatorService.GetOrganisationNationsAsync(organisationId);
+            var nationIds = response.Select(nation => nation.Id).ToList();
             
-            return Ok(check);
+            return Ok(nationIds);
         }
     }
 }

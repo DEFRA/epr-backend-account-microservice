@@ -15,7 +15,7 @@ namespace BackendAccountService.Data.IntegrationTests.Services;
 [TestClass]
 public class ComplianceSchemeMembershipTests
 {
-    private static AzureSqlEdgeDbContainer _database = null!;
+    private static AzureSqlDbContainer _database = null!;
     private static DbContextOptions<AccountsDbContext> _options = null!;
     private AccountsDbContext _writeDbContext = null!;
     private ComplianceSchemeService _complianceSchemeService = null!;
@@ -23,7 +23,7 @@ public class ComplianceSchemeMembershipTests
     [ClassInitialize]
     public static async Task TestFixtureSetup(TestContext _)
     {
-        _database = await AzureSqlEdgeDbContainer.StartDockerDbAsync();
+        _database = await AzureSqlDbContainer.StartDockerDbAsync();
 
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
             .UseSqlServer(_database.ConnectionString)
@@ -46,6 +46,8 @@ public class ComplianceSchemeMembershipTests
     {
         _writeDbContext = new AccountsDbContext(_options);
 
+        // Ensure a clean database state before each test
+        await _writeDbContext.Database.EnsureDeletedAsync();
         await _writeDbContext.Database.EnsureCreatedAsync();
 
         _complianceSchemeService = new ComplianceSchemeService(_writeDbContext, NullLogger<ComplianceSchemeService>.Instance);
@@ -152,6 +154,8 @@ public class ComplianceSchemeMembershipTests
             .Should().NotContain(producerBasicUser.Connection.Person.Email);
     }
     
+    //todo: this works when run individually, but failed when run as part of a full test run
+    // was that it's old behaviour, or is it the new int test interfering by what it leaves in the db?
     [TestMethod]
     [TestCategory("ComplianceSchemeMembership")]
     public async Task WhenProducerIsDissociatedFromComplianceScheme_ThenPendingApprovalDelegatedPersonWillNotBeInRemovalNotificationRecipients()
