@@ -95,6 +95,6 @@ public class UpdatedProducersRequestTests
 
         var results = ValidateModel(request);
 
-        Assert.IsFalse(results.Count > 0); // No validation errors
+        Assert.IsLessThanOrEqualTo(0, results.Count); // No validation errors
     }
 }

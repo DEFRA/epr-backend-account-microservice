@@ -26,7 +26,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static async Task TestFixtureTearDown()
         {
             await _database.StopAsync();

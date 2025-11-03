@@ -678,7 +678,7 @@ public class RegulatorServiceTests
         // Arrange
         var enrolment = _dbContext.Enrolments.SingleOrDefault(x => x.ExternalId == DelegatedPersonId);
         enrolment.EnrolmentStatusId = EnrolmentStatus.Approved;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var userList = await _regulatorService.GetUserListForRegulator(OrganisationId, true);
@@ -722,7 +722,7 @@ public class RegulatorServiceTests
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -747,7 +747,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -782,7 +782,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpDelegatedPersonWithoutFirstNameEnrolment(organisation.Id);
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -810,7 +810,7 @@ public class RegulatorServiceTests
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -834,7 +834,7 @@ public class RegulatorServiceTests
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -866,7 +866,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new ApprovedUserRequest
         {
@@ -903,7 +903,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
 
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
 
         var request = new ApprovedUserRequest
@@ -942,7 +942,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.BasicUser.Id);
 
         var connExternalId = organisation.PersonOrganisationConnections.FirstOrDefault().ExternalId;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
         var personExternalId = organisation.PersonOrganisationConnections.LastOrDefault().Person.ExternalId;
 
         var request = new ApprovedUserRequest
@@ -980,7 +980,7 @@ public class RegulatorServiceTests
         var organisation = SetUpOrganisation(_dbContext);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id);
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1006,7 +1006,7 @@ public class RegulatorServiceTests
         var organisation = SetUpOrganisation(_dbContext);
         var approvedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.ApprovedPerson.Id).Id;
         var delegatedPersonId = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id).Id;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1045,7 +1045,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
 
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1080,7 +1080,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
 
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1116,7 +1116,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
 
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1153,7 +1153,7 @@ public class RegulatorServiceTests
         var existingDelegatedPerson2 = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
 
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1169,19 +1169,19 @@ public class RegulatorServiceTests
 
         // Assert
         var approvedUser = await GetEnrolmentQuery()
-            .SingleAsync(x => x.Id == approvedPersonEnrolment.Id);
+            .SingleAsync(x => x.Id == approvedPersonEnrolment.Id, default);
 
         approvedUser.Connection.PersonRoleId.Should().Be(PersonRole.Admin);
         approvedUser.ServiceRoleId.Should().Be(ServiceRole.Packaging.ApprovedPerson.Id);
 
         var delegatedPersonEnrolment1 = await GetEnrolmentQuery()
-            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson1.Id);
+            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson1.Id, default);
 
         delegatedPersonEnrolment1.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment1.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
 
         var delegatedPersonEnrolment2 = await GetEnrolmentQuery()
-            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson2.Id);
+            .SingleAsync(x => x.Connection.Person.Id == existingDelegatedPerson2.Id, default);
 
         delegatedPersonEnrolment2.Connection.PersonRoleId.Should().Be(PersonRole.Employee);
         delegatedPersonEnrolment2.ServiceRoleId.Should().Be(ServiceRole.Packaging.BasicUser.Id);
@@ -1211,7 +1211,7 @@ public class RegulatorServiceTests
         _ = SetUpPersonEnrolment(organisation.Id, ServiceRole.Packaging.DelegatedPerson.Id);
 
         var regulatorPerson = SetUpPersonEnrolment(organisation.Id, ServiceRole.Regulator.Admin.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var request = new AddRemoveApprovedUserRequest
         {
@@ -1980,7 +1980,7 @@ public class RegulatorServiceTests
         };
 
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var request = new ManageUserDetailsChangeModel
         {
@@ -2017,7 +2017,7 @@ public class RegulatorServiceTests
             DeclarationDate = DateTimeOffset.UtcNow
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var poc = new PersonOrganisationConnection
         {
@@ -2026,7 +2026,7 @@ public class RegulatorServiceTests
             OrganisationId = changeHistory.OrganisationId
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var request = new ManageUserDetailsChangeModel
         {
@@ -2081,7 +2081,7 @@ public class RegulatorServiceTests
             Organisation = organisation
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var approvedPersonEnrolment = new Enrolment
         {
@@ -2093,7 +2093,7 @@ public class RegulatorServiceTests
             IsDeleted = false
         };
         _dbContext.Enrolments.Add(approvedPersonEnrolment);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
         var changeHistory = new ChangeHistory
         {
             ExternalId = Guid.NewGuid(),
@@ -2116,7 +2116,7 @@ public class RegulatorServiceTests
             })
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
         var request = new ManageUserDetailsChangeModel
         {
             ChangeHistoryExternalId = changeHistory.ExternalId,
@@ -2129,7 +2129,7 @@ public class RegulatorServiceTests
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(keyValues: [changeHistory.Id], cancellationToken: default);
         Assert.IsNotNull(updatedChangeHistory);
         Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
         Assert.AreEqual(person.User.Id, updatedChangeHistory.Person.UserId);
@@ -2170,7 +2170,7 @@ public class RegulatorServiceTests
             Organisation = organisation
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var approvedPersonEnrolment = new Enrolment
         {
@@ -2182,7 +2182,7 @@ public class RegulatorServiceTests
             IsDeleted = false
         };
         _dbContext.Enrolments.Add(approvedPersonEnrolment);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
         var changeHistory = new ChangeHistory
         {
             ExternalId = Guid.NewGuid(),
@@ -2203,7 +2203,7 @@ public class RegulatorServiceTests
             })
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
         var request = new ManageUserDetailsChangeModel
         {
             ChangeHistoryExternalId = changeHistory.ExternalId,
@@ -2216,7 +2216,7 @@ public class RegulatorServiceTests
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(keyValues: [changeHistory.Id], cancellationToken: default);
         Assert.IsNotNull(updatedChangeHistory);
         Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
         Assert.AreEqual(person.User.Id, updatedChangeHistory.Person.UserId);
@@ -2257,7 +2257,7 @@ public class RegulatorServiceTests
             Organisation = organisation
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var approvedPersonEnrolment = new Enrolment
         {
@@ -2269,7 +2269,7 @@ public class RegulatorServiceTests
             IsDeleted = false
         };
         _dbContext.Enrolments.Add(approvedPersonEnrolment);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var changeHistory = new ChangeHistory
         {
@@ -2293,7 +2293,7 @@ public class RegulatorServiceTests
             })
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var request = new ManageUserDetailsChangeModel
         {
@@ -2308,7 +2308,7 @@ public class RegulatorServiceTests
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(changeHistory.Id);
+        var updatedChangeHistory = await _dbContext.ChangeHistory.FindAsync(keyValues: [changeHistory.Id], cancellationToken: default);
         Assert.IsNotNull(updatedChangeHistory);
         Assert.AreEqual(DateTimeOffset.UtcNow.Date, updatedChangeHistory.DecisionDate.Value.Date);
         Assert.AreEqual("I don't accept this.", updatedChangeHistory.ApproverComments);
@@ -2350,7 +2350,7 @@ public class RegulatorServiceTests
             Organisation = organisation
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var approvedPersonEnrolment = new Enrolment
         {
@@ -2362,7 +2362,7 @@ public class RegulatorServiceTests
             IsDeleted = false
         };
         _dbContext.Enrolments.Add(approvedPersonEnrolment);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var changeHistory = new ChangeHistory
         {
@@ -2386,7 +2386,7 @@ public class RegulatorServiceTests
             })
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var request = new ManageUserDetailsChangeModel
         {
@@ -2441,7 +2441,7 @@ public class RegulatorServiceTests
             Organisation = organisation
         };
         _dbContext.PersonOrganisationConnections.Add(poc);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var approvedPersonEnrolment = new Enrolment
         {
@@ -2453,7 +2453,7 @@ public class RegulatorServiceTests
             IsDeleted = false
         };
         _dbContext.Enrolments.Add(approvedPersonEnrolment);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var changeHistory = new ChangeHistory
         {
@@ -2465,7 +2465,7 @@ public class RegulatorServiceTests
             DeclarationDate = DateTimeOffset.UtcNow
         };
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(userId, organisationId);
+        await _dbContext.SaveChangesAsync(userId, organisationId, default);
 
         var request = new ManageUserDetailsChangeModel
         {
@@ -2535,7 +2535,7 @@ public class RegulatorServiceTests
         };
         _dbContext.Enrolments.Add(enrollment);
 
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.GetUserDetailChangeRequestAsync(new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"));
@@ -2573,7 +2573,7 @@ public class RegulatorServiceTests
             IsActive = true,
         });
 
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.GetUserDetailChangeRequestAsync(new Guid("fc4b4b17-5581-4154-a961-21ccf95f318b"));
@@ -2648,7 +2648,7 @@ public class RegulatorServiceTests
 
         await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.BasicUser.Id);
 
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
@@ -2674,7 +2674,7 @@ public class RegulatorServiceTests
 
         await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.ApprovedPerson.Id);
 
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
@@ -2700,7 +2700,7 @@ public class RegulatorServiceTests
 
         await ArrangeDatabaseMockData(changeId, ServiceRole.Packaging.DelegatedPerson.Id);
 
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(
@@ -2769,7 +2769,7 @@ public class RegulatorServiceTests
         // Assert
         Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
         Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
-        Assert.IsTrue(result.ErrorMessage.Contains("request to update non companies house company with details"));
+        Assert.Contains("request to update non companies house company with details", result.ErrorMessage);
     }
 
     /// <summary>
@@ -2804,7 +2804,7 @@ public class RegulatorServiceTests
         // Assert
         Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
         Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
-        Assert.IsTrue(result.ErrorMessage.Contains("not found or is not NonCompaniesHouseCompany."));
+        Assert.Contains("not found or is not NonCompaniesHouseCompany.", result.ErrorMessage);
     }
 
     /// <summary>
@@ -2834,8 +2834,8 @@ public class RegulatorServiceTests
         };
 
         await ArrangeDatabaseMockData(Guid.Empty, ServiceRole.Packaging.BasicUser.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
-        (await _dbContext.Persons.LastAsync()).User = null; // Set a required value to null so that an exception gets thrown.
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
+        (await _dbContext.Persons.LastAsync(default)).User = null; // Set a required value to null so that an exception gets thrown.
 
         // Act
         var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
@@ -2843,7 +2843,7 @@ public class RegulatorServiceTests
         // Assert
         Assert.IsInstanceOfType(result, typeof(Result<RegulatorOrganisationUpdateResponse>));
         Assert.AreEqual(HttpStatusCode.InternalServerError, result.StatusCode);
-        Assert.IsTrue(result.ErrorMessage.Contains("error in request to update non companies house company"));
+        Assert.Contains("error in request to update non companies house company", result.ErrorMessage);
     }
 
     /// <summary>
@@ -2873,7 +2873,7 @@ public class RegulatorServiceTests
         };
 
         await ArrangeDatabaseMockData(Guid.Empty, ServiceRole.Packaging.BasicUser.Id);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
@@ -2932,7 +2932,7 @@ public class RegulatorServiceTests
             Telephone = "0778972343",
             Email = "other.regulator@example.com"
         }); // Adding a different regulator
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var expectedMessage = $"Accept Or Reject User Details Change Request by RegulatorEmail {request.RegulatorEmail} is not valid.";
 
@@ -2974,7 +2974,7 @@ public class RegulatorServiceTests
         // Assert
         Assert.IsFalse(result.IsSuccess);
         Assert.AreEqual(HttpStatusCode.BadRequest, result.StatusCode);
-        Assert.IsTrue(result.ErrorMessage.Contains(expectedMessage));
+        Assert.Contains(expectedMessage, result.ErrorMessage);
     }
 
     [TestMethod]
@@ -3013,7 +3013,7 @@ public class RegulatorServiceTests
 
         // Remove ChangeHistory to simulate the condition where it's not found
         _dbContext.ChangeHistory.RemoveRange(_dbContext.ChangeHistory);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var expectedMessage = "Accept Or Reject User Details Change Request for PersonId: 2 and OrganisationId: 1 not found or is not active.";
 
@@ -3054,7 +3054,7 @@ public class RegulatorServiceTests
         };
 
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
         // Act
         var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
 
@@ -3093,7 +3093,7 @@ public class RegulatorServiceTests
         };
 
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
@@ -3126,7 +3126,7 @@ public class RegulatorServiceTests
         };
 
         _dbContext.ChangeHistory.Add(changeHistory);
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
         var expectedMessage = $"Error in Accept Or Reject User Details Change Request for OrganisationReference {request.OrganisationReference} and user email {request.UserEmail}";
 
         // Act
@@ -3148,7 +3148,7 @@ public class RegulatorServiceTests
         var result = await _regulatorService.GetOrganisationNationsAsync(nonExistentOrganisationId);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(0, result[0].Id);
     }
 
@@ -3184,13 +3184,13 @@ public class RegulatorServiceTests
                 NationId = 2
             }
         );
-        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         // Act
         var result = await _regulatorService.GetOrganisationNationsAsync(organisationId);
 
         // Assert
-        Assert.AreEqual(2, result.Count);
+        Assert.HasCount(2, result);
         Assert.AreEqual(expectedResponse[0].Id, result[0].Id);
         Assert.AreEqual(expectedResponse[0].Name, result[0].Name);
         Assert.AreEqual(expectedResponse[0].NationCode, result[0].NationCode);
@@ -3211,13 +3211,13 @@ public class RegulatorServiceTests
             NationId = 3
         };
         _dbContext.Organisations.Add(organisation);
-        await _dbContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
         // Act
         var result = await _regulatorService.GetOrganisationNationsAsync(organisationId);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(3, result[0].Id);
     }
 
@@ -3254,13 +3254,13 @@ public class RegulatorServiceTests
         var organisationIds = organisations.Select(org => org.ExternalId).ToList();
 
         _dbContext.Organisations.AddRange(organisations);
-        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         // Act
         var result = await _regulatorService.GetOrganisationNationsAsync(organisationIds[0]);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(Nation.Scotland, result[0].Id);
         Assert.AreEqual("Scotland", result[0].Name);
         Assert.AreEqual("GB-SCT", result[0].NationCode);
@@ -3276,7 +3276,7 @@ public class RegulatorServiceTests
         var result = await _regulatorService.GetCSOrganisationNationsAsync(nonExistentOrganisationId);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(0, result[0].Id);
     }
 
@@ -3303,7 +3303,7 @@ public class RegulatorServiceTests
                 ExternalId = complianceScheme2ExternalId
             }
         );
-        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await _dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         var expectedResponse = new List<OrganisationNationResponseModel> {
          new() { Id = 2, Name = "Northern Ireland", NationCode = "GB-NIR" },
@@ -3314,7 +3314,7 @@ public class RegulatorServiceTests
         var result = await _regulatorService.GetCSOrganisationNationsAsync(complianceScheme2ExternalId);
 
         // Assert
-        Assert.AreEqual(1, result.Count);
+        Assert.HasCount(1, result);
         Assert.AreEqual(expectedResponse[0].Id, result[0].Id);
         Assert.AreEqual(expectedResponse[0].Name, result[0].Name);
         Assert.AreEqual(expectedResponse[0].NationCode, result[0].NationCode);

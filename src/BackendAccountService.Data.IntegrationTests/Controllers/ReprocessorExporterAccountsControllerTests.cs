@@ -81,7 +81,7 @@ public class ReprocessorExporterAccountsControllerTests
         }
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         if (_database == null)

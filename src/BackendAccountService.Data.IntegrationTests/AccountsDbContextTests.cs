@@ -22,7 +22,7 @@ public class AccountsDbContextTests
         _database = await AzureSqlDbContainer.StartDockerDbAsync();
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();
@@ -47,9 +47,9 @@ public class AccountsDbContextTests
     {
         await using var context = _context;
 
-        var didExist = await context.Database.EnsureDeletedAsync();
+        var didExist = await context.Database.EnsureDeletedAsync(default);
 
-        var isCreated = await context.Database.EnsureCreatedAsync();
+        var isCreated = await context.Database.EnsureCreatedAsync(default);
 
         Assert.IsTrue(didExist);
 
@@ -83,7 +83,7 @@ public class AccountsDbContextTests
         context.ComplianceSchemes.Add(complianceScheme);
         context.Organisations.Add(organisation);
 
-        await context.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await context.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         Assert.IsNotNull(context.ComplianceSchemes.Single(s => s.Name == "Compliance-scheme-1"));
         Assert.IsNotNull(context.Organisations.Single(o => o.Name == "Compliance-scheme-operator-1"));
@@ -111,7 +111,7 @@ public class AccountsDbContextTests
 
         context.Persons.Add(person);
 
-        await context.SaveChangesAsync(person.User.UserId.Value, Guid.Empty);
+        await context.SaveChangesAsync(person.User.UserId.Value, Guid.Empty, default);
 
         Assert.IsNotNull(context.Users.First(o => o.Email == "user-one").Person);
 
@@ -140,7 +140,7 @@ public class AccountsDbContextTests
 
         context.Users.Add(newUser);
 
-        await context.SaveChangesAsync(newUser.UserId.Value, Guid.Empty);
+        await context.SaveChangesAsync(newUser.UserId.Value, Guid.Empty, default);
 
         var person = context.Users
             .Where(o => o.Email == "user-two").Include(user => user.Person).First()
@@ -192,7 +192,7 @@ public class AccountsDbContextTests
 
         context.Users.AddRange(user1, user2);
 
-        await context.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await context.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         context.Users.Count(u => u.UserId == Guid.Empty).Should().Be(2);
     }
@@ -236,7 +236,7 @@ public class AccountsDbContextTests
 
         context.Users.AddRange(user1, user2);
 
-        var action = async () => await context.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        var action = async () => await context.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         await action.Should().ThrowExactlyAsync<DbUpdateException>().WithInnerException<DbUpdateException, SqlException>().WithMessage("Cannot insert duplicate key*");
     }

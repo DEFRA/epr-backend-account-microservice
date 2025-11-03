@@ -47,7 +47,7 @@ public class AuditLogsNoTransactionAsyncTests : AuditLogsBaseTests
         base.Enrolment = Enrolment;
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

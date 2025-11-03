@@ -231,7 +231,7 @@ public class AddReprocessorExporterOrganisationAsyncTests
             .Include(e => e.Connection.Person).ThenInclude(p => p.User) // Include User for verification
             .Include(e => e.ApprovedPersonEnrolment)
             .SingleOrDefaultAsync(e => e.Connection.Organisation.ExternalId == mainEnrolmentToBeMappedAndAdded.Connection.Organisation.ExternalId
-                                                && e.ServiceRoleId == ServiceRole.ReprocessorExporter.AdminUser.Id);
+                                                && e.ServiceRoleId == ServiceRole.ReprocessorExporter.AdminUser.Id, default);
 
         savedEnrolment.Should().NotBeNull();
         savedEnrolment.Connection.Organisation.Name.Should().Be(accountInput.Organisation.Name);
@@ -273,7 +273,7 @@ public class AddReprocessorExporterOrganisationAsyncTests
             .Include(e => e.Connection.Person).ThenInclude(p => p.User) // Include User for verification
             .Include(e => e.ApprovedPersonEnrolment)
             .SingleOrDefaultAsync(e => e.Connection.Organisation.ExternalId == mainEnrolmentToBeMappedAndAdded.Connection.Organisation.ExternalId
-                                                && e.ServiceRoleId == ServiceRole.ReprocessorExporter.ApprovedPerson.Id);
+                                                && e.ServiceRoleId == ServiceRole.ReprocessorExporter.ApprovedPerson.Id, default);
 
         savedEnrolment.Should().NotBeNull();
         savedEnrolment.Connection.Organisation.Name.Should().Be(accountInput.Organisation.Name);
@@ -361,13 +361,13 @@ public class AddReprocessorExporterOrganisationAsyncTests
         // Assert
         var savedMainOrganisation = await _dbContext.Organisations
             .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.ExternalId == mainEnrolmentMapped.Connection.Organisation.ExternalId);
+            .FirstOrDefaultAsync(o => o.ExternalId == mainEnrolmentMapped.Connection.Organisation.ExternalId, default);
         savedMainOrganisation.Should().NotBeNull();
 
         var savedPartnerLinks = await _dbContext.OrganisationToPartnerRoles
             .AsNoTracking()
             .Where(otp => otp.OrganisationId == savedMainOrganisation.Id)
-            .ToListAsync();
+            .ToListAsync(default);
         savedPartnerLinks.Should().HaveCount(1);
         savedPartnerLinks.Should().Contain(p => p.Name == "Partner One Inc." && p.PartnerRoleId == 11);
     }
@@ -411,7 +411,7 @@ public class AddReprocessorExporterOrganisationAsyncTests
 
         // Assert
         var savedMainOrganisation = await _dbContext.Organisations
-            .FirstOrDefaultAsync(o => o.ExternalId == mainEnrolmentMapped.Connection.Organisation.ExternalId);
+            .FirstOrDefaultAsync(o => o.ExternalId == mainEnrolmentMapped.Connection.Organisation.ExternalId, default);
         savedMainOrganisation.Should().NotBeNull();
 
         var savedInvitedEnrolments = await _dbContext.Enrolments
@@ -419,7 +419,7 @@ public class AddReprocessorExporterOrganisationAsyncTests
             .Include(e => e.Connection.Person.User)
             .Include(e => e.Connection.Organisation)
             .Where(e => e.EnrolmentStatusId == EnrolmentStatus.Invited && e.Connection.OrganisationId == savedMainOrganisation.Id)
-            .ToListAsync();
+            .ToListAsync(default);
         savedInvitedEnrolments.Should().HaveCount(1);
         savedInvitedEnrolments[0].Connection.Person.Email.Should().Be("invite1.inmem@test.com");
         savedInvitedEnrolments[0].Connection.Person.User.InviteToken.Should().Be(token1);

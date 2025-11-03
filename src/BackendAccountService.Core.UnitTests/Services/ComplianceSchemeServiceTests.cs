@@ -109,7 +109,7 @@ public class ComplianceSchemeServiceTests
         var expectedResult = Result.FailedResult($"Error removing selected scheme id {request.SelectedSchemeId}", HttpStatusCode.InternalServerError);
         var OrgConnection = _dbContext.OrganisationsConnections.Single(con => con.ExternalId == new Guid("00000000-0000-0000-0000-000000000011"));
         OrgConnection.IsDeleted = true;
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         //Assert
         var result = await _complianceSchemeService.RemoveComplianceSchemeAsync(request);
@@ -497,13 +497,13 @@ public class ComplianceSchemeServiceTests
             .Where(x => x.IsComplianceScheme)
             .AsNoTracking()
             .Select(x => x.CompaniesHouseNumber)
-            .ToListAsync();
+            .ToListAsync(default);
 
         var expectedResult = await _dbContext
             .ComplianceSchemes
             .Where(cs => csOrgsCompaniesHouseNumbers.Contains(cs.CompaniesHouseNumber))
             .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
-            .ToListAsync();
+            .ToListAsync(default);
 
         //Act
         var result = await _complianceSchemeService.GetAllComplianceSchemesAsync();
@@ -516,13 +516,13 @@ public class ComplianceSchemeServiceTests
     public async Task When_Get_Compliance_Schemes_For_Operator_Is_Called_Then_Return_Its_Compliance_Schemes()
     {
         //Arrange
-        var organisation = await _dbContext.Organisations.FirstOrDefaultAsync(x => x.ExternalId == _existingProducerWithSelectedSchemeId);
+        var organisation = await _dbContext.Organisations.FirstOrDefaultAsync(x => x.ExternalId == _existingProducerWithSelectedSchemeId, default);
 
         var expectedResult = await _dbContext
             .ComplianceSchemes
             .Where(x => x.CompaniesHouseNumber == organisation.CompaniesHouseNumber)
             .Select(cs => new ComplianceSchemeDto(cs.Id, cs.ExternalId, cs.Name, cs.CreatedOn, cs.NationId))
-            .ToListAsync();
+            .ToListAsync(default);
 
         //Act
         var result = await _complianceSchemeService.GetComplianceSchemesForOperatorAsync(_existingProducerWithSelectedSchemeId);
@@ -591,7 +591,7 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         //Act
         var result = await new ComplianceSchemeService(dbContext, _logger)
@@ -606,7 +606,7 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
@@ -616,7 +616,7 @@ public class ComplianceSchemeServiceTests
         var complianceScheme2 = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.Scotland);
         ComplainceSchemeTestHelper.SummaryData.AddDeletedSchemeMembers(dbContext, operatorOrganisation, complianceScheme2, deletedMembersCount: 25);
 
-        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         var summary1 = await new ComplianceSchemeService(dbContext, _logger)
             .GetComplianceSchemeSummary(operatorOrganisation.ExternalId, complianceScheme1.ExternalId);
@@ -642,14 +642,14 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
         var complianceScheme = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.England);
         ComplainceSchemeTestHelper.SummaryData.AddSchemeMembers(dbContext, operatorOrganisation, complianceScheme, membersCount: 111);
 
-        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         //Act
         var summary = await new ComplianceSchemeService(dbContext, _logger)
@@ -668,14 +668,14 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
         var complianceScheme = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.England);
         ComplainceSchemeTestHelper.SummaryData.AddSchemeMembers(dbContext, operatorOrganisation, complianceScheme, membersCount: 111);
 
-        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         //Act
         var summary = await new ComplianceSchemeService(dbContext, _logger)
@@ -690,14 +690,14 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
         var complianceScheme1 = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.England);
         var complianceScheme2 = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.Scotland);
 
-        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         var summary1 = await new ComplianceSchemeService(dbContext, _logger)
             .GetComplianceSchemeSummary(operatorOrganisation.ExternalId, complianceScheme1.ExternalId);
@@ -723,7 +723,7 @@ public class ComplianceSchemeServiceTests
     {
         //Arrange
         var dbContext = new AccountsDbContext(_dbContextOptions);
-        await dbContext.Database.EnsureCreatedAsync();
+        await dbContext.Database.EnsureCreatedAsync(default);
 
         var operatorOrganisation = ComplainceSchemeTestHelper.SummaryData.AddOperatorOrganisation(dbContext);
 
@@ -733,7 +733,7 @@ public class ComplianceSchemeServiceTests
         var complianceScheme2 = ComplainceSchemeTestHelper.SummaryData.AddComplianceScheme(dbContext, Data.DbConstants.Nation.England);
         ComplainceSchemeTestHelper.SummaryData.AddSchemeMembers(dbContext, operatorOrganisation, complianceScheme2, membersCount: 97);
 
-        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid());
+        await dbContext.SaveChangesAsync(Guid.NewGuid(), Guid.NewGuid(), default);
 
         var summary1 = await new ComplianceSchemeService(dbContext, _logger)
             .GetComplianceSchemeSummary(operatorOrganisation.ExternalId, complianceScheme1.ExternalId);

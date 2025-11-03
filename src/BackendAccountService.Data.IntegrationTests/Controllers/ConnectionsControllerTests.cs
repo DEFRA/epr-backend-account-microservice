@@ -58,7 +58,7 @@ public class ConnectionsControllerTests
             new Mock<ILogger<ConnectionsController>>().Object);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

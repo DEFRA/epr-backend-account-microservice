@@ -65,7 +65,6 @@ public class ConnectionsServiceTests
     [DataRow(RelationshipType.Consultancy)]
     [DataRow(RelationshipType.ComplianceScheme)]
     [DataRow(RelationshipType.Other)]
-    [DataRow(0)]
     public async Task NominateToDelegatedPerson_WhenNominationRequestIsIncomplete_ThenNominationFails(RelationshipType relationshipType)
     {
         var result = await _connectionsService.NominateToDelegatedPerson(ApprovedUserConnectionId, UserId, ValidOrganisationId, ValidServiceKey, new DelegatedPersonNominationRequest
@@ -209,7 +208,7 @@ public class ConnectionsServiceTests
         const string invalidServiceKey = "SomethingOtherThanPackaging";
 
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(ApprovedUserConnectionId, UserId, ValidOrganisationId, invalidServiceKey, Models.PersonRole.Admin));
     }
 
@@ -221,7 +220,7 @@ public class ConnectionsServiceTests
         const int invalidPersonRole = PersonRole.NotSet;
 
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(ApprovedUserConnectionId, UserId, ValidOrganisationId, ValidServiceKey, invalidPersonRole));
     }
 
@@ -233,7 +232,7 @@ public class ConnectionsServiceTests
         var invalidConnectionId = Guid.NewGuid();
 
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(invalidConnectionId, UserId, ValidOrganisationId, ValidServiceKey, Models.PersonRole.Admin));
     }
 
@@ -242,7 +241,7 @@ public class ConnectionsServiceTests
     public async Task UpdatePersonRoleAsync_WhenConnectionPersonUserAndUserAreSame_ThrowsRoleManagementException()
     {
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(ApprovedUserConnectionId, UserId, ValidOrganisationId, ValidServiceKey, Models.PersonRole.Admin));
     }
 
@@ -251,7 +250,7 @@ public class ConnectionsServiceTests
     public async Task UpdatePersonRoleAsync_WhenNoActiveEnrolment_ThrowsRoleManagementException()
     {
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(NoConnectionId, UserId, ValidOrganisationId, ValidServiceKey, Models.PersonRole.Admin));
     }
 
@@ -260,7 +259,7 @@ public class ConnectionsServiceTests
     public async Task UpdatePersonRoleAsync_WhenActiveEnrolmentInInvitedStatus_ThrowsRoleManagementException()
     {
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(InvitedEnrolmentConnectionId, UserId, ValidOrganisationId, ValidServiceKey, Models.PersonRole.Admin));
     }
 
@@ -269,7 +268,7 @@ public class ConnectionsServiceTests
     public async Task UpdatePersonRoleAsync_WhenEnrolmentPersonIsApproved_ThrowsRoleManagementException()
     {
         // Act and Assert
-        await Assert.ThrowsExceptionAsync<RoleManagementException>(() =>
+        await Assert.ThrowsExactlyAsync<RoleManagementException>(() =>
              _connectionsService.UpdatePersonRoleAsync(ApprovedUserConnectionId, ValidUserId, ValidOrganisationId, ValidServiceKey, Models.PersonRole.Admin));
     }
 

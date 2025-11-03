@@ -54,7 +54,7 @@ public class NotificationsControllerTests
             apiConfigOptionsMock.Object);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

@@ -650,9 +650,9 @@ public class UserServiceTests
     public async Task GetPersonOrganisation_WhenUserExists_ThenReturnListOfPersonOrganisations()
     {
         //Setup
-        var expectedUser = await _dbContext.Users.FirstOrDefaultAsync(user => !string.IsNullOrWhiteSpace(user.ExternalIdpUserId));
+        var expectedUser = await _dbContext.Users.FirstOrDefaultAsync(user => !string.IsNullOrWhiteSpace(user.ExternalIdpUserId), default);
         var userId = expectedUser.ExternalIdpUserId;
-        var expectedPerson = await _dbContext.Persons.FirstOrDefaultAsync(person => person.UserId == expectedUser.Id);
+        var expectedPerson = await _dbContext.Persons.FirstOrDefaultAsync(person => person.UserId == expectedUser.Id, default);
         var serviceKey = "serviceKey";
 
         //Act
