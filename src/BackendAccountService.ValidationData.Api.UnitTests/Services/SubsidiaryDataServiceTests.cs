@@ -14,6 +14,10 @@ public class SubsidiaryDataServiceTests
 {
     private readonly Guid _organisation1Id = Guid.NewGuid();
     private AccountsDbContext _accountContext = null!;
+    private static readonly string[] sourceArray = new[] { "ref3004" };
+    private static readonly string[] sourceArray0 = new[] { "ref3004" };
+    private static readonly string[] sourceArray1 = new[] { "ref3005" };
+    private static readonly string[] sourceArray2 = new[] { "ref3XX9" };
 
     [TestInitialize]
     public async Task Setup()
@@ -100,7 +104,7 @@ public class SubsidiaryDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         result.SubsidiaryOrganisationDetails.Single(org => org.OrganisationReference == "ref3001").SubsidiaryDetails
-            .Where(detail => new[] { "ref3004" }.Contains(detail.ReferenceNumber)
+            .Where(detail => sourceArray.Contains(detail.ReferenceNumber)
                 && !detail.SubsidiaryBelongsToAnyOtherOrganisation
                 && detail.SubsidiaryDoesNotBelongToAnyOrganisation
                 && detail.SubsidiaryExists).Should().HaveCount(1);
@@ -136,7 +140,7 @@ public class SubsidiaryDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         result.SubsidiaryOrganisationDetails.Single(org => org.OrganisationReference == "ref3001").SubsidiaryDetails
-            .Where(detail => new[] { "ref3004" }.Contains(detail.ReferenceNumber)
+            .Where(detail => sourceArray0.Contains(detail.ReferenceNumber)
                 && !string.IsNullOrEmpty(detail.CompaniesHouseNumber)
                 && detail.SubsidiaryExists).Should().HaveCount(1);
     }
@@ -168,7 +172,7 @@ public class SubsidiaryDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         result.SubsidiaryOrganisationDetails.Single(org => org.OrganisationReference == "ref3001").SubsidiaryDetails
-            .Where(detail => new[] { "ref3005" }.Contains(detail.ReferenceNumber)
+            .Where(detail => sourceArray1.Contains(detail.ReferenceNumber)
                 && string.IsNullOrEmpty(detail.CompaniesHouseNumber)
                 && detail.SubsidiaryExists).Should().HaveCount(1);
     }
@@ -200,7 +204,7 @@ public class SubsidiaryDataServiceTests
         // Assert
         Assert.IsNotNull(result);
         result.SubsidiaryOrganisationDetails.Single(org => org.OrganisationReference == "ref3001").SubsidiaryDetails
-            .Where(detail => new[] { "ref3XX9" }.Contains(detail.ReferenceNumber)
+            .Where(detail => sourceArray2.Contains(detail.ReferenceNumber)
                 && string.IsNullOrEmpty(detail.CompaniesHouseNumber)
                 && !detail.SubsidiaryExists).Should().HaveCount(1);
     }

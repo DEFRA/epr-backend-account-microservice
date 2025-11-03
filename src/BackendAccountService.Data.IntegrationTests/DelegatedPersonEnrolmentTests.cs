@@ -29,7 +29,7 @@ public class DelegatedPersonEnrolmentTests
         await context.Database.EnsureCreatedAsync(default);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

@@ -83,7 +83,7 @@ public class AccountManagementServiceTests
 
         _accountContext.Enrolments.Single().EnrolmentStatusId = 
             Data.DbConstants.EnrolmentStatus.Enrolled; // query will no longer find an Enrolment with status of Invited 
-        await _accountContext.SaveChangesAsync(default);
+        await _accountContext.SaveChangesAsync(default, cancellationToken: default);
         
         var invitedUser = _accountContext.Users.Single(x => x.Id == UserIdToEnroll);
         
@@ -111,7 +111,7 @@ public class AccountManagementServiceTests
         
         var enrolment = _accountContext.Enrolments.Single();
         _accountContext.Remove(enrolment); // query will no longer match with any Enrolments
-        await _accountContext.SaveChangesAsync(default);
+        await _accountContext.SaveChangesAsync(default, cancellationToken: default);
 
         var invitedUser = _accountContext.Users.Single(x => x.Id == UserIdToEnroll);
         
