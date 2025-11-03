@@ -34,7 +34,7 @@ public class SoftDeleteFilterTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
 
         context.PersonOrganisationConnections.Add(new PersonOrganisationConnection
         {

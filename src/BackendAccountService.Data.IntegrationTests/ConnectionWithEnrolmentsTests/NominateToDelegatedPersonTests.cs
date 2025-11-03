@@ -87,13 +87,13 @@ public class NominateToDelegatedPersonTests
             .Where(enrolment =>
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var delegatedPersonEnrolment = await readDbContext
             .DelegatedPersonEnrolments
             .Where(enrolment => enrolment.EnrolmentId == nominatedPersonEnrolment.Id)
             .Include(enrolment => enrolment.Enrolment.Connection)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         delegatedPersonEnrolment.Should().NotBeNull();
 
@@ -152,13 +152,13 @@ public class NominateToDelegatedPersonTests
             .Where(enrolment => 
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var delegatedPersonEnrolment = await readDbContext
             .DelegatedPersonEnrolments
             .Where(enrolment => enrolment.EnrolmentId == nominatedPersonEnrolment.Id)
             .Include(enrolment => enrolment.Enrolment.Connection)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         delegatedPersonEnrolment.Should().NotBeNull();
 
@@ -215,13 +215,13 @@ public class NominateToDelegatedPersonTests
             .Where(enrolment =>
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var delegatedPersonEnrolment = await readDbContext
             .DelegatedPersonEnrolments
             .Where(enrolment => enrolment.EnrolmentId == nominatedPersonEnrolment.Id)
             .Include(enrolment => enrolment.Enrolment.Connection)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         delegatedPersonEnrolment.Should().NotBeNull();
 
@@ -279,13 +279,13 @@ public class NominateToDelegatedPersonTests
             .Where(enrolment =>
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var delegatedPersonEnrolment = await readDbContext
             .DelegatedPersonEnrolments
             .Where(enrolment => enrolment.EnrolmentId == nominatedPersonEnrolment.Id)
             .Include(enrolment => enrolment.Enrolment.Connection)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         delegatedPersonEnrolment.Should().NotBeNull();
 
@@ -342,12 +342,12 @@ public class NominateToDelegatedPersonTests
             .Where(enrolment =>
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var delegatedPersonEnrolment = await readDbContext
             .DelegatedPersonEnrolments
             .Where(enrolment => enrolment.EnrolmentId == nominatedPersonEnrolment.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         delegatedPersonEnrolment.Enrolment.EnrolmentStatusId.Should().Be(DbConstants.EnrolmentStatus.Nominated);
         delegatedPersonEnrolment.Enrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.DelegatedPerson.Id);
@@ -386,7 +386,7 @@ public class NominateToDelegatedPersonTests
         
         var updatedEnrolment = await readDbContext.Enrolments
             .Where(enrolment => enrolment.Id == editedEnrolment.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         updatedEnrolment.EnrolmentStatusId.Should().Be(nonEnrolledStatus);
         updatedEnrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.BasicUser.Id);
@@ -422,7 +422,7 @@ public class NominateToDelegatedPersonTests
 
         var updatedEnrolment = await readDbContext.Enrolments
             .Where(enrolment => enrolment.Id == editedEnrolment.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         updatedEnrolment.EnrolmentStatusId.Should().Be(DbConstants.EnrolmentStatus.Invited);
         updatedEnrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.BasicUser.Id);

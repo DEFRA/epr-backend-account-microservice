@@ -26,7 +26,7 @@ public class DelegatedPersonEnrolmentTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
     }
 
     [ClassCleanup]
@@ -71,7 +71,7 @@ public class DelegatedPersonEnrolmentTests
             ServiceRoleId = DbConstants.ServiceRole.Packaging.ApprovedPerson.Id
         });
 
-        await context.SaveChangesAsync(approvedPersonUserId, organisationId);
+        await context.SaveChangesAsync(approvedPersonUserId, organisationId, default);
 
         var basicUserEnrolment = context.Enrolments.Add(new Enrolment
         {
@@ -87,7 +87,7 @@ public class DelegatedPersonEnrolmentTests
             ServiceRoleId = DbConstants.ServiceRole.Packaging.BasicUser.Id
         });
 
-        await context.SaveChangesAsync(approvedPersonUserId, organisationId);
+        await context.SaveChangesAsync(approvedPersonUserId, organisationId, default);
 
         context.DelegatedPersonEnrolments.Add(new DelegatedPersonEnrolment()
         {
@@ -97,11 +97,11 @@ public class DelegatedPersonEnrolmentTests
             RelationshipType = RelationshipType.ComplianceScheme
         });
 
-        await context.SaveChangesAsync(approvedPersonUserId, organisationId);
+        await context.SaveChangesAsync(approvedPersonUserId, organisationId, default);
 
         var basicUserEnrolmentId = basicUserEnrolment.Entity.Id;
 
-        var checkedEnrolment = await context.DelegatedPersonEnrolments.SingleAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId);
+        var checkedEnrolment = await context.DelegatedPersonEnrolments.SingleAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId, default);
 
         checkedEnrolment.Id.Should().NotBe(default);
         checkedEnrolment.EnrolmentId.Should().NotBe(default);
@@ -125,13 +125,13 @@ public class DelegatedPersonEnrolmentTests
         checkedEnrolment.LastUpdatedOn.Should().BeExactly(checkedEnrolment.CreatedOn);
 
         checkedEnrolment.IsDeleted = true;
-        await context.SaveChangesAsync(approvedPersonUserId, organisationId);
+        await context.SaveChangesAsync(approvedPersonUserId, organisationId, default);
         checkedEnrolment.LastUpdatedOn.Should().BeAfter(checkedEnrolment.CreatedOn);
 
-        var deletedEnrolment = await context.DelegatedPersonEnrolments.SingleOrDefaultAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId);
+        var deletedEnrolment = await context.DelegatedPersonEnrolments.SingleOrDefaultAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId, default);
         deletedEnrolment.Should().BeNull();
 
-        deletedEnrolment = await context.DelegatedPersonEnrolments.IgnoreQueryFilters().SingleOrDefaultAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId);
+        deletedEnrolment = await context.DelegatedPersonEnrolments.IgnoreQueryFilters().SingleOrDefaultAsync(enrolment => enrolment.EnrolmentId == basicUserEnrolmentId, default);
         deletedEnrolment.Should().NotBeNull();
     }
 

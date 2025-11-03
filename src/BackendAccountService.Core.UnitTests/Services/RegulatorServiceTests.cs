@@ -2964,7 +2964,7 @@ public class RegulatorServiceTests
             Telephone = "0778972343",
             Email = "other.regulator@example.com"
         }); // Adding a different regulator
-        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _dbContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         var expectedMessage = $"is not regulator to Accept Or Reject User Details Change Request for user email {request.UserEmail}.";
 

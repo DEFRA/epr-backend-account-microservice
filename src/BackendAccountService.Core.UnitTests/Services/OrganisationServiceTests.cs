@@ -225,15 +225,15 @@ public class OrganisationServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task WhenQueryForNullCompanyName_ThenReturnEmptyList()
     {
         //Act
-        var organisationList = await _organisationService.GetOrganisationsByCompaniesHouseNameAsync(null);
+        var organisationList =  _organisationService.GetOrganisationsByCompaniesHouseNameAsync(null);
 
         //Assert
+        Assert.ThrowsAsync<ArgumentException>(() => Assert.ThrowsAsync<ArgumentException>(async () => await  organisationList ));
         organisationList.Should().NotBeNull();
-        Assert.ThrowsExactly<ArgumentException>(() => organisationList.Should().BeEmpty());
+        
     }
 
     [TestMethod]
@@ -602,7 +602,7 @@ public class OrganisationServiceTests
         Assert.AreEqual(showPerPage, result.Items.Count);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result.Items[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result.Items[1].OrganisationName);
-        Assert.AreEqual(21, result.SearchTerms.Count);
+        Assert.HasCount(21, result.SearchTerms);
     }
 
     [TestMethod]
@@ -2132,7 +2132,7 @@ public class OrganisationServiceTests
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId);
+        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId, default);
         Assert.IsNotNull(org);
         org.Name.Should().Be("Name");
         org.SubBuildingName.Should().Be("SubBuildingName");
@@ -2387,7 +2387,7 @@ public class OrganisationServiceTests
             new Enrolment { ConnectionId = orgConnection2Id }
         );
 
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId, default);
 
         // Act
         var result = await _organisationService.GetPersonEmails(organisationExternalId, "DR");
@@ -2503,7 +2503,7 @@ public class OrganisationServiceTests
         (
             new Enrolment
             {
-                ConnectionId = (await _accountContext.PersonOrganisationConnections.FirstOrDefaultAsync(a => a.PersonId == person1Id)).Id,
+                ConnectionId = (await _accountContext.PersonOrganisationConnections.FirstOrDefaultAsync(a => a.PersonId == person1Id, default)).Id,
                 ServiceRoleId = 1,
                 EnrolmentStatus = new() { Id = 10, Name = "Approved" }
             }

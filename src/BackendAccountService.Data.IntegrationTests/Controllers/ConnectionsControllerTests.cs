@@ -39,7 +39,7 @@ public class ConnectionsControllerTests
                 .EnableSensitiveDataLogging()
                 .Options);
 
-        await _context.Database.MigrateAsync();
+        await _context.Database.MigrateAsync(default);
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
         
@@ -79,7 +79,7 @@ public class ConnectionsControllerTests
             Name = "Other Service"
         });
 
-        await _context.SaveChangesAsync(approvedPersonEnrolment.Connection.Person.User.UserId.Value, organisationId);
+        await _context.SaveChangesAsync(approvedPersonEnrolment.Connection.Person.User.UserId.Value, organisationId, default);
 
         _context.ServiceRoles.Add(new ServiceRole()
         {
@@ -88,7 +88,7 @@ public class ConnectionsControllerTests
             ServiceId = otherService.Entity.Id
         });
         
-        await _context.SaveChangesAsync(approvedPersonEnrolment.Connection.Person.User.UserId.Value, organisationId);
+        await _context.SaveChangesAsync(approvedPersonEnrolment.Connection.Person.User.UserId.Value, organisationId, default);
         
         var otherServicePersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
             _context, organisationId, "OtherService.ApprovedPerson", DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Approved);

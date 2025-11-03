@@ -26,11 +26,11 @@ public class AuditLogsTransactionSyncTests : AuditLogsBaseTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
 
-        await using var transaction = await context.Database.BeginTransactionAsync();
+        await using var transaction = await context.Database.BeginTransactionAsync(default);
 
-        var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key);
+        var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, default);
         Enrolment.ServiceRoleId = serviceRole.Id;
         context.Add(Enrolment);
         // ReSharper disable once MethodHasAsyncOverload
@@ -44,7 +44,7 @@ public class AuditLogsTransactionSyncTests : AuditLogsBaseTests
         // ReSharper disable once MethodHasAsyncOverload
         context.SaveChanges(UserDeletingEnrolment, OrganisationDeletingEnrolment);
 
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(default);
     }
 
     [TestInitialize]

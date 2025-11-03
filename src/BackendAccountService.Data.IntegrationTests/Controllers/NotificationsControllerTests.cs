@@ -38,7 +38,7 @@ public class NotificationsControllerTests
                 .EnableSensitiveDataLogging()
                 .Options);
 
-        await _context.Database.MigrateAsync();
+        await _context.Database.MigrateAsync(default);
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
         
