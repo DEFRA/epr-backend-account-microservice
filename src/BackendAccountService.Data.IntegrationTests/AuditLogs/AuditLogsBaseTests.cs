@@ -60,7 +60,7 @@ public abstract class AuditLogsBaseTests
     {
         await using var context = new AccountsDbContext(Options);
 
-        var organisation = await context.Organisations.SingleAsync();
+        var organisation = await context.Organisations.SingleAsync(default);
 
         organisation.CreatedOn.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromMinutes(1));
         organisation.LastUpdatedOn.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromMinutes(1));
@@ -73,7 +73,7 @@ public abstract class AuditLogsBaseTests
 
         var auditLogs = await context.AuditLogs
             .Where(log => log.Operation == "Added")
-            .ToListAsync();
+            .ToListAsync(default);
 
         auditLogs.Should().NotBeEmpty().And.HaveCount(5)
             .And.ContainSingle(log => log.Entity == "Enrolment")
@@ -90,7 +90,7 @@ public abstract class AuditLogsBaseTests
 
         var auditLogs = await context.AuditLogs
             .Where(log => log.Operation == "Modified")
-            .ToListAsync();
+            .ToListAsync(default);
 
         auditLogs.Should().NotBeEmpty().And.HaveCount(1)
             .And.ContainSingle(log => log.Entity == "Enrolment");
@@ -103,7 +103,7 @@ public abstract class AuditLogsBaseTests
 
         var auditLogs = await context.AuditLogs
             .Where(log => log.Operation == "Deleted")
-            .ToListAsync();
+            .ToListAsync(default);
 
         auditLogs.Should().NotBeEmpty().And.HaveCount(1)
             .And.ContainSingle(log => log.Entity == "Enrolment");
@@ -117,7 +117,7 @@ public abstract class AuditLogsBaseTests
         var auditLog = await context.AuditLogs
             .Where(log => log.Operation == "Added")
             .Where(log => log.Entity == "Person")
-            .SingleAsync();
+            .SingleAsync(default);
 
         auditLog.UserId.Should().Be(UserCreatingEnrolment);
         auditLog.OrganisationId.Should().Be(OrganisationCreatingEnrolment);
@@ -147,7 +147,7 @@ public abstract class AuditLogsBaseTests
         var auditLog = await context.AuditLogs
             .Where(log => log.Operation == "Modified")
             .Where(log => log.Entity == "Enrolment")
-            .SingleAsync();
+            .SingleAsync(default);
 
         auditLog.UserId.Should().Be(UserRejectingEnrolment);
         auditLog.OrganisationId.Should().Be(OrganisationRejectingEnrolment);
@@ -185,7 +185,7 @@ public abstract class AuditLogsBaseTests
         var auditLog = await context.AuditLogs
             .Where(log => log.Operation == "Deleted")
             .Where(log => log.Entity == "Enrolment")
-            .SingleAsync();
+            .SingleAsync(default);
 
         auditLog.UserId.Should().Be(UserDeletingEnrolment);
         auditLog.OrganisationId.Should().Be(OrganisationDeletingEnrolment);

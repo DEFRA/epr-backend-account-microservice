@@ -33,7 +33,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                 .Options;
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static async Task TestFixtureTearDown()
         {
             await _database.StopAsync();
@@ -84,7 +84,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             var nominatedPersonEnrolment = await _writeDbContext.Enrolments
                 .Where(nominated => nominated.Connection.Person.User.UserId == enrolment.Connection.Person.User.UserId)
                 .Where(nominated => nominated.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(default);
 
             var result = await _connectionsService.AcceptNominationToDelegatedPerson(
                 enrolmentId: nominatedPersonEnrolment.ExternalId,
@@ -97,7 +97,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                     Telephone = "01234000000"
                 });
 
-            (await _writeDbContext.Enrolments.Where(enrolment => enrolment.Id == enrolmentIdOfEnroledRecord).CountAsync()).Should().Be(0);
+            (await _writeDbContext.Enrolments.Where(enrolment => enrolment.Id == enrolmentIdOfEnroledRecord).CountAsync(default)).Should().Be(0);
 
             result.Succeeded.Should().BeTrue();
             result.ErrorMessage.Should().BeNullOrEmpty();
@@ -109,7 +109,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                 .Where(enrolment =>
                     enrolment.ConnectionId == enrolment.ConnectionId &&
                     enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
-                .ToListAsync();
+                .ToListAsync(default);
 
             nominatedEnrolments.Should().BeEmpty();
 
@@ -118,7 +118,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                 .Where(enrolment => enrolment.ConnectionId == enrolment.ConnectionId)
                 .Include(enrolment => enrolment.DelegatedPersonEnrolment)
                 .Include(enrolment => enrolment.Connection.Person)
-                .ToListAsync();
+                .ToListAsync(default);
 
             enrolments.Where(enrolment => enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Pending).Should().HaveCount(1);
 

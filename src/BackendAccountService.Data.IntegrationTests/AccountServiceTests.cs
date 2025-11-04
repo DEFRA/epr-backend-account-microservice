@@ -23,7 +23,7 @@ public class AccountServiceTests
         _database = await AzureSqlDbContainer.StartDockerDbAsync();
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();
@@ -59,7 +59,7 @@ public class AccountServiceTests
 
         addedEnrolment.Connection.Organisation.ReferenceNumber.Should().Be("100001");
 
-        (await _context.Organisations.FirstAsync()).ReferenceNumber.Should().Be("100001");
+        (await _context.Organisations.FirstAsync(default)).ReferenceNumber.Should().Be("100001");
 
 
         // Second account data
@@ -71,6 +71,6 @@ public class AccountServiceTests
 
         addedEnrolment.Connection.Organisation.ReferenceNumber.Should().Be("100002");
 
-        (await _context.Organisations.FirstAsync(organisation => organisation.ReferenceNumber == "100002")).Should().NotBeNull();
+        (await _context.Organisations.FirstAsync(organisation => organisation.ReferenceNumber == "100002", default)).Should().NotBeNull();
     }
 }

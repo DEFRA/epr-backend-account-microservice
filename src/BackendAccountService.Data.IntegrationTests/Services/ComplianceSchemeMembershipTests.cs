@@ -35,7 +35,7 @@ public class ComplianceSchemeMembershipTests
             .Options;
     }
     
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();
@@ -103,14 +103,15 @@ public class ComplianceSchemeMembershipTests
         var complianceScheme = await readDbContext.ComplianceSchemes
             .Where(complianceScheme => complianceScheme.CompaniesHouseNumber == complianceSchemeCompaniesHouseNumber &&
                                        complianceScheme.NationId == DbConstants.Nation.NorthernIreland)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         operatorOrganisationEnrolment.Connection.Organisation.CompaniesHouseNumber =
             complianceSchemeCompaniesHouseNumber;
 
         await _writeDbContext.SaveChangesAsync(
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value,
-            operatorOrganisationEnrolment.Connection.Organisation.ExternalId);
+            operatorOrganisationEnrolment.Connection.Organisation.ExternalId,
+            default);
         
         await _complianceSchemeService.SelectComplianceSchemeAsync(new SelectComplianceSchemeRequest()
         {
@@ -121,7 +122,7 @@ public class ComplianceSchemeMembershipTests
 
         var selectedScheme = await readDbContext.SelectedSchemes
             .Where(scheme => scheme.ComplianceSchemeId == complianceScheme.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var infoResponse = await _complianceSchemeService.GetInfoForSelectedSchemeRemoval(
             complianceSchemeOrganisationId,
@@ -213,14 +214,15 @@ public class ComplianceSchemeMembershipTests
 
         var complianceScheme = await readDbContext.ComplianceSchemes
             .Where(complianceScheme => complianceScheme.CompaniesHouseNumber == complianceSchemeCompaniesHouseNumber)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         operatorOrganisationEnrolment.Connection.Organisation.CompaniesHouseNumber =
             complianceSchemeCompaniesHouseNumber;
 
         await _writeDbContext.SaveChangesAsync(
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value,
-            operatorOrganisationEnrolment.Connection.Organisation.ExternalId);
+            operatorOrganisationEnrolment.Connection.Organisation.ExternalId,
+            default);
         
         await _complianceSchemeService.SelectComplianceSchemeAsync(new SelectComplianceSchemeRequest()
         {
@@ -231,7 +233,7 @@ public class ComplianceSchemeMembershipTests
 
         var selectedScheme = await readDbContext.SelectedSchemes
             .Where(scheme => scheme.ComplianceSchemeId == complianceScheme.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(default);
 
         var infoResponse = await _complianceSchemeService.GetInfoForSelectedSchemeRemoval(
             complianceSchemeOrganisationId,

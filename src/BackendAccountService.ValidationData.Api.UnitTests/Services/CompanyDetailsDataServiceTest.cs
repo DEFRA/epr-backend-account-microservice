@@ -52,7 +52,7 @@ public class CompanyDetailsDataServiceTests
         var expectedOrganisation = "123456";
         var expectedMember = await _accountContext.Organisations.AsNoTracking()
             .Where(organisation => organisation.ReferenceNumber == expectedOrganisation)
-            .ToListAsync();
+            .ToListAsync(default);
         foreach (var org in expectedMember)
         {
             _companyDetailsResponseList.Add(new CompanyDetailResponse { ReferenceNumber = org.ReferenceNumber, CompaniesHouseNumber = org.CompaniesHouseNumber });
@@ -91,7 +91,7 @@ public class CompanyDetailsDataServiceTests
         var externalId = Guid.Parse("11111111-0000-0000-0000-000000000001");
         var expectedMember = await _accountContext.Organisations.AsNoTracking()
             .Where(organisation => organisation.ExternalId == externalId)
-            .ToListAsync();
+            .ToListAsync(default);
 
         foreach (var org in expectedMember)
         {
@@ -149,7 +149,7 @@ public class CompanyDetailsDataServiceTests
                 ? member.OrganisationConnection.FromOrganisation.CompaniesHouseNumber.ToString()
                 : null
             })
-            .ToListAsync();
+            .ToListAsync(default);
 
         foreach (var org in selectedSchemes)
         {
@@ -205,7 +205,7 @@ public class CompanyDetailsDataServiceTests
         var organisations = await _accountContext.Organisations
            .AsNoTracking()
            .Where(organisation => expectedOrganisation.Contains(organisation.ReferenceNumber) && !organisation.IsComplianceScheme && (organisation.OrganisationTypeId == 1 || organisation.OrganisationTypeId == 2))
-           .ToListAsync();
+           .ToListAsync(default);
 
         foreach (var org in organisations)
         {

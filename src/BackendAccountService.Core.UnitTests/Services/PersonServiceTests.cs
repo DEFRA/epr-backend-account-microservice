@@ -36,7 +36,7 @@ public class PersonServiceTests
     public async Task GetPersonByUserIdAsync_WhenValidId_ThenReturnPerson()
     {
         var person = await _personService.GetPersonResponseByUserId(UserId);
-        var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId);
+        var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId, default);
         person.Should().NotBeNull();
         person?.FirstName.Should().Be(expectedPerson?.FirstName);
         person?.LastName.Should().Be(expectedPerson?.LastName);
@@ -77,7 +77,7 @@ public class PersonServiceTests
     public async Task GetAllPersonByUserIdAsync_WhenValidId_ThenReturnPerson()
     {
         var person = await _personService.GetAllPersonByUserIdAsync(UserId);
-        var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId);
+        var expectedPerson = await _accountContext.Persons.FirstOrDefaultAsync(p => p.User.UserId == UserId, default);
         person.Should().NotBeNull();
         person?.FirstName.Should().Be(expectedPerson?.FirstName);
         person?.LastName.Should().Be(expectedPerson?.LastName);
@@ -92,7 +92,7 @@ public class PersonServiceTests
         var person = await _personService.GetPersonByExternalIdAsync(ExternalId);
         var expectedPerson = await _accountContext.Persons
             .Include(p => p.User)
-            .FirstOrDefaultAsync(p => p.ExternalId == ExternalId);
+            .FirstOrDefaultAsync(p => p.ExternalId == ExternalId, default);
 
         person.Should().NotBeNull();
         person?.FirstName.Should().Be(expectedPerson?.FirstName);

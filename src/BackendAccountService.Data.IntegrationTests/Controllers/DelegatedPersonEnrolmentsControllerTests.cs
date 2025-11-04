@@ -37,7 +37,7 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
         [ClassInitialize]
         public static async Task TestFixtureSetup(TestContext _)
         {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync();
+            _database = await AzureSqlDbContainer.StartDockerDbAsync(default);
 
             _context = new AccountsDbContext(
                 new DbContextOptionsBuilder<AccountsDbContext>()
@@ -46,7 +46,7 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
                     .EnableSensitiveDataLogging()
                     .Options);
 
-            await _context.Database.MigrateAsync();
+            await _context.Database.MigrateAsync(default);
 
             ApiConfigOptionsMock
                 .Setup(x => x.Value)
@@ -61,7 +61,7 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
                 NullLogger);
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static async Task TestFixtureTearDown()
         {
             await _database.StopAsync();

@@ -38,7 +38,7 @@ public class NotificationsControllerTests
                 .EnableSensitiveDataLogging()
                 .Options);
 
-        await _context.Database.MigrateAsync();
+        await _context.Database.MigrateAsync(default);
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
         
@@ -54,7 +54,7 @@ public class NotificationsControllerTests
             apiConfigOptionsMock.Object);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

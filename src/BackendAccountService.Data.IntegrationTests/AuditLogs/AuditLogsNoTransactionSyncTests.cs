@@ -26,9 +26,9 @@ public class AuditLogsNoTransactionSyncTests : AuditLogsBaseTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
 
-        var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key);
+        var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, cancellationToken: default);
         Enrolment.ServiceRoleId = serviceRole.Id;
         context.Add(Enrolment);
         // ReSharper disable once MethodHasAsyncOverload
@@ -50,7 +50,7 @@ public class AuditLogsNoTransactionSyncTests : AuditLogsBaseTests
         base.Enrolment = Enrolment;
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

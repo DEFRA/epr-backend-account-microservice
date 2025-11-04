@@ -25,7 +25,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static async Task TestFixtureTearDown()
         {
             await _database.StopAsync();
@@ -112,7 +112,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             Guid userId = approvedPersonEnrolment.Connection.Person.User.UserId.Value;
             Guid organisationId = approvedPersonEnrolment.Connection.Organisation.ExternalId;
-            await context.SaveChangesAsync(userId, organisationId);
+            await context.SaveChangesAsync(userId, organisationId, default);
 
             approvedPersonEnrolment.EnrolmentStatusId.Should().Be(authorisedToManageEnrolmentStatus);
 
@@ -136,7 +136,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             Guid userId = approvedPersonEnrolment.Connection.Person.User.UserId.Value;
             Guid organisationId = approvedPersonEnrolment.Connection.Organisation.ExternalId;
-            await context.SaveChangesAsync(userId, organisationId);
+            await context.SaveChangesAsync(userId, organisationId, default);
 
             approvedPersonEnrolment.EnrolmentStatusId.Should().Be(authorisedToManageEnrolmentStatus);
 

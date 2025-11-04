@@ -51,7 +51,7 @@ public class ReprocessorExporterRepositoryTests
     public async Task GetNationDetailsByNationId_WhenNationDoesNotExist_ThrowsKeyNotFoundException()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => _repository.GetNationDetailsByNationId(InvalidNationId));
+        await Assert.ThrowsExactlyAsync<KeyNotFoundException>(() => _repository.GetNationDetailsByNationId(InvalidNationId));
     }
 
     [TestMethod]
@@ -70,7 +70,7 @@ public class ReprocessorExporterRepositoryTests
     public async Task GetOrganisationDetailsByOrgId_WhenOrganisationDoesNotExist_ThrowsKeyNotFoundException()
     {
         // Act & Assert
-        await Assert.ThrowsExceptionAsync<KeyNotFoundException>(() => _repository.GetOrganisationDetailsByOrgId(Guid.Empty));
+        await Assert.ThrowsExactlyAsync<KeyNotFoundException>(() => _repository.GetOrganisationDetailsByOrgId(Guid.Empty));
     }
 
     [TestMethod]

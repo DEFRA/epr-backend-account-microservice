@@ -24,10 +24,10 @@ public class EnrolmentQueryableExtensionsTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();

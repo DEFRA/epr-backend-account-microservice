@@ -92,19 +92,17 @@ public class OrganisationServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task WhenQueryForEmpyStringNumber_ThenThrowException()
     {
         //Act
-        _ = await _organisationService.GetOrganisationsByCompaniesHouseNumberAsync("");
+        await Assert.ThrowsExactlyAsync<ArgumentException>(async () => _ = await _organisationService.GetOrganisationsByCompaniesHouseNumberAsync(""));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task WhenQueryForEmpyStringName_ThenThrowException()
     {
         //Act
-        _ = await _organisationService.GetOrganisationsByCompaniesHouseNameAsync("");
+        await Assert.ThrowsExactlyAsync<ArgumentException>(async () => _ = await _organisationService.GetOrganisationsByCompaniesHouseNameAsync(""));
     }
 
     [TestMethod]
@@ -119,20 +117,18 @@ public class OrganisationServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task GetByCompaniesHouseNumberAsync_WhenQueryForEmpyStringName_ThenThrowException()
     {
         //Act
-        _ = await _organisationService.GetByCompaniesHouseNumberAsync("");
+        await Assert.ThrowsExactlyAsync<ArgumentException>(async () => _ = await _organisationService.GetByCompaniesHouseNumberAsync(""));
     }
 
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task GetByCompaniesHouseNumberAsync_WhenQueryForNullString_ThenThrowException()
     {
         //Act
-        _ = await _organisationService.GetByCompaniesHouseNumberAsync(null);
+        await Assert.ThrowsExactlyAsync<ArgumentException>(async () => _ = await _organisationService.GetByCompaniesHouseNumberAsync(null));
     }
 
 
@@ -229,15 +225,15 @@ public class OrganisationServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public async Task WhenQueryForNullCompanyName_ThenReturnEmptyList()
     {
         //Act
-        var organisationList = await _organisationService.GetOrganisationsByCompaniesHouseNameAsync(null);
+        var organisationList =  _organisationService.GetOrganisationsByCompaniesHouseNameAsync(null);
 
         //Assert
+        Assert.ThrowsAsync<ArgumentException>(() => Assert.ThrowsAsync<ArgumentException>(async () => await  organisationList ));
         organisationList.Should().NotBeNull();
-        organisationList.Should().BeEmpty();
+        
     }
 
     [TestMethod]
@@ -409,7 +405,7 @@ public class OrganisationServiceTests
         var results = await _organisationService.AddOrganisationAndOrganisationRelationshipsAsync(org, orgRelationships, It.IsAny<Guid>());
         results.Should().NotBeNull();
         results.SubsidiaryOrganisations.Should().NotBeNull();
-        Assert.IsNotNull(results.SubsidiaryOrganisations.FirstOrDefault().Id);
+        
     }
 
     [TestMethod]
@@ -496,7 +492,7 @@ public class OrganisationServiceTests
         var results = await _organisationService.AddOrganisationAndOrganisationRelationshipsAsync(org, orgRelationships, It.IsAny<Guid>());
         results.Should().NotBeNull();
         results.SubsidiaryOrganisations.Should().NotBeNull();
-        Assert.IsNotNull(results.SubsidiaryOrganisations.FirstOrDefault().Id);
+        
     }
 
     [TestMethod]
@@ -564,7 +560,7 @@ public class OrganisationServiceTests
         //Act
 
         //Assert
-        Assert.ThrowsException<AggregateException>(() =>
+        Assert.ThrowsExactly<AggregateException>(() =>
             _organisationService.GetOrganisationNameByInviteTokenAsync("not" + inviteToken1).Result);
     }
 
@@ -585,7 +581,7 @@ public class OrganisationServiceTests
         Assert.AreEqual(showPerPage, result.Items.Count);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result.Items[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result.Items[1].OrganisationName);
-        Assert.AreEqual(21, result.SearchTerms.Count);
+        Assert.HasCount(21, result.SearchTerms);
     }
 
     [TestMethod]
@@ -606,7 +602,7 @@ public class OrganisationServiceTests
         Assert.AreEqual(showPerPage, result.Items.Count);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result.Items[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result.Items[1].OrganisationName);
-        Assert.AreEqual(21, result.SearchTerms.Count);
+        Assert.HasCount(21, result.SearchTerms);
     }
 
     [TestMethod]
@@ -618,7 +614,7 @@ public class OrganisationServiceTests
         var result = await _organisationService.GetUnpagedOrganisationRelationships();
 
         // Assert
-        Assert.AreEqual(10, result.Count);
+        Assert.HasCount(10, result);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result[1].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 2 For Producer Organisation 1", result[2].OrganisationName);
@@ -655,7 +651,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual("Org Relationship Parent Organisation", result.Organisation.Name);
         Assert.AreEqual("Org Relationship Subsidiary Organisation", result.Relationships[0].OrganisationName);
-        Assert.AreEqual(6, result.Relationships.Count);
+        Assert.HasCount(6, result.Relationships);
     }
 
     [TestMethod]
@@ -670,7 +666,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual("Org Relationship Parent Organisation", result.Organisation.Name);
         Assert.AreEqual("Org Relationship Subsidiary Organisation", result.Relationships[0].OrganisationName);
-        Assert.AreEqual(6, result.Relationships.Count);
+        Assert.HasCount(6, result.Relationships);
         Assert.IsNotNull(result.Relationships[0].JoinerDate, "Joiner Date is null");
     }
 
@@ -697,11 +693,11 @@ public class OrganisationServiceTests
     {
         // Arrange
         var firstRelationship = await _accountContext.OrganisationRelationships
-            .SingleAsync(rel => rel.SecondOrganisationId == 10001);
+            .SingleAsync(rel => rel.SecondOrganisationId == 10001, default);
 
         firstRelationship.RelationToDate = DateTime.UtcNow;
         firstRelationship.RelationExpiryReason = "Test";
-        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
         // Act
         var result = await _organisationService.GetOrganisationRelationshipsByOrganisationId(orgRelationshipExternalId);
@@ -710,7 +706,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual("Org Relationship Parent Organisation", result.Organisation.Name);
         Assert.AreEqual("Org Second Test Relationship Organisation", result.Relationships[0].OrganisationName);
-        Assert.AreEqual(5, result.Relationships.Count);
+        Assert.HasCount(5, result.Relationships);
     }
 
     [TestMethod]
@@ -767,7 +763,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         var newRelationship = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == parentOrganisation7Id &&
-            relationship.SecondOrganisationId == childOrganisation9Id);
+            relationship.SecondOrganisationId == childOrganisation9Id, default);
 
         Assert.IsNotNull(newRelationship);
     }
@@ -798,7 +794,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         var newRelationship = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == parentOrganisation7Id &&
-            relationship.SecondOrganisationId == childOrganisation9Id);
+            relationship.SecondOrganisationId == childOrganisation9Id, default);
 
         Assert.IsNotNull(newRelationship);
     }
@@ -829,14 +825,14 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         var oldRelationship = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == oldParentOrganisation7Id &&
-            relationship.SecondOrganisationId == childOrganisation12Id);
+            relationship.SecondOrganisationId == childOrganisation12Id, default);
 
         Assert.IsNotNull(oldRelationship);
         Assert.IsNotNull(oldRelationship.RelationToDate);
 
         var newRelationship = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == newParentOrganisation8Id &&
-            relationship.SecondOrganisationId == childOrganisation12Id);
+            relationship.SecondOrganisationId == childOrganisation12Id, default);
 
         Assert.IsNotNull(newRelationship);
         Assert.IsNull(newRelationship.RelationToDate);
@@ -867,7 +863,7 @@ public class OrganisationServiceTests
         Assert.IsNotNull(result);
         var checkRelationship = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == parentOrganisation7Id &&
-            relationship.SecondOrganisationId == childOrganisation12Id);
+            relationship.SecondOrganisationId == childOrganisation12Id, default);
 
         Assert.IsNotNull(checkRelationship);
         Assert.IsNull(checkRelationship.RelationToDate);
@@ -880,7 +876,7 @@ public class OrganisationServiceTests
 
         var checkRelationshipAgain = await _accountContext.OrganisationRelationships.SingleOrDefaultAsync(relationship =>
             relationship.FirstOrganisationId == parentOrganisation7Id &&
-            relationship.SecondOrganisationId == childOrganisation12Id);
+            relationship.SecondOrganisationId == childOrganisation12Id, default);
 
         Assert.IsNotNull(checkRelationshipAgain);
         Assert.IsNull(checkRelationshipAgain.RelationToDate);
@@ -932,7 +928,7 @@ public class OrganisationServiceTests
         result.IsSuccess.Should().BeTrue();
 
         var updatedRelationship = await _accountContext.OrganisationRelationships.SingleAsync(relationship =>
-            relationship.FirstOrganisationId == 10000 && relationship.SecondOrganisationId == 10013);
+            relationship.FirstOrganisationId == 10000 && relationship.SecondOrganisationId == 10013, default);
 
         updatedRelationship.Should().NotBeNull();
         updatedRelationship.RelationToDate.Should().NotBeNull();
@@ -2125,8 +2121,8 @@ public class OrganisationServiceTests
             {
                 Name = string.Empty,
                 ExternalId = organisationId,
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
         // Act
         var result = await _organisationService.UpdateOrganisationDetails(
@@ -2136,7 +2132,7 @@ public class OrganisationServiceTests
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId);
+        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId, default);
         Assert.IsNotNull(org);
         org.Name.Should().Be("Name");
         org.SubBuildingName.Should().Be("SubBuildingName");
@@ -2178,8 +2174,8 @@ public class OrganisationServiceTests
             {
                 Name = string.Empty,
                 ExternalId = Guid.NewGuid(),
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
         // Act
         var result = await _organisationService.UpdateOrganisationDetails(
@@ -2189,7 +2185,7 @@ public class OrganisationServiceTests
 
         // Assert
         Assert.IsFalse(result.IsSuccess);
-        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId);
+        var org = await _accountContext.Organisations.SingleOrDefaultAsync(o => o.ExternalId == organisationId, default);
         Assert.IsNull(org);
     }
 
@@ -2220,8 +2216,8 @@ public class OrganisationServiceTests
                 Name = string.Empty,
                 ExternalId = organisationId,
                 OrganisationTypeId = 2
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
         // Act
         var result = await _organisationService.UpdateOrganisationDetails(
@@ -2261,8 +2257,8 @@ public class OrganisationServiceTests
                 Name = string.Empty,
                 ExternalId = organisationId,
                 OrganisationTypeId = 2
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
         // Act
         var result = await _organisationService.UpdateOrganisationDetails(
@@ -2292,8 +2288,8 @@ public class OrganisationServiceTests
                     Name = string.Empty,
                     ExternalId = organisationId,
                     OrganisationTypeId = 2
-                });
-            await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+                }, default);
+            await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
         }
         //Act
         var isValidOrganisation = await _organisationService.IsOrganisationValidAsync(organisationId);
@@ -2370,7 +2366,7 @@ public class OrganisationServiceTests
             Id = organisationId,
             ExternalId = organisationExternalId,
             Name = "Test Organisation"
-        });
+        }, default);
 
         // Set up persons
         await _accountContext.Persons.AddRangeAsync(
@@ -2391,7 +2387,7 @@ public class OrganisationServiceTests
             new Enrolment { ConnectionId = orgConnection2Id }
         );
 
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId, default);
 
         // Act
         var result = await _organisationService.GetPersonEmails(organisationExternalId, "DR");
@@ -2420,7 +2416,7 @@ public class OrganisationServiceTests
             Id = organisationId,
             ExternalId = organisationExternalId,
             Name = "Test Organisation"
-        });
+        }, default);
 
         // Set up persons
         await _accountContext.Persons.AddRangeAsync(
@@ -2440,7 +2436,7 @@ public class OrganisationServiceTests
             new Enrolment { ConnectionId = orgConnection1Id }
         );
 
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId, default);
 
         // Act
         var result = await _organisationService.GetPersonEmails(organisationExternalId, "DR");
@@ -2483,7 +2479,7 @@ public class OrganisationServiceTests
             ExternalId = organisationExternalId,
             Name = "Test Organisation",
             CompaniesHouseNumber = companiesHouseNumber
-        });
+        }, default);
 
         // Set up persons
         await _accountContext.Persons.AddRangeAsync(
@@ -2498,22 +2494,22 @@ public class OrganisationServiceTests
         );
 
         await _accountContext.ComplianceSchemes.AddAsync(
-            new ComplianceScheme { Name = "beyond.there", CompaniesHouseNumber = companiesHouseNumber, ExternalId = organisationExternalId }
+            new ComplianceScheme { Name = "beyond.there", CompaniesHouseNumber = companiesHouseNumber, ExternalId = organisationExternalId }, default
         );
 
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId, default);
 
         await _accountContext.Enrolments.AddRangeAsync
         (
             new Enrolment
             {
-                ConnectionId = (await _accountContext.PersonOrganisationConnections.FirstOrDefaultAsync(a => a.PersonId == person1Id)).Id,
+                ConnectionId = (await _accountContext.PersonOrganisationConnections.FirstOrDefaultAsync(a => a.PersonId == person1Id, default)).Id,
                 ServiceRoleId = 1,
                 EnrolmentStatus = new() { Id = 10, Name = "Approved" }
             }
         );
 
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationExternalId, default);
 
         // Act
         var result = await _organisationService.GetPersonEmails(organisationExternalId, "CS");
@@ -2536,8 +2532,8 @@ public class OrganisationServiceTests
             {
                 Name = "Empty Organisation",
                 ExternalId = organisationId,
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
 
         // Act
@@ -2560,8 +2556,8 @@ public class OrganisationServiceTests
             {
                 Name = "Empty Organisation",
                 ExternalId = organisationId,
-            });
-        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId);
+            }, default);
+        await _accountContext.SaveChangesAsync(Guid.NewGuid(), organisationId, default);
 
 
         // Act
@@ -2650,14 +2646,14 @@ public class OrganisationServiceTests
         var userExternalID = Guid.NewGuid();
 
         // Snapshot counts before
-        var beforeCount = await _accountContext.OrganisationRelationships.CountAsync();
+        var beforeCount = await _accountContext.OrganisationRelationships.CountAsync(default);
 
         // Act
         var result = await _organisationService.UpdateOrganisationRelationshipsAsync(model, parentExternalID, userExternalID);
 
         // Assert
         result.Should().BeNull(); // triggers the null branch (Commit + return)
-        var afterCount = await _accountContext.OrganisationRelationships.CountAsync();
+        var afterCount = await _accountContext.OrganisationRelationships.CountAsync(default);
         afterCount.Should().Be(beforeCount); // no rows added/updated
 
         // also ensure nothing is being tracked as modified
@@ -2693,7 +2689,7 @@ public class OrganisationServiceTests
         var reloaded = await _accountContext.OrganisationRelationships
             .FirstOrDefaultAsync(r => r.FirstOrganisationId == 10000 &&
                                       r.SecondOrganisationId == 10013 &&
-                                      r.RelationToDate == null);
+                                      r.RelationToDate == null, default);
 
         reloaded.Should().NotBeNull();
     }

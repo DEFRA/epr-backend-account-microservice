@@ -51,7 +51,7 @@ public class ReprocessorExporterAccountsControllerTests
                     .EnableSensitiveDataLogging()
                     .Options);
 
-            await _context.Database.MigrateAsync();
+            await _context.Database.MigrateAsync(default);
 
             Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
 
@@ -81,7 +81,7 @@ public class ReprocessorExporterAccountsControllerTests
         }
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         if (_database == null)
@@ -184,7 +184,7 @@ public class ReprocessorExporterAccountsControllerTests
             .Include(organisation => organisation.Nation)
             .Include(organisation => organisation.OrganisationType)
             .Include(organisation => organisation.ProducerType)
-            .FirstOrDefaultAsync(o => o.Name == reprocessorExporterAddOrganisation.Organisation.Name);
+            .FirstOrDefaultAsync(o => o.Name == reprocessorExporterAddOrganisation.Organisation.Name,default);
 
         dbOrganisation.Should().NotBeNull();
         dbOrganisation!.Name.Should().Be(reprocessorExporterAddOrganisation.Organisation.Name);
@@ -264,7 +264,7 @@ public class ReprocessorExporterAccountsControllerTests
             .Include(organisation => organisation.Nation)
             .Include(organisation => organisation.OrganisationType)
             .Include(organisation => organisation.ProducerType)
-            .FirstOrDefaultAsync(o => o.Name == organisation.Name);
+            .FirstOrDefaultAsync(o => o.Name == organisation.Name, default);
 
         dbOrganisation.Should().NotBeNull();
         dbOrganisation!.Country.Should().Be("Réunion");
@@ -316,7 +316,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .ThenInclude(c => c.Person)
             .Include(e => e.Connection)
             .Where(e => e.Connection != null && e.Connection.Person != null && e.Connection.Person.Email == user.email)
-            .ToListAsync();
+            .ToListAsync(default);
 
         // assert enrolment properties
         userEnrolments.Should().NotBeNull();
@@ -332,7 +332,7 @@ public class ReprocessorExporterAccountsControllerTests
         var organisationToPartnerRoles = await assertContext.OrganisationToPartnerRoles
             .AsNoTracking()
             .Where(o => o.OrganisationId == organisationId)
-            .ToListAsync();
+            .ToListAsync(default);
         organisationToPartnerRoles.Should().BeEmpty();
 
         // assert there are no invited approved users
@@ -340,7 +340,7 @@ public class ReprocessorExporterAccountsControllerTests
             .AsNoTracking()
             .Include(e => e.Connection)
             .Where(e => e.Connection != null && e.Connection.OrganisationId == organisationId)
-            .ToListAsync();
+            .ToListAsync(default);
 
         organisationEnrolments.Should().HaveCount(2);
 
@@ -407,7 +407,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .ThenInclude(c => c.Person)
             .Include(e => e.Connection)
             .Where(e => e.Connection != null && e.Connection.Person != null && e.Connection.Person.Email == user.email)
-            .ToListAsync();
+            .ToListAsync(default);
 
         //todo: helper to get org id?
         userEnrolments.Should().NotBeNull();
@@ -419,7 +419,7 @@ public class ReprocessorExporterAccountsControllerTests
         var organisationToPartnerRoles = await assertContext.OrganisationToPartnerRoles
             .AsNoTracking()
             .Where(o => o.OrganisationId == organisationId)
-            .ToListAsync();
+            .ToListAsync(default);
         organisationToPartnerRoles.Should().BeEquivalentTo(new List<OrganisationToPartnerRole>
             {
                 new()
@@ -514,7 +514,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .ThenInclude(c => c.Person)
             .Include(e => e.Connection)
             .Where(e => e.Connection != null && e.Connection.Person != null && e.Connection.Person.Email == user.email)
-            .ToListAsync();
+            .ToListAsync(default);
 
         userEnrolments.Should().NotBeNull();
         userEnrolments.Should().HaveCount(1);
@@ -529,7 +529,7 @@ public class ReprocessorExporterAccountsControllerTests
             .ThenInclude(p => p.User)
             .Where(e => e.EnrolmentStatusId != DbConstants.EnrolmentStatus.Enrolled
                         && e.Connection != null && e.Connection.OrganisationId == organisationId)
-            .ToListAsync();
+            .ToListAsync(default);
 
         nonEnrolledEnrolments.Should().BeEquivalentTo(new List<Enrolment>
         {
@@ -606,7 +606,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .Include(poci => poci.User)
                 .Include(poci => poci.Organisation)
                 .Where(poci => poci.Person.Email == invitedApprovedUserEmail1 || poci.Person.Email == invitedApprovedUserEmail2)
-                .ToListAsync();
+                .ToListAsync(default);
 
         personOrganisationConnectionInvites.Should().BeEquivalentTo(new List<PersonOrganisationConnectionInvite>
         {
@@ -721,7 +721,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .ThenInclude(c => c.Person)
             .Include(e => e.Connection)
             .Where(e => e.Connection != null && e.Connection.Person != null && e.Connection.Person.Email == user.email)
-            .ToListAsync();
+            .ToListAsync(default);
 
         userEnrolments.Should().NotBeNull();
         userEnrolments.Should().HaveCount(1);
@@ -736,7 +736,7 @@ public class ReprocessorExporterAccountsControllerTests
             .ThenInclude(p => p.User)
             .Where(e => e.EnrolmentStatusId != DbConstants.EnrolmentStatus.Enrolled
                         && e.Connection != null && e.Connection.OrganisationId == organisationId)
-            .ToListAsync();
+            .ToListAsync(default);
 
         nonEnrolledEnrolments.Should().BeEquivalentTo(new List<Enrolment>
         {
@@ -790,7 +790,7 @@ public class ReprocessorExporterAccountsControllerTests
                 .Include(poci => poci.User)
                 .Include(poci => poci.Organisation)
                 .Where(poci => poci.Person.Email == invitedApprovedExistingUserEmail)
-                .ToListAsync();
+                .ToListAsync(default);
 
         personOrganisationConnectionInvites.Should().BeEquivalentTo(new List<PersonOrganisationConnectionInvite>
         {

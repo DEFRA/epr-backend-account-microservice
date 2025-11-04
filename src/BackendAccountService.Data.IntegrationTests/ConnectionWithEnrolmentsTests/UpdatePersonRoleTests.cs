@@ -26,7 +26,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             _database = await AzureSqlDbContainer.StartDockerDbAsync();
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static async Task TestFixtureTearDown()
         {
             await _database.StopAsync();
@@ -71,7 +71,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             result.Should().NotBeNull();
 
-            var updatedEnrolment = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == adminEnrolment.Id).FirstOrDefaultAsync();
+            var updatedEnrolment = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == adminEnrolment.Id).FirstOrDefaultAsync(default);
 
             updatedEnrolment.Connection.PersonRoleId.Should().Be(DbConstants.PersonRole.Employee);
         }
@@ -96,7 +96,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             result.Should().NotBeNull();
 
-            var updatedEnrolment = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == employeeEnrolment.Id).FirstOrDefaultAsync();
+            var updatedEnrolment = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == employeeEnrolment.Id).FirstOrDefaultAsync(default);
 
             updatedEnrolment.Connection.PersonRoleId.Should().Be(DbConstants.PersonRole.Admin);
         }
@@ -126,14 +126,14 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             result.RemovedServiceRoles.First().ServiceRoleKey.Should().Be("Packaging.DelegatedPerson");
             result.RemovedServiceRoles.First().EnrolmentStatus.Should().Be("Approved");
 
-            var delegatedPersonEnrolmentOld = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == delegatedPersonEnrolment.Id).FirstOrDefaultAsync();
+            var delegatedPersonEnrolmentOld = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == delegatedPersonEnrolment.Id).FirstOrDefaultAsync(default);
 
             delegatedPersonEnrolmentOld.Should().BeNull();
 
             var delegatedPersonEnrolmentNew = await _writeContext
                 .Enrolments
                 .Include(enrolment => enrolment.ServiceRole)
-                .Where(enrolment => enrolment.ConnectionId == delegatedPersonEnrolment.ConnectionId).FirstOrDefaultAsync();
+                .Where(enrolment => enrolment.ConnectionId == delegatedPersonEnrolment.ConnectionId).FirstOrDefaultAsync(default);
 
             delegatedPersonEnrolmentNew.Id.Should().NotBe(delegatedPersonEnrolment.Id);
             delegatedPersonEnrolmentNew.ServiceRole.Key.Should().Be(DbConstants.ServiceRole.Packaging.BasicUser.Key);
@@ -164,7 +164,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             result.Should().NotBeNull();
 
-            var basicUserEnrolmentAfterUpdate = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == basicUserEnrolment.Id).FirstOrDefaultAsync();
+            var basicUserEnrolmentAfterUpdate = await _writeContext.Enrolments.Where(enrolment => enrolment.Id == basicUserEnrolment.Id).FirstOrDefaultAsync(default);
 
             basicUserEnrolmentAfterUpdate.Connection.LastUpdatedOn.Should().Be(basicUserEnrolment.Connection.LastUpdatedOn);
             basicUserEnrolmentAfterUpdate.LastUpdatedOn.Should().Be(basicUserEnrolment.LastUpdatedOn);

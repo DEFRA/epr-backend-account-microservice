@@ -34,7 +34,7 @@ public class SoftDeleteFilterTests
             .Options;
 
         await using var context = new AccountsDbContext(_options);
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.EnsureCreatedAsync(default);
 
         context.PersonOrganisationConnections.Add(new PersonOrganisationConnection
         {
@@ -49,10 +49,10 @@ public class SoftDeleteFilterTests
             IsDeleted = false
         });
 
-        await context.SaveChangesAsync(Guid.Empty, Guid.Empty);
+        await context.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
     }
 
-    [ClassCleanup]
+    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
     public static async Task TestFixtureTearDown()
     {
         await _database.StopAsync();
@@ -84,10 +84,10 @@ public class SoftDeleteFilterTests
     {
         await using var context = new AccountsDbContext(_options);
 
-        var usersList = await context.Users.ToListAsync();
-        var personsList = await context.Persons.ToListAsync();
-        var organisationsList = await context.Organisations.ToListAsync();
-        var connectionsList = await context.PersonOrganisationConnections.ToListAsync();
+        var usersList = await context.Users.ToListAsync(default);
+        var personsList = await context.Persons.ToListAsync(default);
+        var organisationsList = await context.Organisations.ToListAsync(default);
+        var connectionsList = await context.PersonOrganisationConnections.ToListAsync(default);
 
         usersList.Should().NotBeEmpty();
         usersList.Should().OnlyContain(user => !user.IsDeleted);
@@ -107,10 +107,10 @@ public class SoftDeleteFilterTests
     {
         await using var context = new AccountsDbContext(_options);
 
-        var usersList = await context.Users.IgnoreQueryFilters().ToListAsync();
-        var personsList = await context.Persons.IgnoreQueryFilters().ToListAsync();
-        var organisationsList = await context.Organisations.IgnoreQueryFilters().ToListAsync();
-        var connectionsList = await context.PersonOrganisationConnections.AsNoTracking().IgnoreQueryFilters().ToListAsync();
+        var usersList = await context.Users.IgnoreQueryFilters().ToListAsync(default);
+        var personsList = await context.Persons.IgnoreQueryFilters().ToListAsync(default);
+        var organisationsList = await context.Organisations.IgnoreQueryFilters().ToListAsync(default);
+        var connectionsList = await context.PersonOrganisationConnections.AsNoTracking().IgnoreQueryFilters().ToListAsync(default);
 
         usersList.Should().NotBeEmpty();
         usersList.Should().Contain(user => user.IsDeleted);

@@ -83,7 +83,7 @@ public class AccountManagementServiceTests
 
         _accountContext.Enrolments.Single().EnrolmentStatusId = 
             Data.DbConstants.EnrolmentStatus.Enrolled; // query will no longer find an Enrolment with status of Invited 
-        await _accountContext.SaveChangesAsync(null);
+        await _accountContext.SaveChangesAsync(default, cancellationToken: default);
         
         var invitedUser = _accountContext.Users.Single(x => x.Id == UserIdToEnroll);
         
@@ -111,7 +111,7 @@ public class AccountManagementServiceTests
         
         var enrolment = _accountContext.Enrolments.Single();
         _accountContext.Remove(enrolment); // query will no longer match with any Enrolments
-        await _accountContext.SaveChangesAsync(null);
+        await _accountContext.SaveChangesAsync(default, cancellationToken: default);
 
         var invitedUser = _accountContext.Users.Single(x => x.Id == UserIdToEnroll);
         
@@ -145,7 +145,6 @@ public class AccountManagementServiceTests
     [TestMethod]
     [DataRow("fifty_one_characters_123456789012345678901234567890", "last_name")]
     [DataRow("first_name", "fifty_one_characters_123456789012345678901234567890")]
-    [ExpectedException(typeof(ValidationException))]
     public async Task User_should_not_be_enrolled_when_names_exceed_max_character_limit(string firstName, string lastName)
     {
         // Arrange
@@ -159,9 +158,9 @@ public class AccountManagementServiceTests
             FirstName = firstName,
             LastName = lastName
         };
-        
+
         // Act
-        await _sut.EnrolInvitedUserAsync(invitedUser, enrolmentRequest);
+        await Assert.ThrowsExactlyAsync<ValidationException>(async () => await _sut.EnrolInvitedUserAsync(invitedUser, enrolmentRequest));
     }
     
     [TestMethod]
@@ -306,7 +305,6 @@ public class AccountManagementServiceTests
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ValidationException))]
     public async Task ReInviteUser_Throws_When_Invited_Person_IsNot_In_Same_Organisation()
     {
         //Arrange
@@ -323,9 +321,9 @@ public class AccountManagementServiceTests
             1);
 
         var differentOrganisationId = new Guid("00000000-0000-0000-0000-000000000003");
-        
+
         //Act & Assert
-        await _sut.ReInviteUserAsync(new InvitedUser
+        await Assert.ThrowsExactlyAsync<ValidationException>(async () => await _sut.ReInviteUserAsync(new InvitedUser
             {
                 Email = initialInviteRequest.InvitedUser.Email,
                 OrganisationId = differentOrganisationId,
@@ -333,7 +331,7 @@ public class AccountManagementServiceTests
                 ServiceRoleId = initialInviteRequest.InvitedUser.ServiceRoleId,
                 UserId = initialInviteRequest.InvitedUser.UserId
             },
-            initialInviteRequest.InvitingUser);
-        
+            initialInviteRequest.InvitingUser));
+
     }
 }
