@@ -85,3 +85,7 @@ e62b7dc62c67196806831a8312a036ffa18e2e19:src/BackendAccountService.Api/appsettin
 D:/a/1/s/ado-source/pipelines/vars/DEV12-development.yaml:generic-api-key:10
 D:/a/1/s/ado-source/pipelines/vars/DEV16-development.yaml:generic-api-key:10
 D:/a/1/s/ado-source/src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188
+fae6f50652343ff4b2b8387f005fa422417ae58b:pipelines/vars/DEV16-development.yaml:generic-api-key:10
+fae6f50652343ff4b2b8387f005fa422417ae58b:pipelines/vars/DEV12-development.yaml:generic-api-key:10
+fae6f50652343ff4b2b8387f005fa422417ae58b:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188
+384d4fdff08fc6ba4560e9da02f9821696f05638:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
