@@ -148,12 +148,12 @@ namespace BackendAccountService.Data.Migrations
                     { 9, true, "Left group mid-year, HC still responsible", "Obligated", "5d" },
                     { 10, true, "Joined group, not obligated", "Not Obligated", "5c" },
                     { 11, true, "Left group, HC still responsible", "Obligated", "5c" },
-                    { 12, true, "Producer no longer obligated – insolvency or ceased function", "Not Obligated – HC", "none" },
-                    { 13, true, "Resigned from compliance scheme", "Not Obligated – CS", "none" },
-                    { 14, true, "Compliance scheme terminated membership", "Not Obligated – CS", "none" },
-                    { 16, true, "Merged with another company – non-incapacity, CS only", "Not Obligated – CS", "none" },
+                    { 12, true, "Producer no longer obligated - insolvency or ceased function", "Not Obligated - HC", "none" },
+                    { 13, true, "Resigned from compliance scheme", "Not Obligated - CS", "none" },
+                    { 14, true, "Compliance scheme terminated membership", "Not Obligated - CS", "none" },
+                    { 16, true, "Merged with another company - non-incapacity, CS only", "Not Obligated - CS", "none" },
                     { 17, true, "Producer data changed (e.g. acquisition of insolvent entity)", "Obligated", "none" },
-                    { 18, true, "Became a producer mid-year – all scenarios", "Obligated", "all" }
+                    { 18, true, "Became a producer mid-year - all scenarios", "Obligated", "all" }
                 });
 
             migrationBuilder.InsertData(
@@ -171,12 +171,12 @@ namespace BackendAccountService.Data.Migrations
                     { 8, 2, "08", "Producer left group; HC still responsible due to MYC.", true, "H", "None", "Direct", false, true, true },
                     { 9, 1, "09", "Producer joined group; not obligated due to MYC.", true, "I", "None", "Direct", false, false, true },
                     { 10, 2, "10", "Producer left group; HC still responsible due to MYC.", true, "J", "J", "Direct", false, true, true },
-                    { 11, 2, "11", "No longer obligated – insolvency event.", true, "K", "A,B,H", "ManualReview", false, true, true },
+                    { 11, 2, "11", "No longer obligated - insolvency event.", true, "K", "A,B,H", "ManualReview", false, true, true },
                     { 12, 2, "12", "Ceased performing producer function.", true, "L", "L", "ManualReview", false, true, true },
                     { 13, 2, "13", "Producer resigned from compliance scheme.", true, "M", "E", "ManualReview", false, true, true },
                     { 14, 2, "14", "CS terminated producer’s membership.", true, "N", "F", "ManualReview", false, true, true },
                     { 15, 1, "15", "Became a producer due to mid-year change.", true, "O", "None", "ManualReview", false, false, true },
-                    { 16, 2, "16", "Merged with another company – not incapacity related.", true, "P", "I", "ManualReview", false, true, true },
+                    { 16, 2, "16", "Merged with another company - not incapacity related.", true, "P", "I", "ManualReview", false, true, true },
                     { 17, 1, "17", "Producer data changed due to MYC (e.g. insolvent acquisition).", true, "Q", "A,B,H", "ManualReview", false, false, true }
                 });
 

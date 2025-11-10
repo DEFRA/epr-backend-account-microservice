@@ -741,10 +741,10 @@ public class AccountsDbContext : DbContext
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR9, ScenarioCode = "5d", Description = "Left group mid-year, HC still responsible", ObligationFlag = "Obligated", Active = true },
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR10, ScenarioCode = "5c", Description = "Joined group, not obligated", ObligationFlag = "Not Obligated", Active = true },
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR11, ScenarioCode = "5c", Description = "Left group, HC still responsible", ObligationFlag = "Obligated", Active = true },
-                new ScenarioReference { Id = DbConstants.ScenarioReference.SR12, ScenarioCode = "none", Description = "Producer no longer obligated – insolvency or ceased function", ObligationFlag = "Not Obligated – HC", Active = true },
-                new ScenarioReference { Id = DbConstants.ScenarioReference.SR13, ScenarioCode = "none", Description = "Resigned from compliance scheme", ObligationFlag = "Not Obligated – CS", Active = true },
-                new ScenarioReference { Id = DbConstants.ScenarioReference.SR14, ScenarioCode = "none", Description = "Compliance scheme terminated membership", ObligationFlag = "Not Obligated – CS", Active = true },
-                new ScenarioReference { Id = DbConstants.ScenarioReference.SR16, ScenarioCode = "none", Description = "Merged with another company – non-incapacity, CS only", ObligationFlag = "Not Obligated – CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR12, ScenarioCode = "none", Description = "Producer no longer obligated - insolvency or ceased function", ObligationFlag = "Not Obligated - HC", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR13, ScenarioCode = "none", Description = "Resigned from compliance scheme", ObligationFlag = "Not Obligated - CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR14, ScenarioCode = "none", Description = "Compliance scheme terminated membership", ObligationFlag = "Not Obligated - CS", Active = true },
+                new ScenarioReference { Id = DbConstants.ScenarioReference.SR16, ScenarioCode = "none", Description = "Merged with another company - non-incapacity, CS only", ObligationFlag = "Not Obligated - CS", Active = true },
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR17, ScenarioCode = "none", Description = "Producer data changed (e.g. acquisition of insolvent entity)", ObligationFlag = "Obligated", Active = true },
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR18, ScenarioCode = "all", Description = "Producer who meets thresholds independently has left group. Holding Company remains responsible for obligation due to Mid Year change", ObligationFlag = "Not Obligated", Active = true },
                 new ScenarioReference { Id = DbConstants.ScenarioReference.SR19, ScenarioCode = "all", Description = "Producer Registered late.", ObligationFlag = "Obligated", Active = true },
@@ -908,7 +908,7 @@ public class AccountsDbContext : DbContext
                     MatchType = "ManualReview",
                     MappedOldCodes = "A,B,H",
                     Enabled = true,
-                    Description = "No longer obligated – insolvency event."
+                    Description = "No longer obligated - insolvency event."
                 },
                 new CodeStatusConfig
                 {
@@ -978,7 +978,7 @@ public class AccountsDbContext : DbContext
                     MatchType = "ManualReview",
                     MappedOldCodes = "I",
                     Enabled = true,
-                    Description = "Merged with another company – not incapacity related."
+                    Description = "Merged with another company - not incapacity related."
                 },
                 new CodeStatusConfig
                 {
@@ -1034,7 +1034,7 @@ public class AccountsDbContext : DbContext
                     MatchType = "ManualReview",
                     MappedOldCodes = "",
                     Enabled = true,
-                    Description = "Other – Joiner."
+                    Description = "Other - Joiner."
                 },
                 new CodeStatusConfig
                 {

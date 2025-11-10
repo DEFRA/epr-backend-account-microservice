@@ -47,28 +47,28 @@ namespace BackendAccountService.Data.Migrations
                 keyColumn: "Id",
                 keyValue: 18,
                 columns: new[] { "Description", "ObligationFlag" },
-                values: new object[] { "Became a producer mid-year – all scenarios", "Obligated" });
+                values: new object[] { "Became a producer mid-year - all scenarios", "Obligated" });
 
             migrationBuilder.UpdateData(
                 table: "ScenarioReferences",
                 keyColumn: "Id",
                 keyValue: 19,
                 column: "Description",
-                value: "Became a producer mid-year – all scenarios");
+                value: "Became a producer mid-year - all scenarios");
 
             migrationBuilder.UpdateData(
                 table: "ScenarioReferences",
                 keyColumn: "Id",
                 keyValue: 20,
                 column: "Description",
-                value: "Became a producer mid-year – all scenarios");
+                value: "Became a producer mid-year - all scenarios");
 
             migrationBuilder.UpdateData(
                 table: "ScenarioReferences",
                 keyColumn: "Id",
                 keyValue: 21,
                 columns: new[] { "Description", "ObligationFlag" },
-                values: new object[] { "Became a producer mid-year – all scenarios", "Obligated" });
+                values: new object[] { "Became a producer mid-year - all scenarios", "Obligated" });
         }
     }
 }

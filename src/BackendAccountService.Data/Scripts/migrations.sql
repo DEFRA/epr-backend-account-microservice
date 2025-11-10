@@ -6527,12 +6527,12 @@ BEGIN
     (9, CAST(1 AS bit), N''Left group mid-year, HC still responsible'', N''Obligated'', N''5d''),
     (10, CAST(1 AS bit), N''Joined group, not obligated'', N''Not Obligated'', N''5c''),
     (11, CAST(1 AS bit), N''Left group, HC still responsible'', N''Obligated'', N''5c''),
-    (12, CAST(1 AS bit), N''Producer no longer obligated – insolvency or ceased function'', N''Not Obligated – HC'', N''none''),
-    (13, CAST(1 AS bit), N''Resigned from compliance scheme'', N''Not Obligated – CS'', N''none''),
-    (14, CAST(1 AS bit), N''Compliance scheme terminated membership'', N''Not Obligated – CS'', N''none''),
-    (16, CAST(1 AS bit), N''Merged with another company – non-incapacity, CS only'', N''Not Obligated – CS'', N''none''),
+    (12, CAST(1 AS bit), N''Producer no longer obligated - insolvency or ceased function'', N''Not Obligated - HC'', N''none''),
+    (13, CAST(1 AS bit), N''Resigned from compliance scheme'', N''Not Obligated - CS'', N''none''),
+    (14, CAST(1 AS bit), N''Compliance scheme terminated membership'', N''Not Obligated - CS'', N''none''),
+    (16, CAST(1 AS bit), N''Merged with another company - non-incapacity, CS only'', N''Not Obligated - CS'', N''none''),
     (17, CAST(1 AS bit), N''Producer data changed (e.g. acquisition of insolvent entity)'', N''Obligated'', N''none''),
-    (18, CAST(1 AS bit), N''Became a producer mid-year – all scenarios'', N''Obligated'', N''all'')');
+    (18, CAST(1 AS bit), N''Became a producer mid-year - all scenarios'', N''Obligated'', N''all'')');
     IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Active', N'Description', N'ObligationFlag', N'ScenarioCode') AND [object_id] = OBJECT_ID(N'[ScenarioReferences]'))
         SET IDENTITY_INSERT [ScenarioReferences] OFF;
 END;
@@ -6556,12 +6556,12 @@ BEGIN
     (8, 2, N''08'', N''Producer left group; HC still responsible due to MYC.'', CAST(1 AS bit), N''H'', N''None'', N''Direct'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (9, 1, N''09'', N''Producer joined group; not obligated due to MYC.'', CAST(1 AS bit), N''I'', N''None'', N''Direct'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit)),
     (10, 2, N''10'', N''Producer left group; HC still responsible due to MYC.'', CAST(1 AS bit), N''J'', N''J'', N''Direct'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
-    (11, 2, N''11'', N''No longer obligated – insolvency event.'', CAST(1 AS bit), N''K'', N''A,B,H'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
+    (11, 2, N''11'', N''No longer obligated - insolvency event.'', CAST(1 AS bit), N''K'', N''A,B,H'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (12, 2, N''12'', N''Ceased performing producer function.'', CAST(1 AS bit), N''L'', N''L'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (13, 2, N''13'', N''Producer resigned from compliance scheme.'', CAST(1 AS bit), N''M'', N''E'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (14, 2, N''14'', N''CS terminated producer’s membership.'', CAST(1 AS bit), N''N'', N''F'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (15, 1, N''15'', N''Became a producer due to mid-year change.'', CAST(1 AS bit), N''O'', N''None'', N''ManualReview'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit)),
-    (16, 2, N''16'', N''Merged with another company – not incapacity related.'', CAST(1 AS bit), N''P'', N''I'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
+    (16, 2, N''16'', N''Merged with another company - not incapacity related.'', CAST(1 AS bit), N''P'', N''I'', N''ManualReview'', CAST(0 AS bit), CAST(1 AS bit), CAST(1 AS bit)),
     (17, 1, N''17'', N''Producer data changed due to MYC (e.g. insolvent acquisition).'', CAST(1 AS bit), N''Q'', N''A,B,H'', N''ManualReview'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit))');
     IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'ClassificationId', N'Code', N'Description', N'Enabled', N'LegacyCode', N'MappedOldCodes', N'MatchType', N'RequiresJoinerDate', N'RequiresLeaverDate', N'RequiresRegType') AND [object_id] = OBJECT_ID(N'[CodeStatusConfigs]'))
         SET IDENTITY_INSERT [CodeStatusConfigs] OFF;
@@ -6777,7 +6777,7 @@ BEGIN
     EXEC(N'INSERT INTO [CodeStatusConfigs] ([Id], [ClassificationId], [Code], [Description], [Enabled], [LegacyCode], [MappedOldCodes], [MatchType], [RequiresJoinerDate], [RequiresLeaverDate], [RequiresRegType])
     VALUES (18, 1, N''18'', N''Producer who meets thresholds independently has left group. Holding company remains responsible for obligation due to mid year change.'', CAST(1 AS bit), N'''', N'''', N''ManualReview'', CAST(1 AS bit), CAST(0 AS bit), CAST(0 AS bit)),
     (19, 1, N''19'', N''Producer registered late.'', CAST(1 AS bit), N'''', N'''', N''ManualReview'', CAST(1 AS bit), CAST(0 AS bit), CAST(1 AS bit)),
-    (20, 1, N''20'', N''Other – Joiner.'', CAST(1 AS bit), N'''', N'''', N''ManualReview'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit)),
+    (20, 1, N''20'', N''Other - Joiner.'', CAST(1 AS bit), N'''', N'''', N''ManualReview'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit)),
     (21, 2, N''21'', N''Other - Leaver.'', CAST(1 AS bit), N'''', N'''', N''ManualReview'', CAST(0 AS bit), CAST(0 AS bit), CAST(1 AS bit))');
     IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'ClassificationId', N'Code', N'Description', N'Enabled', N'LegacyCode', N'MappedOldCodes', N'MatchType', N'RequiresJoinerDate', N'RequiresLeaverDate', N'RequiresRegType') AND [object_id] = OBJECT_ID(N'[CodeStatusConfigs]'))
         SET IDENTITY_INSERT [CodeStatusConfigs] OFF;
@@ -6792,9 +6792,9 @@ BEGIN
     IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Active', N'Description', N'ObligationFlag', N'ScenarioCode') AND [object_id] = OBJECT_ID(N'[ScenarioReferences]'))
         SET IDENTITY_INSERT [ScenarioReferences] ON;
     EXEC(N'INSERT INTO [ScenarioReferences] ([Id], [Active], [Description], [ObligationFlag], [ScenarioCode])
-    VALUES (19, CAST(1 AS bit), N''Became a producer mid-year – all scenarios'', N''Obligated'', N''all''),
-    (20, CAST(1 AS bit), N''Became a producer mid-year – all scenarios'', N''Obligated'', N''all''),
-    (21, CAST(1 AS bit), N''Became a producer mid-year – all scenarios'', N''Obligated'', N''all'')');
+    VALUES (19, CAST(1 AS bit), N''Became a producer mid-year - all scenarios'', N''Obligated'', N''all''),
+    (20, CAST(1 AS bit), N''Became a producer mid-year - all scenarios'', N''Obligated'', N''all''),
+    (21, CAST(1 AS bit), N''Became a producer mid-year - all scenarios'', N''Obligated'', N''all'')');
     IF EXISTS (SELECT * FROM [sys].[identity_columns] WHERE [name] IN (N'Id', N'Active', N'Description', N'ObligationFlag', N'ScenarioCode') AND [object_id] = OBJECT_ID(N'[ScenarioReferences]'))
         SET IDENTITY_INSERT [ScenarioReferences] OFF;
 END;
