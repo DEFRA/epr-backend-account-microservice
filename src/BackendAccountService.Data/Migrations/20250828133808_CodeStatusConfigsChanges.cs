@@ -26,7 +26,7 @@ namespace BackendAccountService.Data.Migrations
                 {
                     { 18, 1, "18", "Producer who meets thresholds independently has left group. Holding company remains responsible for obligation due to mid year change.", true, "", "", "ManualReview", true, false, false },
                     { 19, 1, "19", "Producer registered late.", true, "", "", "ManualReview", true, false, true },
-                    { 20, 1, "20", "Other – Joiner.", true, "", "", "ManualReview", false, false, true },
+                    { 20, 1, "20", "Other - Joiner.", true, "", "", "ManualReview", false, false, true },
                     { 21, 2, "21", "Other - Leaver.", true, "", "", "ManualReview", false, false, true }
                 });
 
@@ -35,9 +35,9 @@ namespace BackendAccountService.Data.Migrations
                 columns: new[] { "Id", "Active", "Description", "ObligationFlag", "ScenarioCode" },
                 values: new object[,]
                 {
-                    { 19, true, "Became a producer mid-year – all scenarios", "Obligated", "all" },
-                    { 20, true, "Became a producer mid-year – all scenarios", "Obligated", "all" },
-                    { 21, true, "Became a producer mid-year – all scenarios", "Obligated", "all" }
+                    { 19, true, "Became a producer mid-year - all scenarios", "Obligated", "all" },
+                    { 20, true, "Became a producer mid-year - all scenarios", "Obligated", "all" },
+                    { 21, true, "Became a producer mid-year - all scenarios", "Obligated", "all" }
                 });
         }
 

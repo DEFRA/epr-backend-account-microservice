@@ -821,7 +821,7 @@ namespace BackendAccountService.Data.Migrations
                             ClassificationId = 2,
                             Code = "11",
                             CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "No longer obligated – insolvency event.",
+                            Description = "No longer obligated - insolvency event.",
                             Enabled = true,
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
@@ -911,7 +911,7 @@ namespace BackendAccountService.Data.Migrations
                             ClassificationId = 2,
                             Code = "16",
                             CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Merged with another company – not incapacity related.",
+                            Description = "Merged with another company - not incapacity related.",
                             Enabled = true,
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
@@ -983,7 +983,7 @@ namespace BackendAccountService.Data.Migrations
                             ClassificationId = 1,
                             Code = "20",
                             CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Other – Joiner.",
+                            Description = "Other - Joiner.",
                             Enabled = true,
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
@@ -3700,11 +3700,11 @@ namespace BackendAccountService.Data.Migrations
                             Id = 12,
                             Active = true,
                             CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Producer no longer obligated – insolvency or ceased function",
+                            Description = "Producer no longer obligated - insolvency or ceased function",
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
                             LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            ObligationFlag = "Not Obligated – HC",
+                            ObligationFlag = "Not Obligated - HC",
                             ScenarioCode = "none"
                         },
                         new
@@ -3716,7 +3716,7 @@ namespace BackendAccountService.Data.Migrations
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
                             LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            ObligationFlag = "Not Obligated – CS",
+                            ObligationFlag = "Not Obligated - CS",
                             ScenarioCode = "none"
                         },
                         new
@@ -3728,7 +3728,7 @@ namespace BackendAccountService.Data.Migrations
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
                             LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            ObligationFlag = "Not Obligated – CS",
+                            ObligationFlag = "Not Obligated - CS",
                             ScenarioCode = "none"
                         },
                         new
@@ -3736,11 +3736,11 @@ namespace BackendAccountService.Data.Migrations
                             Id = 16,
                             Active = true,
                             CreatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Description = "Merged with another company – non-incapacity, CS only",
+                            Description = "Merged with another company - non-incapacity, CS only",
                             ExternalId = new Guid("00000000-0000-0000-0000-000000000000"),
                             IsDeleted = false,
                             LastUpdatedOn = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            ObligationFlag = "Not Obligated – CS",
+                            ObligationFlag = "Not Obligated - CS",
                             ScenarioCode = "none"
                         },
                         new
