@@ -1,4 +1,4 @@
-using BackendAccountService.Data.Entities;
+﻿using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Entities.Conversions;
 using BackendAccountService.Data.Entities.EntityConfiguration;
 using Microsoft.EntityFrameworkCore;
@@ -950,7 +950,7 @@ public class AccountsDbContext : DbContext
                     MatchType = "ManualReview",
                     MappedOldCodes = "F",
                     Enabled = true,
-                    Description = "CS terminated producer�s membership."
+                    Description = "CS terminated producer’s membership."
                 },
                 new CodeStatusConfig
                 {
