@@ -12,6 +12,8 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Logging;
 using InterOrganisationRole = BackendAccountService.Data.DbConstants.InterOrganisationRole;
 
 namespace BackendAccountService.Core.Services;
@@ -285,19 +287,24 @@ public class OrganisationService : ServiceBase, IOrganisationService
     {
         var relationshipsQuery = GetOrganisationRelationshipsQuery(search);
 
-        var searchTerms = await (from o in _accountsDbContext.Organisations
-                                 join rel in _accountsDbContext.OrganisationRelationships on o.Id equals rel.FirstOrganisationId
-                                 join sub in _accountsDbContext.Organisations on rel.SecondOrganisationId equals sub.Id
-                                 join subOrg in _accountsDbContext.SubsidiaryOrganisations on rel.SecondOrganisationId equals subOrg.OrganisationId into subOrgGroup
-                                 from subOrg in subOrgGroup.DefaultIfEmpty()
-                                 orderby sub.Name
-                                 select new RelationshipResponseModel()
-                                 {
-                                     OrganisationName = sub.Name,
-                                     OrganisationNumber = sub.ReferenceNumber,
-                                     CompaniesHouseNumber = sub.CompaniesHouseNumber
-                                 }).Distinct()
-                                 .ToListAsync();
+        var searchTermsQuery = (from o in _accountsDbContext.Organisations
+            join rel in _accountsDbContext.OrganisationRelationships on o.Id equals rel.FirstOrganisationId
+            join sub in _accountsDbContext.Organisations on rel.SecondOrganisationId equals sub.Id
+            join subOrg in _accountsDbContext.SubsidiaryOrganisations on rel.SecondOrganisationId equals subOrg
+                .OrganisationId into subOrgGroup
+            from subOrg in subOrgGroup.DefaultIfEmpty()
+            orderby sub.Name
+            select new RelationshipResponseModel()
+            {
+                OrganisationName = sub.Name,
+                OrganisationNumber = sub.ReferenceNumber,
+                CompaniesHouseNumber = sub.CompaniesHouseNumber
+            }).Distinct();
+
+        var logger = _accountsDbContext.Services.GetService<ILogger<OrganisationService>>();
+        logger.LogTrace("Get subsidiary relationship {Query}", searchTermsQuery.ToQueryString());
+
+        var searchTerms = await searchTermsQuery.ToListAsync();
 
         return new PagedOrganisationRelationshipsResponse
         {
