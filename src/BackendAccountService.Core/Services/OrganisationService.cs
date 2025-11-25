@@ -302,7 +302,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
             }).Distinct();
 
         var logger = _accountsDbContext.Services.GetService<ILogger<OrganisationService>>();
-        logger.LogTrace("Get subsidiary relationship {Query}", searchTermsQuery.ToQueryString());
+        logger.LogInformation("Get subsidiary relationship {Query}", searchTermsQuery.ToQueryString());
 
         var searchTerms = await searchTermsQuery.ToListAsync();
 
