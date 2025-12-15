@@ -748,8 +748,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
 
     private IOrderedQueryable<OrganisationSearchResult> FetchProducersInNation(string query, int nationId)
     {
-        var lowerCaseQuery = query.ToLower();
-        var organisationIdQuery = lowerCaseQuery.Replace(" ", String.Empty);
+        var organisationIdQuery = query.Trim();
         var organisationsQueryable = _accountsDbContext.Organisations
             .AsNoTracking()
             .GroupJoin(
@@ -766,7 +765,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
                     ComplianceSchemeNationId = scheme.NationId
                 })
             .Where(joined => !joined.Organisation.IsDeleted)
-            .Where(joined => joined.Organisation.Name.ToLower().Contains(lowerCaseQuery) || joined.Organisation.ReferenceNumber.ToLower().Contains(organisationIdQuery))
+            .Where(joined => joined.Organisation.Name.Contains(organisationIdQuery) || joined.Organisation.ReferenceNumber.Contains(organisationIdQuery))
             .Where(joined =>
                 joined.Organisation.NationId == nationId || (!joined.ComplianceSchemeIsDeleted && joined.ComplianceSchemeNationId == nationId))
             .Where(joined => joined.Organisation.OrganisationTypeId != Data.DbConstants.OrganisationType.Regulators)
@@ -800,7 +799,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
                join oc in _accountsDbContext.OrganisationsConnections on sc.OrganisationConnectionId equals oc.Id
                join o in _accountsDbContext.Organisations on oc.FromOrganisationId equals o.Id
                where n.Id == nationId
-                     && o.Name.ToLower().Contains(query.ToLower())
+                     && o.Name.Contains(query)
                      && o.NationId != nationId
                group o by new
                {
