@@ -15,11 +15,9 @@ public class TokenService : ITokenService
     
     private static string ToSHA512(string value)
     {
-        using var sha = SHA512.Create();
-    
         var bytes = Encoding.UTF8.GetBytes(value);
-        var hash  = sha.ComputeHash(bytes);
- 
+        var hash = SHA512.HashData(bytes);
+
         return Convert.ToBase64String(hash).Replace('+', '-').Replace('/', '_');
     }
 }

@@ -42,7 +42,7 @@ public class ComplianceSchemeService : IComplianceSchemeService
 
         pageSize = Math.Min(pageSize, MaxPageSize);
 
-        query = query.Trim().ToLower();
+        query = query.Trim();
 
         string? referenceNumber = query.TryExtractReferenceNumberFromQuery();
         var searchReferenceNumberNotRequired = query.Length == 0 || referenceNumber is null;
@@ -92,9 +92,9 @@ public class ComplianceSchemeService : IComplianceSchemeService
                 .Where(selectedScheme =>
                     (searchReferenceNumberNotRequired ||
                         selectedScheme.OrganisationConnection.FromOrganisation.ReferenceNumber == referenceNumber ||
-                        selectedScheme.OrganisationConnection.FromOrganisation.Name.ToLower().Contains(query)) &&
+                        selectedScheme.OrganisationConnection.FromOrganisation.Name.Contains(query)) &&
                     (searchOrganisationNameNotRequired ||
-                        selectedScheme.OrganisationConnection.FromOrganisation.Name.ToLower().Contains(query)))
+                        selectedScheme.OrganisationConnection.FromOrganisation.Name.Contains(query)))
                 .OrderBy(selectedScheme => selectedScheme.OrganisationConnection.FromOrganisation.Name)
                 .Select(selectedScheme => new ComplianceSchemeMemberDto
                 {

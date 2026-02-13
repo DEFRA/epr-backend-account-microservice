@@ -1191,7 +1191,7 @@ public class AccountsDbContext : DbContext
         return result;
     }
 
-    private ICollection<AuditEntry> HandleAuditBeforeSave(Guid? userId, Guid? organisationId, string? serviceId, DateTimeOffset timestamp)
+    private IList<AuditEntry> HandleAuditBeforeSave(Guid? userId, Guid? organisationId, string? serviceId, DateTimeOffset timestamp)
     {
         var changedEntries = ChangeTracker.Entries<IEditableEntity>()
             .Where(entry => entry.State is EntityState.Added or EntityState.Modified)

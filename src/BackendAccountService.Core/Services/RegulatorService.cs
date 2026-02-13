@@ -904,7 +904,7 @@ public class RegulatorService : ServiceBase, IRegulatorService
                                join s in _accountsDbContext.ServiceRoles on en.ServiceRoleId equals s.Id
                                where ch.DecisionDate == null && ch.IsActive && !ch.IsDeleted
                                       && o.NationId == nationId
-                                    && (string.IsNullOrWhiteSpace(organisationName) || o.Name.ToLower().Contains(organisationName.ToLower()))
+                                    && (string.IsNullOrWhiteSpace(organisationName) || o.Name.Contains(organisationName))
                                select new OrganisationUserDetailChangeRequest
                                {
                                    OrganisationId = o.ExternalId,
@@ -970,7 +970,7 @@ public class RegulatorService : ServiceBase, IRegulatorService
             return Result<RegulatorUserDetailsUpdateByServiceResponse>.FailedResult(message, HttpStatusCode.BadRequest);
         }
 
-        var regulatorFromEmail = await _accountsDbContext.Persons.Include(o => o.User).AsNoTracking().SingleOrDefaultAsync(o => o.Email.ToLower() == request.RegulatorEmail.ToLower());
+        var regulatorFromEmail = await _accountsDbContext.Persons.Include(o => o.User).AsNoTracking().SingleOrDefaultAsync(o => o.Email == request.RegulatorEmail);
         if (regulatorFromEmail == null)
         {
             var message = $"Accept Or Reject User Details Change Request by RegulatorEmail {request.RegulatorEmail} is not valid.";
@@ -994,7 +994,7 @@ public class RegulatorService : ServiceBase, IRegulatorService
             var poc = await _accountsDbContext.PersonOrganisationConnections
              .Include(p => p.Person).ThenInclude(u => u.User)
              .Include(o => o.Organisation).ThenInclude(n => n.Nation)
-             .Where(con => con.Person.Email.ToLower() == request.UserEmail.ToLower() && !con.Person.IsDeleted
+             .Where(con => con.Person.Email == request.UserEmail && !con.Person.IsDeleted
                && con.Organisation.ReferenceNumber == request.OrganisationReference.Trim().Replace(" ", "")
                && !con.Organisation.IsDeleted).SingleOrDefaultAsync();
 
@@ -1069,7 +1069,7 @@ public class RegulatorService : ServiceBase, IRegulatorService
             var poc = await _accountsDbContext.PersonOrganisationConnections
             .Include(p => p.Person).ThenInclude(u => u.User)
             .Include(o => o.Organisation)
-            .Where(con => con.Person.Email.ToLower() == request.UserEmail.ToLower() && !con.Person.IsDeleted
+            .Where(con => con.Person.Email == request.UserEmail && !con.Person.IsDeleted
               && con.Organisation.ReferenceNumber == request.OrganisationReference.Trim().Replace(" ", "")
               && con.Organisation.OrganisationTypeId == OrganisationType.NonCompaniesHouseCompany
               && !con.Organisation.IsDeleted).SingleOrDefaultAsync();

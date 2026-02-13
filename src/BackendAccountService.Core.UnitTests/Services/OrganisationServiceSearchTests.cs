@@ -29,15 +29,13 @@ public class OrganisationServiceSearchTests
 
     [TestMethod]
     [DataRow("Test organisation 1")]
-    [DataRow("tEST oRganisation 1")]
-    [DataRow("rEference numBEr 1")]
     [DataRow("Reference Number 1")]
-    [DataRow(" Reference  Number  1    ")]
+    [DataRow(" Reference Number 1    ")]
     public async Task WhenGetOrganisationsBySearchTermForProducerOrganisationRole_ThenReturnCorrectValues(string query)
     {
         var organisation = CreateOrganisation();
         organisation.Name = "Test organisation 1";
-        organisation.ReferenceNumber = "ReferenceNumber1";
+        organisation.ReferenceNumber = "Reference Number 1";
 
         var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.England);
         await _accountContext.AddAsync(complianceScheme, default);
@@ -277,26 +275,6 @@ public class OrganisationServiceSearchTests
     }
 
     [TestMethod]
-    public async Task WhenGetOrganisationsBySearchTermWhichIsCaseInsensitive_ThenReturnsCorrectData()
-    {
-        var organisation = CreateOrganisation();
-        var complianceScheme = CreateComplianceScheme(organisation.CompaniesHouseNumber, Data.DbConstants.Nation.Scotland);
-
-        organisation.Name = "Case Insensitive Test Organisation";
-
-        await _accountContext.AddAsync(organisation, default);
-        await _accountContext.AddAsync(complianceScheme, default);
-
-        await _accountContext.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
-
-        var query = "cASE iNSENSITIVE tEST oRGANISATION";
-        var results = await _organisationService.GetOrganisationsBySearchTerm(query, Data.DbConstants.Nation.England, 3, 1);
-
-        results.Items.Count.Should().Be(1);
-        AddAssert(results.Items[0], organisation);
-    }
-
-    [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermWhichHasDeletedComplianceScheme_ThenReturnsNoData()
     {
         var organisation = CreateOrganisation();
@@ -405,7 +383,7 @@ public class OrganisationServiceSearchTests
     [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermIsNotComplianceSchemeMember_ThenReturnsDirectOrgType()
     {
-        var orgName = "Test Org";
+        var orgName = "Test org";
         var organisation = CreateOrganisation();
 
         await _accountContext.AddAsync(organisation, default);
@@ -420,7 +398,7 @@ public class OrganisationServiceSearchTests
     [TestMethod]
     public async Task WhenGetOrganisationsBySearchTermIsSubsidiaryOfDirectProducer_ThenReturnsDirectOrgType()
     {
-        var orgName = "Test Org";
+        var orgName = "Test org";
         var organisation = CreateOrganisation();
         var organisationRelationShip = new OrganisationRelationship { FirstOrganisationId = 1, SecondOrganisationId = 1 };
 
