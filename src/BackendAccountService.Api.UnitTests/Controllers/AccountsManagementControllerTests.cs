@@ -160,7 +160,7 @@ public class AccountsManagementControllerTests
         validationProblemDetails.Errors.Count.Should().Be(1);
         validationProblemDetails.Errors.FirstOrDefault().Key.Should().Be("Email");
         validationProblemDetails.Errors.FirstOrDefault().Value.First().Should()
-            .Be("Invited user 'test@abc.com' is enrolled already.");
+            .Be("Invited user id '11111111-1111-1111-1111-111111111111' is enrolled already.");
     }
 
     [TestMethod]
@@ -195,7 +195,7 @@ public class AccountsManagementControllerTests
         validationProblemDetails.Errors.Count.Should().Be(1);
         validationProblemDetails.Errors.FirstOrDefault().Key.Should().Be("Email");
         validationProblemDetails.Errors.FirstOrDefault().Value.First().Should()
-            .Be("Invited user 'test@abc.com' doesn't belong to the same organisation.");
+            .Be("Invited user id '11111111-1111-1111-1111-111111111111' doesn't belong to the same organisation.");
     }
 
     [TestMethod]
@@ -279,6 +279,7 @@ public class AccountsManagementControllerTests
             InvitedUser = new()
             {
                 Email = "test@abc.com",
+                UserId = new Guid("11111111-1111-1111-1111-111111111111"),
                 OrganisationId = _existingOrgId,
                 PersonRoleId = 2,
                 ServiceRoleId = 3
