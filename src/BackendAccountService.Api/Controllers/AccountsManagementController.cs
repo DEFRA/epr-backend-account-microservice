@@ -1,5 +1,6 @@
 using System.Net;
 using BackendAccountService.Api.Configuration;
+using BackendAccountService.Core.Helpers;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
@@ -91,12 +92,12 @@ public class AccountsManagementController : ApiControllerBase
             }
 
             ModelState.AddModelError(nameof(request.InvitedUser.Email),
-                $"Invited user '{request.InvitedUser.Email}' doesn't belong to the same organisation.");
+                $"Invited user id '{UserIdentifier.FromInvitedUser(request.InvitedUser)}' doesn't belong to the same organisation.");
         }
         else
         {
             ModelState.AddModelError(nameof(request.InvitedUser.Email),
-                $"Invited user '{request.InvitedUser.Email}' is enrolled already.");
+                $"Invited user id '{UserIdentifier.FromInvitedUser(request.InvitedUser)}' is enrolled already.");
         }
 
         return false;

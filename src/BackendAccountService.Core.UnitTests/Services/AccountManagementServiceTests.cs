@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BackendAccountService.Core.Helpers;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Core.UnitTests.TestHelpers;
@@ -322,8 +323,11 @@ public class AccountManagementServiceTests
 
         var differentOrganisationId = new Guid("00000000-0000-0000-0000-000000000003");
 
-        //Act & Assert
-        await Assert.ThrowsExactlyAsync<ValidationException>(async () => await _sut.ReInviteUserAsync(new InvitedUser
+        var invitedDbUser = _accountContext.Users.Single(x => x.Email == initialInviteRequest.InvitedUser.Email);
+        var expectedUserId = UserIdentifier.FromUser(invitedDbUser);
+
+        var ex = await Assert.ThrowsExactlyAsync<ValidationException>(async () => await _sut.ReInviteUserAsync(
+            new InvitedUser
             {
                 Email = initialInviteRequest.InvitedUser.Email,
                 OrganisationId = differentOrganisationId,
@@ -333,5 +337,8 @@ public class AccountManagementServiceTests
             },
             initialInviteRequest.InvitingUser));
 
+        ex.Message.Should().Be(
+            $"Invited user id '{expectedUserId}' doesn't belong to the same organisation.");
+        ex.Message.Should().NotContain(initialInviteRequest.InvitedUser.Email);
     }
 }

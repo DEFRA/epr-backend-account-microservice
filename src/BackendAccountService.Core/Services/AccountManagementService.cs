@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BackendAccountService.Core.Helpers;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
@@ -93,7 +94,8 @@ public class AccountManagementService : IAccountManagementService
 
         if (invitedUserOrganisationConnection is null)
         {
-            throw new ValidationException($"Invited user '{invitedUser.Email}' doesn't belong to the same organisation.");
+            throw new ValidationException(
+                $"Invited user id '{UserIdentifier.FromUser(invited)}' doesn't belong to the same organisation.");
         }
 
         invitedUserOrganisationConnection.PersonRoleId = invitedUser.PersonRoleId;
