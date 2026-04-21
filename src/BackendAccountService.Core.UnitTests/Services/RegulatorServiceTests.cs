@@ -503,7 +503,7 @@ public class RegulatorServiceTests
 
     [TestMethod]
     public async Task
-        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_Then_Save_Rejected_Comments_And_Soft_Delete_Organisation_And_Related_Records_And_Return_Success()
+        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_Then_Save_Rejected_Comments_And_Do_Not_Cascade_Delete_Organisation()
     {
         //Act
         var result = await
@@ -512,9 +512,9 @@ public class RegulatorServiceTests
                 RejectedComment);
 
         //Assert
-
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
+
         var rejectedEnrolment = _dbContext.Enrolments.IgnoreQueryFilters().SingleOrDefault(e =>
             e.ExternalId == ApprovedEnrolmentId2 && e.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id
                                              && e.EnrolmentStatusId == EnrolmentStatus.Rejected
@@ -524,30 +524,17 @@ public class RegulatorServiceTests
         _dbContext.RegulatorComments
             .SingleOrDefault(e => e.EnrolmentId == rejectedEnrolment.Id && e.RejectedComments.Equals(RejectedComment))
             .Should().NotBeNull();
-        _dbContext.Organisations.IgnoreQueryFilters()
-            .SingleOrDefault(org => org.ExternalId == OrganisationId && org.IsDeleted).Should().NotBeNull();
-        _dbContext.PersonOrganisationConnections.IgnoreQueryFilters()
-            .Any(con => con.Organisation.ExternalId == OrganisationId && !con.IsDeleted).Should().BeFalse();
 
-        _dbContext.Users.IgnoreQueryFilters().Any(user =>
-                user.Person.OrganisationConnections.Where(org =>
-                        org.Organisation.ExternalId == OrganisationId)
-                    .Select(org => org.Person.UserId).Contains(user.Id) && !user.IsDeleted &&
-                user.UserId != MultiOrgUserId)
-            .Should().BeFalse();
+        // Organisation must NOT be soft-deleted
+        _dbContext.Organisations
+            .SingleOrDefault(org => org.ExternalId == OrganisationId).Should().NotBeNull();
 
+        // Other connections on the org must NOT be soft-deleted
+        _dbContext.PersonOrganisationConnections
+            .Any(con => con.Organisation.ExternalId == OrganisationId && !con.IsDeleted).Should().BeTrue();
+
+        // Other users on the org must NOT be soft-deleted
         _dbContext.Users.Any(user => user.UserId == MultiOrgUserId && !user.IsDeleted).Should().BeTrue();
-
-        _dbContext.Persons.IgnoreQueryFilters().Any(person =>
-            person.OrganisationConnections.Where(org => org.Organisation.ExternalId == OrganisationId)
-                .Select(org => org.Person.UserId).Contains(person.Id) && !person.IsDeleted &&
-            person.User.UserId != MultiOrgUserId).Should().BeFalse();
-
-        _dbContext.Persons.Any(person => person.User.UserId == MultiOrgUserId && !person.IsDeleted).Should().BeTrue();
-
-        _dbContext.Enrolments.IgnoreQueryFilters()
-            .Any(enrolments => enrolments.Connection.Organisation.ExternalId == OrganisationId && !enrolments.IsDeleted)
-            .Should().BeFalse();
     }
 
     [TestMethod]
@@ -577,7 +564,7 @@ public class RegulatorServiceTests
 
     [TestMethod]
     public async Task
-        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_Then_Set_user_id_to_default_Guid()
+        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_Then_Do_Not_Set_user_id_to_default_Guid()
     {
         //Act
         var result = await
@@ -586,21 +573,15 @@ public class RegulatorServiceTests
                 RejectedComment);
 
         //Assert
-
         result.Succeeded.Should().BeTrue();
         result.ErrorMessage.Should().BeEmpty();
-        var rejectedEnrolment = _dbContext.Enrolments.IgnoreQueryFilters().SingleOrDefault(e =>
-            e.ExternalId == ApprovedEnrolmentId2 && e.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id
-                                             && e.EnrolmentStatusId == EnrolmentStatus.Rejected
-                                             && e.IsDeleted);
-        rejectedEnrolment.Should().NotBeNull();
 
-        var user = _dbContext.Users.IgnoreQueryFilters().SingleOrDefault(e => e.UserId == Guid.Empty);
+        // No user should have UserId blanked to Guid.Empty
+        _dbContext.Users.IgnoreQueryFilters()
+            .SingleOrDefault(e => e.UserId == Guid.Empty).Should().BeNull();
 
-        Assert.IsNotNull(user);
-        Assert.AreSame(ApprovedUser2ProducerEmail, user.Email);
-        _dbContext.Users.Any(user1 => user1.UserId == ApprovedUserId2).Should().BeFalse();
-        _dbContext.Users.Any(user1 => user1.UserId == RegulatorUserId).Should().BeTrue();
+        // The rejected AP's user record should retain its original UserId
+        _dbContext.Users.Any(user1 => user1.UserId == ApprovedUserId2).Should().BeTrue();
     }
 
     [TestMethod]
