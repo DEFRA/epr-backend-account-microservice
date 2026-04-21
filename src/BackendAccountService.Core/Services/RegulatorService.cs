@@ -160,78 +160,8 @@ public class RegulatorService : ServiceBase, IRegulatorService
             return (true, string.Empty);
         }
 
-        SoftDeleteOrganisation(organisationId);
-        SetDefaultUserIdForRejectedApprovedPerson(enrolment);
-
         await _accountsDbContext.SaveChangesAsync(userId, organisationId);
         return (true, string.Empty);
-    }
-
-    private static void SetDefaultUserIdForRejectedApprovedPerson(Enrolment enrolment)
-    {
-        if (enrolment.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id)
-        {
-            enrolment.Connection.Person.User.UserId = Guid.Empty;
-        }
-    }
-
-    private void SoftDeleteOrganisation(Guid organisationId)
-    {
-        _accountsDbContext.Enrolments.Where(enrolment =>
-            enrolment.Connection.Organisation.ExternalId == organisationId).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        _accountsDbContext.PersonOrganisationConnections.Where(connection =>
-            connection.Organisation.ExternalId == organisationId).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        _accountsDbContext.Organisations.Where(organisation =>
-            organisation.ExternalId == organisationId).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        _accountsDbContext.OrganisationsConnections.Where(connection =>
-            connection.FromOrganisation.ExternalId == organisationId || connection.ToOrganisation.ExternalId == organisationId).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        _accountsDbContext.SelectedSchemes.Where(scheme =>
-            scheme.OrganisationConnection.FromOrganisation.ExternalId == organisationId || scheme.OrganisationConnection.ToOrganisation.ExternalId == organisationId).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        var organisationUsersList = _accountsDbContext.PersonOrganisationConnections
-            .Where(org => org.Organisation.ExternalId == organisationId)
-            .Select(org => org.Person.User.UserId).ToList();
-
-        var usersToSoftDelete = new List<Guid?>();
-
-        foreach (var userId in organisationUsersList)
-        {
-            if (!_organisationService.IsUserAssociatedWithMultipleOrganisations(userId))
-            {
-                usersToSoftDelete.Add(userId);
-            }
-        }
-
-        _accountsDbContext.Users.Where(user =>
-            usersToSoftDelete.Contains(user.UserId)).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
-
-        _accountsDbContext.Persons.Where(person =>
-            usersToSoftDelete.Contains(person.User.UserId)).ToList().ForEach(x =>
-        {
-            x.IsDeleted = true;
-        });
     }
 
     public int GetRegulatorNationId(Guid userId)
