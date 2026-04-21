@@ -160,8 +160,20 @@ public class RegulatorService : ServiceBase, IRegulatorService
             return (true, string.Empty);
         }
 
-        SoftDeleteOrganisation(organisationId);
-        SetDefaultUserIdForRejectedApprovedPerson(enrolment);
+        // Only cascade-delete the organisation when rejecting an initial
+        // registration (no previously-approved AP exists). When the org already has an
+        // approved AP this is a change-of-AP rejection and the org must stay intact.
+        // https://eaflood.atlassian.net/browse/AMCR-157
+        var orgHasApprovedAp = _accountsDbContext.Enrolments
+            .Any(e => e.Connection.Organisation.ExternalId == organisationId
+                   && e.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id
+                   && e.EnrolmentStatusId == EnrolmentStatus.Approved);
+
+        if (!orgHasApprovedAp)
+        {
+            SoftDeleteOrganisation(organisationId);
+            SetDefaultUserIdForRejectedApprovedPerson(enrolment);
+        }
 
         await _accountsDbContext.SaveChangesAsync(userId, organisationId);
         return (true, string.Empty);
