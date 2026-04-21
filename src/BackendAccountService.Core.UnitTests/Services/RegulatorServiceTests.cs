@@ -43,6 +43,10 @@ public class RegulatorServiceTests
     private static readonly Guid ApprovedUserId2 = new Guid("7dd8ea6a-f634-4c43-b87c-1a8cf9aaa501");
     private static readonly Guid BasicUserExternalId1 = new Guid("7dd8ea6a-f634-4c43-b87c-1a8cf9aaa502");
     private static readonly Guid BasicUserExternalId2 = new Guid("7dd8ea6a-f634-4c43-b87c-1a8cf9aaa503");
+    private static readonly Guid ActiveOrgId = new Guid("dc637f21-88ec-4b5d-b206-c19f9eef1df3");
+    private static readonly Guid ActiveOrgPendingApEnrolmentId = new Guid("4f608048-5f2a-4f72-9998-b0bb53ed803f");
+    private static readonly Guid ActiveOrgPendingApUserId = new Guid("3c1ea175-eb2a-4549-8976-3a6b635a06d8");
+    private const string ActiveOrgPendingApEmail = "pending.ap@test.com";
     private static readonly Guid CsOrganisation = Guid.NewGuid();
     private static readonly Guid CsOrganisation2 = Guid.NewGuid();
     private const int PageIndexOne = 1;
@@ -601,6 +605,67 @@ public class RegulatorServiceTests
         Assert.AreSame(ApprovedUser2ProducerEmail, user.Email);
         _dbContext.Users.Any(user1 => user1.UserId == ApprovedUserId2).Should().BeFalse();
         _dbContext.Users.Any(user1 => user1.UserId == RegulatorUserId).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task
+        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_On_Active_Org_Then_Do_Not_Cascade_Delete()
+    {
+        //Act
+        var result = await
+            _regulatorService.UpdateEnrolmentStatusForUserAsync(RegulatorUserId, ActiveOrgId, ActiveOrgPendingApEnrolmentId,
+                RejectedStatus,
+                RejectedComment);
+
+        //Assert
+        result.Succeeded.Should().BeTrue();
+        result.ErrorMessage.Should().BeEmpty();
+
+        var rejectedEnrolment = _dbContext.Enrolments.IgnoreQueryFilters().SingleOrDefault(e =>
+            e.ExternalId == ActiveOrgPendingApEnrolmentId && e.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id
+                                             && e.EnrolmentStatusId == EnrolmentStatus.Rejected
+                                             && e.IsDeleted);
+        rejectedEnrolment.Should().NotBeNull();
+
+        _dbContext.RegulatorComments
+            .SingleOrDefault(e => e.EnrolmentId == rejectedEnrolment.Id && e.RejectedComments.Equals(RejectedComment))
+            .Should().NotBeNull();
+
+        // Organisation must NOT be soft-deleted
+        _dbContext.Organisations
+            .SingleOrDefault(org => org.ExternalId == ActiveOrgId).Should().NotBeNull();
+
+        // Other connections on the org must NOT be soft-deleted
+        _dbContext.PersonOrganisationConnections
+            .Any(con => con.Organisation.ExternalId == ActiveOrgId && !con.IsDeleted).Should().BeTrue();
+
+        // Other enrolments on the org (the existing Approved AP) must NOT be soft-deleted
+        _dbContext.Enrolments
+            .Any(e => e.Connection.Organisation.ExternalId == ActiveOrgId
+                   && e.ServiceRoleId == ServiceRole.Packaging.ApprovedPerson.Id
+                   && e.EnrolmentStatusId == EnrolmentStatus.Approved).Should().BeTrue();
+    }
+
+    [TestMethod]
+    public async Task
+        When_Update_Enrolment_Is_Requested_And_Approved_Person_Is_Rejected_On_Active_Org_Then_Do_Not_Set_UserId_To_Guid_Empty()
+    {
+        //Act
+        var result = await
+            _regulatorService.UpdateEnrolmentStatusForUserAsync(RegulatorUserId, ActiveOrgId, ActiveOrgPendingApEnrolmentId,
+                RejectedStatus,
+                RejectedComment);
+
+        //Assert
+        result.Succeeded.Should().BeTrue();
+        result.ErrorMessage.Should().BeEmpty();
+
+        var user = _dbContext.Users.IgnoreQueryFilters().SingleOrDefault(e => e.UserId == Guid.Empty);
+
+        Assert.IsNull(user);
+
+        // The pending AP's user record should still have its original UserId
+        _dbContext.Users.Any(u => u.UserId == ActiveOrgPendingApUserId).Should().BeTrue();
     }
 
     [TestMethod]
@@ -1667,7 +1732,8 @@ public class RegulatorServiceTests
                     Name = ApprovedPersonApprovedOrgName,
                     OrganisationTypeId = OrganisationType.CompaniesHouseCompany,
                     CompaniesHouseNumber = "77777777",
-                    NationId = Nation.Scotland
+                    NationId = Nation.Scotland,
+                    ExternalId = ActiveOrgId
                 },
                 Person = new()
                 {
@@ -1832,6 +1898,35 @@ public class RegulatorServiceTests
             NationId = Nation.NorthernIreland
         };
         setupContext.ComplianceSchemes.Add(complianceScheme2);
+
+        // Pending AP on an org that already has an Approved AP — tests change-of-AP rejection
+        // Reuses the Scotland org (approvedPersonApprovedEnrolment1) which has an Approved AP
+        var pendingApOnActiveOrg = new Enrolment
+        {
+            EnrolmentStatusId = EnrolmentStatus.Pending,
+            ServiceRoleId = ServiceRole.Packaging.ApprovedPerson.Id,
+            ExternalId = ActiveOrgPendingApEnrolmentId,
+            Connection = new PersonOrganisationConnection
+            {
+                Organisation = approvedPersonApprovedEnrolment1.Connection.Organisation,
+                Person = new()
+                {
+                    FirstName = "Pending",
+                    LastName = "NewAP",
+                    Email = "pending.ap@abc.com",
+                    Telephone = "0123456789",
+                    User = new()
+                    {
+                        UserId = ActiveOrgPendingApUserId,
+                        Email = ActiveOrgPendingApEmail
+                    }
+                },
+                OrganisationRoleId = OrganisationRole.Employer,
+                PersonRoleId = PersonRole.Admin
+            }
+        };
+        setupContext.Enrolments.Add(pendingApOnActiveOrg);
+
         setupContext.SaveChanges(Guid.Empty, Guid.Empty);
     }
 
