@@ -160,8 +160,8 @@ public class RegulatorService : ServiceBase, IRegulatorService
             return (true, string.Empty);
         }
 
-        SoftDeleteOrganisation(organisationId);
-        SetDefaultUserIdForRejectedApprovedPerson(enrolment);
+        // SoftDeleteOrganisation(organisationId);
+        // SetDefaultUserIdForRejectedApprovedPerson(enrolment);
 
         await _accountsDbContext.SaveChangesAsync(userId, organisationId);
         return (true, string.Empty);
