@@ -802,6 +802,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
                where n.Id == nationId
                      && o.Name.ToLower().Contains(query.ToLower())
                      && o.NationId != nationId
+                     && !o.IsDeleted
                group o by new
                {
                    o.ReferenceNumber,
