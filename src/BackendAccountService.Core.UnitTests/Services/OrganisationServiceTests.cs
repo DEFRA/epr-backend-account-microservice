@@ -581,7 +581,7 @@ public class OrganisationServiceTests
         Assert.AreEqual(showPerPage, result.Items.Count);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result.Items[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result.Items[1].OrganisationName);
-        Assert.HasCount(21, result.SearchTerms);
+        Assert.HasCount(22, result.SearchTerms);
     }
 
     [TestMethod]
@@ -602,7 +602,7 @@ public class OrganisationServiceTests
         Assert.AreEqual(showPerPage, result.Items.Count);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 1", result.Items[0].OrganisationName);
         Assert.AreEqual("Child Subsidiary Organisation 1 For Producer Organisation 3", result.Items[1].OrganisationName);
-        Assert.HasCount(21, result.SearchTerms);
+        Assert.HasCount(22, result.SearchTerms);
     }
 
     [TestMethod]
