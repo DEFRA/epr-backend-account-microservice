@@ -295,6 +295,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
                                  {
                                      OrganisationName = sub.Name,
                                      OrganisationNumber = sub.ReferenceNumber,
+                                     ParentOrganisationNumber = o.ReferenceNumber,
                                      CompaniesHouseNumber = sub.CompaniesHouseNumber
                                  }).Distinct()
                                  .ToListAsync();
@@ -305,7 +306,7 @@ public class OrganisationService : ServiceBase, IOrganisationService
             CurrentPage = page,
             TotalItems = await relationshipsQuery.CountAsync(),
             PageSize = showPerPage,
-            SearchTerms = searchTerms.SelectMany(x => new[] { x.OrganisationNumber, x.OrganisationName, x.CompaniesHouseNumber })
+            SearchTerms = searchTerms.SelectMany(x => new[] { x.ParentOrganisationNumber, x.OrganisationNumber, x.OrganisationName, x.CompaniesHouseNumber })
                 .Where(x => !string.IsNullOrEmpty(x))
                 .OrderBy(x => x)
                 .Distinct()
@@ -710,12 +711,14 @@ public class OrganisationService : ServiceBase, IOrganisationService
                    search == null ||
                    EF.Functions.Like(sub.Name.ToLower(), $"%{search}%") ||
                    EF.Functions.Like(sub.ReferenceNumber, $"%{search}%") ||
-                   EF.Functions.Like(sub.CompaniesHouseNumber.ToLower(), $"%{search}%")
+                   EF.Functions.Like(sub.CompaniesHouseNumber.ToLower(), $"%{search}%") ||
+                   EF.Functions.Like(o.ReferenceNumber, $"%{search}%")
                )
                orderby sub.Name
                select new RelationshipResponseModel()
                {
                    ParentOrganisationExternalId = o.ExternalId,
+                   ParentOrganisationNumber = o.ReferenceNumber,
                    OrganisationName = sub.Name,
                    OrganisationNumber = sub.ReferenceNumber,
                    RelationshipType = ort.Name,
