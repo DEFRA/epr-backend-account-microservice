@@ -1,15 +1,6 @@
-﻿# This is for building the docker base on a host machine behind a Corporate proxy or VPN
-# we need to add in the corporate certificate chain
-# e.g. Kainos developers will need the Kainos ZScaler trusted certificate
-FROM defradigital/dotnetcore:dotnet8.0 AS base
+﻿FROM defradigital/dotnetcore:dotnet8.0 AS base
 USER root
 
-ARG TRUSTED_CERT
-COPY ${TRUSTED_CERT} /usr/local/share/ca-certificates
-RUN update-ca-certificates
-
-# Installs globalization tools and sets common environment settings
-#FROM base-with-trusted-cert-${ADD_TRUSTED_CERT} AS configured-base
 RUN apk add icu-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
 
