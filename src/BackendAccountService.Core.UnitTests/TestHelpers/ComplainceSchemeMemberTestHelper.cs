@@ -2,7 +2,7 @@ namespace BackendAccountService.Core.UnitTests.TestHelpers;
 
 using Data.Entities;
 using Data.Infrastructure;
-using FluentAssertions.Equivalency;
+using AwesomeAssertions.Equivalency;
 
 public static class ComplainceSchemeMemberTestHelper
 {

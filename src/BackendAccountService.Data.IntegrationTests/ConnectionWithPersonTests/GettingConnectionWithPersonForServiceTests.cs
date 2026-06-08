@@ -4,7 +4,7 @@ using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
 using Castle.Core.Logging;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

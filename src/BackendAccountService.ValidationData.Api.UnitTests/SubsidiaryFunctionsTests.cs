@@ -1,6 +1,6 @@
 ﻿using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

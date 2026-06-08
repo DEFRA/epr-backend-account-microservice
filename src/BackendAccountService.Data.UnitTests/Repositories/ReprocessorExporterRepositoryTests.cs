@@ -1,7 +1,7 @@
 ﻿using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.Repositories;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using System;

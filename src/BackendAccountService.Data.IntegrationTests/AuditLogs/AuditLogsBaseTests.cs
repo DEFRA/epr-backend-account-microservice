@@ -1,7 +1,7 @@
 using System.Text.Json;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
