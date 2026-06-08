@@ -6,7 +6,6 @@ src/BackendAccountService.Data.LaTestSeeder/appsettings.json:CSCAN0092 / CSCAN00
 src/docker-compose.laps.yml:CSCAN0092 / CSCAN0043:25
 55545c04aa8f4eb5fb8bb8caaf1ef4a551c1731e:src/docker-compose.yml:CSCAN0092 / CSCAN0043:13
 src/docker-compose.yml:CSCAN0092 / CSCAN0043:13
-
 7b088f5a9a66ca05ad3ac15fb4c2797c4b989809:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:174
 28f1f2a962d805529ce343d7122c55e431189784:pipelines/vars/DEV16-development.yaml:generic-api-key:10
 0dd64b4834865fbabcc309ca1a30bf374e184731:pipelines/vars/DEV16-development.yaml:generic-api-key:10
@@ -89,3 +88,5 @@ fae6f50652343ff4b2b8387f005fa422417ae58b:pipelines/vars/DEV16-development.yaml:g
 fae6f50652343ff4b2b8387f005fa422417ae58b:pipelines/vars/DEV12-development.yaml:generic-api-key:10
 fae6f50652343ff4b2b8387f005fa422417ae58b:src/BackendAccountService.Core.UnitTests/Services/UserServiceTests.cs:generic-api-key:188
 384d4fdff08fc6ba4560e9da02f9821696f05638:src/BackendAccountService.Api/appsettings.Development.json:CSCAN0092 / CSCAN0043:9
+src/BackendAccountService.Api/Properties/launchSettings.json:CSCAN0092 / CSCAN0043:45
+47975699e04f760d6a7e5b191841946762d37c0d:src/BackendAccountService.Api/Properties/launchSettings.json:CSCAN0092 / CSCAN0043:45
