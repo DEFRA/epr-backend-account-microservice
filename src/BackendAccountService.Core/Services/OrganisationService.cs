@@ -281,6 +281,29 @@ public class OrganisationService : ServiceBase, IOrganisationService
         return OrganisationMappings.GetOrganisationResponseModel(organisation);
     }
 
+    public async Task<OrganisationsByExternalIdsResponse> GetOrganisationsByExternalIdsAsync(IList<Guid> externalIds)
+    {
+        var distinctIds = externalIds.Distinct().ToList();
+
+        var found = await _accountsDbContext.Organisations
+            .Where(org => distinctIds.Contains(org.ExternalId))
+            .Select(org => new OrganisationLookupModel
+            {
+                ExternalId = org.ExternalId,
+                Name = org.Name
+            })
+            .ToListAsync();
+
+        var foundIds = found.Select(o => o.ExternalId).ToHashSet();
+        var notFound = distinctIds.Where(id => !foundIds.Contains(id)).ToList();
+
+        return new OrganisationsByExternalIdsResponse
+        {
+            Organisations = found,
+            NotFoundExternalIds = notFound
+        };
+    }
+
     public async Task<PagedOrganisationRelationshipsResponse> GetPagedOrganisationRelationships(int page, int showPerPage, string search = null)
     {
         var relationshipsQuery = GetOrganisationRelationshipsQuery(search);

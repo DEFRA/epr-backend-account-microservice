@@ -134,6 +134,27 @@ public class OrganisationsController : ApiControllerBase
         }
     }
 
+    [HttpPost]
+    [Route("organisations-by-externalIds")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(OrganisationsByExternalIdsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrganisationsByExternalIdsAsync(
+        [BindRequired, FromBody] OrganisationsByExternalIdsRequestModel request)
+    {
+        if (request?.ExternalIds is null || request.ExternalIds.Count == 0)
+        {
+            return ValidationProblem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "At least one external id must be supplied.",
+                type: "externalIds/empty");
+        }
+
+        var result = await _organisationService.GetOrganisationsByExternalIdsAsync(request.ExternalIds);
+
+        return Ok(result);
+    }
+
     [HttpGet]
     [Route("organisation-by-invite-token")]
     [ProducesResponseType(typeof(ApprovedPersonOrganisationModel), StatusCodes.Status200OK)]

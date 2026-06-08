@@ -29,6 +29,8 @@ namespace BackendAccountService.Core.Services
 
         Task<OrganisationResponseModel> GetOrganisationResponseByExternalId(Guid organisationExternalId);
 
+        Task<OrganisationsByExternalIdsResponse> GetOrganisationsByExternalIdsAsync(IList<Guid> externalIds);
+
         Task<OrganisationResponseModel> GetOrganisationResponseByReferenceNumber(string organisationRefNumber);
 
         Task<PaginatedResponse<OrganisationSearchResult>> GetOrganisationsBySearchTerm(string query, int nationId, int pageSize, int page);

@@ -320,6 +320,67 @@ public class OrganisationServiceTests
     }
 
     [TestMethod]
+    public async Task GetOrganisationsByExternalIdsAsync_WhenAllIdsFound_ReturnsAllNamesAndEmptyNotFound()
+    {
+        // Act
+        var result = await _organisationService.GetOrganisationsByExternalIdsAsync(
+            new List<Guid> { organisation101ExternalId, organisation102ExternalId });
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Organisations.Should().HaveCount(2);
+        result.Organisations.Should().Contain(o => o.ExternalId == organisation101ExternalId && o.Name == "Name101");
+        result.Organisations.Should().Contain(o => o.ExternalId == organisation102ExternalId && o.Name == "Name102");
+        result.NotFoundExternalIds.Should().BeEmpty();
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIdsAsync_WhenSomeIdsMissing_ReturnsFoundAndNotFound()
+    {
+        // Arrange
+        var missingId = Guid.NewGuid();
+
+        // Act
+        var result = await _organisationService.GetOrganisationsByExternalIdsAsync(
+            new List<Guid> { organisation101ExternalId, missingId });
+
+        // Assert
+        result.Organisations.Should().ContainSingle()
+            .Which.Should().Match<Core.Models.Responses.OrganisationLookupModel>(
+                o => o.ExternalId == organisation101ExternalId && o.Name == "Name101");
+        result.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missingId });
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIdsAsync_WhenNoIdsFound_ReturnsEmptyFoundAndAllInNotFound()
+    {
+        // Arrange
+        var missing1 = Guid.NewGuid();
+        var missing2 = Guid.NewGuid();
+
+        // Act
+        var result = await _organisationService.GetOrganisationsByExternalIdsAsync(
+            new List<Guid> { missing1, missing2 });
+
+        // Assert
+        result.Organisations.Should().BeEmpty();
+        result.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missing1, missing2 });
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIdsAsync_WhenDuplicateIdsRequested_DeduplicatesResults()
+    {
+        // Act
+        var result = await _organisationService.GetOrganisationsByExternalIdsAsync(
+            new List<Guid> { organisation101ExternalId, organisation101ExternalId });
+
+        // Assert
+        result.Organisations.Should().ContainSingle()
+            .Which.ExternalId.Should().Be(organisation101ExternalId);
+        result.NotFoundExternalIds.Should().BeEmpty();
+    }
+
+    [TestMethod]
     public async Task WhenAddOrganisationAndOrganisationRelationshipsAsync_ThenReturnCorrectValues()
     {
         var org = new Models.OrganisationModel
