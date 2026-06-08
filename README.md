@@ -65,7 +65,9 @@ dotnet test src/BackendAccountService.sln
 
 **Unit tests** — `BackendAccountService.{Api,Core,Data,ValidationData.Api}.UnitTests`. xUnit, no external dependencies.
 
-**Integration tests** — `BackendAccountService.Data.IntegrationTests` exercises `AccountsDbContext` against a Testcontainers-managed `mcr.microsoft.com/mssql/server:2025-latest` instance (see `Containers/AzureSqlDbContainer.cs`). Needs Docker. Each test class starts and tears down its own SQL container, so the full suite takes **several minutes** to run.
+**Data integration tests** — `BackendAccountService.Data.IntegrationTests` exercises `AccountsDbContext` and its query extensions (soft-delete filter, audit logs, etc.) against a real SQL Server. Controllers are instantiated directly here (no HTTP); see the outside-in project below for the HTTP surface. Needs Docker — one `mcr.microsoft.com/mssql/server:2025-latest` container boots once for the assembly run, each test class gets its own isolated database within it (`Containers/AzureSqlDbContainer.cs`).
+
+**Outside-in integration tests** — `BackendAccountService.IntegrationTests` hosts the API in-process via `WebApplicationFactory<Program>` and sends real HTTP requests, asserting on the deserialised JSON response. Proves the wire contract — routing, model binding, middleware, status codes, JSON shape — that the data project can't see. Also needs Docker; one Testcontainers SQL instance per test class. See [its README](src/BackendAccountService.IntegrationTests/README.md) for the project shape and how it differs from the data tests.
 
 ## Database migrations
 
