@@ -213,6 +213,106 @@ public class OrganisationControllerTests
     }
 
     [TestMethod]
+    public async Task GetOrganisationsByExternalIds_WhenIdsResolve_ReturnsOk()
+    {
+        // Arrange
+        var id1 = Guid.NewGuid();
+        var id2 = Guid.NewGuid();
+        var request = new OrganisationsByExternalIdsRequestModel { ExternalIds = new List<Guid> { id1, id2 } };
+        var serviceResponse = new OrganisationsByExternalIdsResponse
+        {
+            Organisations = new List<OrganisationLookupModel>
+            {
+                new() { ExternalId = id1, Name = "Org One" },
+                new() { ExternalId = id2, Name = "Org Two" }
+            },
+            NotFoundExternalIds = new List<Guid>()
+        };
+        _organisationServiceMock
+            .Setup(s => s.GetOrganisationsByExternalIdsAsync(request.ExternalIds))
+            .ReturnsAsync(serviceResponse);
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByExternalIdsAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        result.Value.Should().BeSameAs(serviceResponse);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIds_WhenSomeIdsNotFound_ReturnsOkWithPartialResults()
+    {
+        // Arrange
+        var foundId = Guid.NewGuid();
+        var missingId = Guid.NewGuid();
+        var request = new OrganisationsByExternalIdsRequestModel { ExternalIds = new List<Guid> { foundId, missingId } };
+        var serviceResponse = new OrganisationsByExternalIdsResponse
+        {
+            Organisations = new List<OrganisationLookupModel>
+            {
+                new() { ExternalId = foundId, Name = "Org Found" }
+            },
+            NotFoundExternalIds = new List<Guid> { missingId }
+        };
+        _organisationServiceMock
+            .Setup(s => s.GetOrganisationsByExternalIdsAsync(request.ExternalIds))
+            .ReturnsAsync(serviceResponse);
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByExternalIdsAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        var payload = result.Value as OrganisationsByExternalIdsResponse;
+        payload!.Organisations.Should().ContainSingle(o => o.ExternalId == foundId);
+        payload.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missingId });
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIds_WhenAllIdsNotFound_ReturnsOkWithEmptyOrganisations()
+    {
+        // Arrange
+        var request = new OrganisationsByExternalIdsRequestModel { ExternalIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() } };
+        _organisationServiceMock
+            .Setup(s => s.GetOrganisationsByExternalIdsAsync(request.ExternalIds))
+            .ReturnsAsync(new OrganisationsByExternalIdsResponse
+            {
+                Organisations = new List<OrganisationLookupModel>(),
+                NotFoundExternalIds = request.ExternalIds.ToList()
+            });
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByExternalIdsAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        var payload = result.Value.Should().BeOfType<OrganisationsByExternalIdsResponse>().Subject;
+        payload.Organisations.Should().BeEmpty();
+        payload.NotFoundExternalIds.Should().BeEquivalentTo(request.ExternalIds);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByExternalIds_WhenEmptyList_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new OrganisationsByExternalIdsRequestModel { ExternalIds = new List<Guid>() };
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByExternalIdsAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        _organisationServiceMock.Verify(
+            s => s.GetOrganisationsByExternalIdsAsync(It.IsAny<IList<Guid>>()),
+            Times.Never);
+    }
+
+    [TestMethod]
     public async Task GetOrganisationByInviteTokenAsync_returns_nocontent_if_no_org()
     {
         var token = "sometokenstring";

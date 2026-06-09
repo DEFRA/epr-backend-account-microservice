@@ -1,7 +1,7 @@
 using BackendAccountService.Core.Helpers;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Data.Entities;
-using FluentAssertions;
+using AwesomeAssertions;
 
 namespace BackendAccountService.Core.UnitTests.Helpers;
 

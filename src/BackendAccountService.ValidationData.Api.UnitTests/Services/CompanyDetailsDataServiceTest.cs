@@ -2,7 +2,7 @@
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
-using FluentAssertions;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

@@ -49,3 +49,6 @@ app.MapHealthChecks(
     HealthCheckOptionBuilder.Build()).AllowAnonymous();
 
 app.Run();
+
+// Exposed to BackendAccountService.IntegrationTests so WebApplicationFactory<Program> can host the API in-process.
+public partial class Program;
