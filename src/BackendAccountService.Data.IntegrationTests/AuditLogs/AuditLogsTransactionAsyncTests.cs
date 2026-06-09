@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class AuditLogsTransactionAsyncTests : AuditLogsBaseTests
 {

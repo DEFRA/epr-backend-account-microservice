@@ -17,6 +17,7 @@ using System.Net;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers
 {
+    [TestCategory("IntegrationTest")]
     [TestClass]
     public class DelegatedPersonEnrolmentsControllerTests
     {

@@ -12,6 +12,7 @@ using BackendAccountService.Core.Models.Responses;
 
 namespace BackendAccountService.Data.IntegrationTests.Services;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class ComplianceSchemeMembershipTests
 {

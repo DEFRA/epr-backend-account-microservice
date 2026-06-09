@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 [TestCategory("Nominating Delegated Person")]
 public class NominateToDelegatedPersonTests

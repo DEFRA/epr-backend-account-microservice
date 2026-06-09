@@ -17,6 +17,7 @@ using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class NotificationsControllerTests
 {

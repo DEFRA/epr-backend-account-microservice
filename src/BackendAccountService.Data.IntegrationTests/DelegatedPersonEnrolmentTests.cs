@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class DelegatedPersonEnrolmentTests
 {

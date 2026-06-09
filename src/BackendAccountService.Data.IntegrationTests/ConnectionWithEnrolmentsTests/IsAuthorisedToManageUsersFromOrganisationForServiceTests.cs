@@ -11,6 +11,7 @@ using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
+    [TestCategory("IntegrationTest")]
     [TestClass]
     public class IsAuthorisedToManageUsersFromOrganisationForServiceTests
     {

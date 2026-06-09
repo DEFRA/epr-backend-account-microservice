@@ -12,6 +12,7 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
+    [TestCategory("IntegrationTest")]
     [TestClass]
     public class UpdatePersonRoleTests
     {

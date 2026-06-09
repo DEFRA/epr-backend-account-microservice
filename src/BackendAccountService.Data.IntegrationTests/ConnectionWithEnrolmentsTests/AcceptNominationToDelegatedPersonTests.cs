@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
+    [TestCategory("IntegrationTest")]
     [TestClass]
     public class AcceptNominationToDelegatedPersonTests
     {

@@ -28,6 +28,7 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers;
 /// We can't have the luxury of fully comprehensive, single check integration tests, like we can with unit tests,
 /// as the integration tests take longer to run, so we cover the important aspects and sometimes combine multiple checks into a single test.
 /// </remarks>
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class ReprocessorExporterAccountsControllerTests
 {

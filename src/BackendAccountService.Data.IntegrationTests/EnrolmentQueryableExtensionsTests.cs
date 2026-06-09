@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 
 public class EnrolmentQueryableExtensionsTests

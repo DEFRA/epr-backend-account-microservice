@@ -11,6 +11,7 @@ using EnrolmentStatus = BackendAccountService.Core.Models.EnrolmentStatus;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
+    [TestCategory("IntegrationTest")]
     [TestClass]
     public class GettingConnectionWithEnrolmentsFromOrganisationForServiceTests
     {

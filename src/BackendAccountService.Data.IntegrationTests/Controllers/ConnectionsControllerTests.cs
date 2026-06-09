@@ -18,6 +18,7 @@ using Moq;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers;
 
+[TestCategory("IntegrationTest")]
 [TestClass]
 public class ConnectionsControllerTests
 {
