@@ -15,7 +15,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackendAccountService.Api",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{91DF3911-1801-4495-8B42-2BE2DA0BDB1E}"
 	ProjectSection(SolutionItems) = preProject
-		..\README.md = ..\README.md
+		../.gitignore = ../.gitignore
+		../.gitleaksignore = ../.gitleaksignore
+		../.tool-versions = ../.tool-versions
+		../AGENTS.md = ../AGENTS.md
+		../CLAUDE.md = ../CLAUDE.md
+		../CONTRIBUTING.md = ../CONTRIBUTING.md
+		../LICENCE.md = ../LICENCE.md
+		../README.md = ../README.md
+		../CODEOWNERS = ../CODEOWNERS
+		../Makefile = ../Makefile
+		../Directory.Build.props = ../Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{D7D9D14C-1C3F-41E5-B9E4-84683CF33786}"
@@ -30,12 +40,80 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BackendAccountService.Valid
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendAccountService.Data.UnitTests", "BackendAccountService.Data.UnitTests\BackendAccountService.Data.UnitTests.csproj", "{3ACBF581-C955-47EE-858E-4429D418117D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prompts", "prompts", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendAccountService.IntegrationTests", "BackendAccountService.IntegrationTests\BackendAccountService.IntegrationTests.csproj", "{9CD1AA55-AEA3-4932-996E-13D0160BC70B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{9EA53BB0-5A69-449A-A5FB-EFD9B32E0C2B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prompts", "prompts", "{0121189E-9EDB-4430-8AE4-FB9A973E1CBB}"
 	ProjectSection(SolutionItems) = preProject
-		..\.github\prompts\tests.prompt.md = ..\.github\prompts\tests.prompt.md
+		../.github\prompts\tests.prompt.md = ../.github\prompts\tests.prompt.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BackendAccountService.IntegrationTests", "BackendAccountService.IntegrationTests\BackendAccountService.IntegrationTests.csproj", "{9CD1AA55-AEA3-4932-996E-13D0160BC70B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "buildscripts", "buildscripts", "{6B66FC6D-88C5-4F6F-BDA3-7865095D6CB5}"
+	ProjectSection(SolutionItems) = preProject
+		../buildscripts\run-laps.sh = ../buildscripts\run-laps.sh
+		../buildscripts\util.make = ../buildscripts\util.make
+		../buildscripts\run.sh = ../buildscripts\run.sh
+		../buildscripts\unit-tests.sh = ../buildscripts\unit-tests.sh
+		../buildscripts\all-tests.sh = ../buildscripts\all-tests.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{E4902B45-1BB8-464D-ACDC-C27D673343B7}"
+	ProjectSection(SolutionItems) = preProject
+		../pipelines\deployment-pipeline.yaml = ../pipelines\deployment-pipeline.yaml
+		../pipelines\deployment-pipeline-validation-data-api.yaml = ../pipelines\deployment-pipeline-validation-data-api.yaml
+		../pipelines\Initialise-SQL-db.yaml = ../pipelines\Initialise-SQL-db.yaml
+		../pipelines\azure-pipelines.yml = ../pipelines\azure-pipelines.yml
+		../pipelines\azure-pipelines-validation-data-api.yml = ../pipelines\azure-pipelines-validation-data-api.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vars", "vars", "{06C87F45-B080-4EF3-8C7F-950887593194}"
+	ProjectSection(SolutionItems) = preProject
+		../pipelines\vars\DEV10-development.yaml = ../pipelines\vars\DEV10-development.yaml
+		../pipelines\vars\Team-Laps-tst.yaml = ../pipelines\vars\Team-Laps-tst.yaml
+		../pipelines\vars\DEV6-development.yaml = ../pipelines\vars\DEV6-development.yaml
+		../pipelines\vars\preprod2.yaml = ../pipelines\vars\preprod2.yaml
+		../pipelines\vars\DEV4-development.yaml = ../pipelines\vars\DEV4-development.yaml
+		../pipelines\vars\tst.yaml = ../pipelines\vars\tst.yaml
+		../pipelines\vars\DEV13-development.yaml = ../pipelines\vars\DEV13-development.yaml
+		../pipelines\vars\preprod.yaml = ../pipelines\vars\preprod.yaml
+		../pipelines\vars\DEV11-development.yaml = ../pipelines\vars\DEV11-development.yaml
+		../pipelines\vars\DEV7-development.yaml = ../pipelines\vars\DEV7-development.yaml
+		../pipelines\vars\DEV14-development.yaml = ../pipelines\vars\DEV14-development.yaml
+		../pipelines\vars\DEV2-development.yaml = ../pipelines\vars\DEV2-development.yaml
+		../pipelines\vars\DEV12-development.yaml = ../pipelines\vars\DEV12-development.yaml
+		../pipelines\vars\DEV15.yaml = ../pipelines\vars\DEV15.yaml
+		../pipelines\vars\DEV8-development.yaml = ../pipelines\vars\DEV8-development.yaml
+		../pipelines\vars\DEV3-development.yaml = ../pipelines\vars\DEV3-development.yaml
+		../pipelines\vars\prod.yaml = ../pipelines\vars\prod.yaml
+		../pipelines\vars\DEV1-development.yaml = ../pipelines\vars\DEV1-development.yaml
+		../pipelines\vars\DEV9-development.yaml = ../pipelines\vars\DEV9-development.yaml
+		../pipelines\vars\DEV16-development.yaml = ../pipelines\vars\DEV16-development.yaml
+		../pipelines\vars\Team-Laps-development.yaml = ../pipelines\vars\Team-Laps-development.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "laps-epl", "laps-epl", "{51EB7A6C-6DD1-4AEB-9C78-98605475E6D3}"
+	ProjectSection(SolutionItems) = preProject
+		../pipelines\vars\laps-epl\oscar-development.yaml = ../pipelines\vars\laps-epl\oscar-development.yaml
+		../pipelines\vars\laps-epl\oscar-test.yaml = ../pipelines\vars\laps-epl\oscar-test.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "release-notes", "release-notes", "{B9861A6F-B03C-4D9B-8150-FACBB594E920}"
+	ProjectSection(SolutionItems) = preProject
+		../pipelines\release-notes\README.md = ../pipelines\release-notes\README.md
+		../pipelines\release-notes\cliff.toml = ../pipelines\release-notes\cliff.toml
+		../pipelines\release-notes\generate-release-notes.sh = ../pipelines\release-notes\generate-release-notes.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "laps", "laps", "{40DFAC28-10EB-4775-8EEC-5F20E6662865}"
+	ProjectSection(SolutionItems) = preProject
+		../pipelines\laps\laps-deployment-pipeline.yaml = ../pipelines\laps\laps-deployment-pipeline.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postman", "postman", "{CDF42135-DB5E-4C6B-B424-67B338D56CC5}"
+	ProjectSection(SolutionItems) = preProject
+		../postman\Account Service.postman_collection.json = ../postman\Account Service.postman_collection.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -96,5 +174,16 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {589F50BB-7D18-4A4E-8E83-EB3658B62218}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9EA53BB0-5A69-449A-A5FB-EFD9B32E0C2B} = {91DF3911-1801-4495-8B42-2BE2DA0BDB1E}
+		{6B66FC6D-88C5-4F6F-BDA3-7865095D6CB5} = {91DF3911-1801-4495-8B42-2BE2DA0BDB1E}
+		{E4902B45-1BB8-464D-ACDC-C27D673343B7} = {91DF3911-1801-4495-8B42-2BE2DA0BDB1E}
+		{CDF42135-DB5E-4C6B-B424-67B338D56CC5} = {91DF3911-1801-4495-8B42-2BE2DA0BDB1E}
+		{0121189E-9EDB-4430-8AE4-FB9A973E1CBB} = {9EA53BB0-5A69-449A-A5FB-EFD9B32E0C2B}
+		{06C87F45-B080-4EF3-8C7F-950887593194} = {E4902B45-1BB8-464D-ACDC-C27D673343B7}
+		{B9861A6F-B03C-4D9B-8150-FACBB594E920} = {E4902B45-1BB8-464D-ACDC-C27D673343B7}
+		{40DFAC28-10EB-4775-8EEC-5F20E6662865} = {E4902B45-1BB8-464D-ACDC-C27D673343B7}
+		{51EB7A6C-6DD1-4AEB-9C78-98605475E6D3} = {06C87F45-B080-4EF3-8C7F-950887593194}
 	EndGlobalSection
 EndGlobal
