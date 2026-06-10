@@ -8,17 +8,17 @@ namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
 
 public abstract class AuditLogsBaseTests
 {
-    protected static readonly Guid UserCreatingEnrolment = Guid.NewGuid();
-    protected static readonly Guid OrganisationCreatingEnrolment = Guid.NewGuid();
-    protected static readonly Guid UserRejectingEnrolment = Guid.NewGuid();
-    protected static readonly Guid OrganisationRejectingEnrolment = Guid.NewGuid();
-    protected static readonly Guid UserDeletingEnrolment = Guid.NewGuid();
-    protected static readonly Guid OrganisationDeletingEnrolment = Guid.NewGuid();
+    internal static readonly Guid UserCreatingEnrolment = Guid.NewGuid();
+    internal static readonly Guid OrganisationCreatingEnrolment = Guid.NewGuid();
+    internal static readonly Guid UserRejectingEnrolment = Guid.NewGuid();
+    internal static readonly Guid OrganisationRejectingEnrolment = Guid.NewGuid();
+    internal static readonly Guid UserDeletingEnrolment = Guid.NewGuid();
+    internal static readonly Guid OrganisationDeletingEnrolment = Guid.NewGuid();
 
     protected DbContextOptions<AccountsDbContext> Options = null!;
     protected Enrolment Enrolment = null!;
 
-    protected static Enrolment CreateEnrolment() => new()
+    internal static Enrolment CreateAuditEnrolment() => new()
     {
         Connection = new PersonOrganisationConnection
         {
@@ -55,7 +55,7 @@ public abstract class AuditLogsBaseTests
         EnrolmentStatusId = DbConstants.EnrolmentStatus.Pending
     };
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldSetTimeStamps()
     {
         await using var context = new AccountsDbContext(Options);
@@ -66,7 +66,7 @@ public abstract class AuditLogsBaseTests
         organisation.LastUpdatedOn.Should().BeCloseTo(DateTimeOffset.Now, TimeSpan.FromMinutes(1));
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldCreateAddedAuditLogs()
     {
         await using var context = new AccountsDbContext(Options);
@@ -83,7 +83,7 @@ public abstract class AuditLogsBaseTests
             .And.ContainSingle(log => log.Entity == "User");
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldCreateModifiedAuditLogs()
     {
         await using var context = new AccountsDbContext(Options);
@@ -96,7 +96,7 @@ public abstract class AuditLogsBaseTests
             .And.ContainSingle(log => log.Entity == "Enrolment");
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldCreateDeletedAuditLogs()
     {
         await using var context = new AccountsDbContext(Options);
@@ -109,7 +109,7 @@ public abstract class AuditLogsBaseTests
             .And.ContainSingle(log => log.Entity == "Enrolment");
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldSetPropertiesForAddedAuditLog()
     {
         await using var context = new AccountsDbContext(Options);
@@ -139,7 +139,7 @@ public abstract class AuditLogsBaseTests
         newPerson.ExternalId.Should().Be(Enrolment.Connection.Person.ExternalId);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldSetPropertiesForModifiedAuditLog()
     {
         await using var context = new AccountsDbContext(Options);
@@ -177,7 +177,7 @@ public abstract class AuditLogsBaseTests
         changes.Should().Contain("EnrolmentStatusId");
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AccountsDbContext_SaveChangesAsync_ShouldSetPropertiesForDeletedAuditLog()
     {
         await using var context = new AccountsDbContext(Options);

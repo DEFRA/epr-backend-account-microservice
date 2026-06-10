@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Models.Mappings;
+using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
 using BackendAccountService.Data.Infrastructure;
@@ -11,33 +11,25 @@ using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
-    [TestCategory("IntegrationTest")]
-    [TestClass]
-    public class IsAuthorisedToManageUsersFromOrganisationForServiceTests
+    [Collection(SharedSqlCollection.Name)]
+    [Trait("Category", "IntegrationTest")]
+    public class IsAuthorisedToManageUsersFromOrganisationForServiceTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
     {
-        private static AzureSqlDbContainer _database = null!;
+        private readonly PerClassDbFixture _db;
 
         private AccountsDbContext _context = null!;
         private ValidationService _validationService = null!;
 
-        [ClassInitialize]
-        public static async Task TestFixtureSetup(TestContext _)
+        public IsAuthorisedToManageUsersFromOrganisationForServiceTests(PerClassDbFixture db)
         {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync();
+            _db = db;
         }
 
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-        public static async Task TestFixtureTearDown()
-        {
-            await _database.StopAsync();
-        }
-
-        [TestInitialize]
-        public async Task Setup()
+        public async Task InitializeAsync()
         {
             _context = new AccountsDbContext(
                 new DbContextOptionsBuilder<AccountsDbContext>()
-                    .UseSqlServer(_database.ConnectionString)
+                    .UseSqlServer(_db.ConnectionString)
                     .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                     .EnableSensitiveDataLogging()
                     .Options);
@@ -47,7 +39,9 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             _validationService = new ValidationService(_context, new Mock<ILogger<ValidationService>>().Object);
         }
 
-        [TestMethod]
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        [Fact]
         public async Task WhenUserIsApprovedPerson_ThenTheyCanManageTheirOwnUsers()
         {
             await using var context = _context;
@@ -64,7 +58,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             canManageOwnUsers.Should().BeTrue();
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenUserIsApprovedPerson_ThenTheyCannotManageUsersFromOtherOrganisations()
         {
             await using var context = _context;
@@ -83,7 +77,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             canManageOwnUsers.Should().BeFalse();
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenUserIsApprovedPerson_ThenTheyCannotManageUsersForOtherServices()
         {
             await using var context = _context;
@@ -100,10 +94,10 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             canManageOwnUsers.Should().BeFalse();
         }
 
-        [DataRow(DbConstants.EnrolmentStatus.Enrolled)]
-        [DataRow(DbConstants.EnrolmentStatus.Pending)]
-        [DataRow(DbConstants.EnrolmentStatus.Approved)]
-        [TestMethod]
+        [Theory]
+        [InlineData(DbConstants.EnrolmentStatus.Enrolled)]
+        [InlineData(DbConstants.EnrolmentStatus.Pending)]
+        [InlineData(DbConstants.EnrolmentStatus.Approved)]
         public async Task WhenEnrolmentStatusOfApprovedPersonIsAppropriate_ThenTheyCanManageTheirUsers(int authorisedToManageEnrolmentStatus)
         {
             await using var context = _context;
@@ -124,10 +118,10 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             canManageOwnUsers.Should().BeTrue();
         }
 
-        [DataRow(DbConstants.EnrolmentStatus.NotSet)]
-        [DataRow(DbConstants.EnrolmentStatus.Invited)]
-        [DataRow(DbConstants.EnrolmentStatus.Rejected)]
-        [TestMethod]
+        [Theory]
+        [InlineData(DbConstants.EnrolmentStatus.NotSet)]
+        [InlineData(DbConstants.EnrolmentStatus.Invited)]
+        [InlineData(DbConstants.EnrolmentStatus.Rejected)]
         public async Task WhenEnrolmentStatusOfApprovedPersonIsInappropriate_ThenTheyCannotManageTheirUsers(int authorisedToManageEnrolmentStatus)
         {
             await using var context = _context;

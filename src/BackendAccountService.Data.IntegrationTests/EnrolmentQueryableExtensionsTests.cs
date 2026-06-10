@@ -2,24 +2,27 @@ using System.Diagnostics;
 using BackendAccountService.Data.Extensions;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
+using AwesomeAssertions;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
-[TestCategory("IntegrationTest")]
-[TestClass]
-
-public class EnrolmentQueryableExtensionsTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class EnrolmentQueryableExtensionsTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    private readonly PerClassDbFixture _db;
+    private DbContextOptions<AccountsDbContext> _options = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public EnrolmentQueryableExtensionsTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
+    }
+
+    public async Task InitializeAsync()
+    {
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString!)
+            .UseSqlServer(_db.ConnectionString)
             .LogTo(message => Debug.WriteLine(message))
             .EnableSensitiveDataLogging()
             .Options;
@@ -28,13 +31,9 @@ public class EnrolmentQueryableExtensionsTests
         await context.Database.EnsureCreatedAsync(default);
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
+    public Task DisposeAsync() => Task.CompletedTask;
 
-    [TestMethod]
+    [Fact]
     public async Task EnrolmentsQueryableExtensions_GetOrganisation()
     {
         var organisationId = Guid.NewGuid();
@@ -50,7 +49,7 @@ public class EnrolmentQueryableExtensionsTests
             .WhereOrganisationIdIs(organisationId)
             .WhereUserObjectIdIs(userObjectId)
             .SelectDistinctSingleOrganisation();
-        
-        Assert.IsNull(organisation);
+
+        organisation.Should().BeNull();
     }
 }

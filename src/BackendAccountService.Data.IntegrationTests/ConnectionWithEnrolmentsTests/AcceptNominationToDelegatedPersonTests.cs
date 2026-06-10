@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Services;
+using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
 using AwesomeAssertions;
@@ -13,36 +13,28 @@ using System.Threading.Tasks;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
-    [TestCategory("IntegrationTest")]
-    [TestClass]
-    public class AcceptNominationToDelegatedPersonTests
+    [Collection(SharedSqlCollection.Name)]
+    [Trait("Category", "IntegrationTest")]
+    public class AcceptNominationToDelegatedPersonTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
     {
-        private static AzureSqlDbContainer _database = null!;
-        private static DbContextOptions<AccountsDbContext> _options = null!;
+        private readonly PerClassDbFixture _db;
+        private DbContextOptions<AccountsDbContext> _options = null!;
         private AccountsDbContext _writeDbContext = null!;
         private RoleManagementService _connectionsService = null!;
 
-        [ClassInitialize]
-        public static async Task TestFixtureSetup(TestContext _)
+        public AcceptNominationToDelegatedPersonTests(PerClassDbFixture db)
         {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync();
+            _db = db;
+        }
 
+        public async Task InitializeAsync()
+        {
             _options = new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options;
-        }
 
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-        public static async Task TestFixtureTearDown()
-        {
-            await _database.StopAsync();
-        }
-
-        [TestInitialize]
-        public async Task Setup()
-        {
             _writeDbContext = new AccountsDbContext(_options);
 
             await _writeDbContext.Database.EnsureCreatedAsync();
@@ -51,14 +43,13 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
                 new ValidationService(_writeDbContext, NullLogger<ValidationService>.Instance));
         }
 
-        [TestCleanup]
-        public async Task TearDown()
+        public async Task DisposeAsync()
         {
             await _writeDbContext.DisposeAsync();
         }
 
-        [TestMethod]
-        [TestCategory("AcceptNominationToDelegatedPerson")]
+        [Fact]
+        [Trait("Category", "AcceptNominationToDelegatedPerson")]
         public async Task WhenNominationIsAccepted_ThenEnrlomentStateChangesToPendingAndThereAreNoBasicUserEnrolments()
         {
             Guid organisationId = Guid.NewGuid();

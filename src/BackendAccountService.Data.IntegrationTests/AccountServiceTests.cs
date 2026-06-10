@@ -10,32 +10,24 @@ using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
-[TestCategory("IntegrationTest")]
-[TestClass]
-public class AccountServiceTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class AccountServiceTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
+    private readonly PerClassDbFixture _db;
 
     private AccountsDbContext _context = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public AccountServiceTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
-
-    [TestInitialize]
-    public async Task Setup()
+    public async Task InitializeAsync()
     {
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
@@ -44,7 +36,9 @@ public class AccountServiceTests
         await _context.Database.EnsureCreatedAsync();
     }
 
-    [TestMethod]
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
     public async Task WhenSavingEnrolmentData_OrganisationReferenceNumberIsSetToFirstAvailable()
     {
         await using var context = _context;

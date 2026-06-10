@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Controllers;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -17,17 +17,15 @@ using System.Net;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers
 {
-    [TestCategory("IntegrationTest")]
-    [TestClass]
-    public class DelegatedPersonEnrolmentsControllerTests
+    [Collection(SharedSqlCollection.Name)]
+    [Trait("Category", "IntegrationTest")]
+    public class DelegatedPersonEnrolmentsControllerTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
     {
-        private static AzureSqlDbContainer _database = null!;
-
-        private static AccountsDbContext _context = null!;
-
-        private static readonly Mock<IRoleManagementService> RoleManagementServiceMock = new();
-        private static DelegatedPersonEnrolmentsController _delegatedPersonEnrolmentController = null!;
-        private static readonly Mock<IOptions<ApiConfig>> ApiConfigOptionsMock = new();
+        private readonly PerClassDbFixture _db;
+        private AccountsDbContext _context = null!;
+        private readonly Mock<IRoleManagementService> _roleManagementServiceMock = new();
+        private DelegatedPersonEnrolmentsController _delegatedPersonEnrolmentController = null!;
+        private readonly Mock<IOptions<ApiConfig>> _apiConfigOptionsMock = new();
         private const string BaseProblemTypePath = "https://epr-errors/";
         private static readonly NullLogger<DelegatedPersonEnrolmentsController> NullLogger = new();
         private readonly Guid _enrolmentId = Guid.NewGuid();
@@ -35,21 +33,23 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
         private readonly Guid _organisationId = Guid.NewGuid();
         private readonly string _serviceKey = "Packaging";
 
-        [ClassInitialize]
-        public static async Task TestFixtureSetup(TestContext _)
+        public DelegatedPersonEnrolmentsControllerTests(PerClassDbFixture db)
         {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync(default);
+            _db = db;
+        }
 
+        public async Task InitializeAsync()
+        {
             _context = new AccountsDbContext(
                 new DbContextOptionsBuilder<AccountsDbContext>()
-                    .UseSqlServer(_database.ConnectionString)
+                    .UseSqlServer(_db.ConnectionString)
                     .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                     .EnableSensitiveDataLogging()
                     .Options);
 
             await _context.Database.MigrateAsync(default);
 
-            ApiConfigOptionsMock
+            _apiConfigOptionsMock
                 .Setup(x => x.Value)
                 .Returns(new ApiConfig
                 {
@@ -57,19 +57,15 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
                 });
 
             _delegatedPersonEnrolmentController = new DelegatedPersonEnrolmentsController(
-                RoleManagementServiceMock.Object,
-                ApiConfigOptionsMock.Object,
+                _roleManagementServiceMock.Object,
+                _apiConfigOptionsMock.Object,
                 NullLogger);
         }
 
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-        public static async Task TestFixtureTearDown()
-        {
-            await _database.StopAsync();
-        }
+        public Task DisposeAsync() => Task.CompletedTask;
 
-        [TestMethod]
-        [TestCategory("AcceptNominationToDelegatedPerson")]
+        [Fact]
+        [Trait("Category", "AcceptNominationToDelegatedPerson")]
         public async Task AcceptNominationToDelegatedPerson_WhenServiceKeyNotPackaging_ThenAcceptingNominationFails()
         {
             var nominatedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -92,8 +88,8 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
             problem.Status.Should().Be(StatusCodes.Status404NotFound);
         }
 
-        [TestMethod]
-        [TestCategory("AcceptNominationToDelegatedPerson")]
+        [Fact]
+        [Trait("Category", "AcceptNominationToDelegatedPerson")]
         public async Task AcceptNominationToDelegatedPerson_WhenUserDoesNotMatchEnrolmentId_ThenAcceptingNominationFails()
         {
             var nominatedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -115,8 +111,8 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
             problem.Status.Should().Be(StatusCodes.Status400BadRequest);
         }
 
-        [TestMethod]
-        [TestCategory("AcceptNominationToDelegatedPerson")]
+        [Fact]
+        [Trait("Category", "AcceptNominationToDelegatedPerson")]
         public async Task AcceptNominationToDelegatedPerson_WhenOrganisationDoesNotMatchEnrolmentId_ThenAcceptingNominationFails()
         {
             var nominatedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -139,13 +135,13 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
             problem.Status.Should().Be(StatusCodes.Status400BadRequest);
         }
 
-        [TestMethod]
-        [TestCategory("AcceptNominationToDelegatedPerson")]
+        [Fact]
+        [Trait("Category", "AcceptNominationToDelegatedPerson")]
         public async Task AcceptNominationToDelegatedPerson_WhenEnrolmentIdIsAccepted_ShouldReturnCorrectResponse()
         {
             // Arrange
             var acceptNominationRequest = new Core.Models.Request.AcceptNominationRequest();
-            RoleManagementServiceMock.Setup(x => x.AcceptNominationToDelegatedPerson(_enrolmentId, _userId, _organisationId, _serviceKey, acceptNominationRequest))
+            _roleManagementServiceMock.Setup(x => x.AcceptNominationToDelegatedPerson(_enrolmentId, _userId, _organisationId, _serviceKey, acceptNominationRequest))
                 .ReturnsAsync(new ValueTuple<bool, string>(true, string.Empty));
 
             // Act
@@ -155,11 +151,11 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
             result.Should().BeOfType<OkResult>();
         }
 
-        [TestMethod]
+        [Fact]
         public async Task GetDelegatedPersonNominator_WhenEnrolmentIdIsValid_ShouldReturnCorrectResponse()
         {
             // Arrange
-            RoleManagementServiceMock.Setup(x => x.GetDelegatedPersonNominator(_enrolmentId, _userId, _organisationId, _serviceKey))
+            _roleManagementServiceMock.Setup(x => x.GetDelegatedPersonNominator(_enrolmentId, _userId, _organisationId, _serviceKey))
                 .ReturnsAsync(new DelegatedPersonNominatorResponse());
 
             // Act
@@ -169,11 +165,11 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers
             result.Should().BeOfType<OkObjectResult>();
         }
 
-        [TestMethod]
+        [Fact]
         public async Task GetDelegatedPersonNominator_WhenEnrolmentIdIsNotValid_ShouldReturnErrorResponse()
         {
             // Arrange
-            RoleManagementServiceMock.Setup(x => x.GetDelegatedPersonNominator(_enrolmentId, _userId, _organisationId, _serviceKey))
+            _roleManagementServiceMock.Setup(x => x.GetDelegatedPersonNominator(_enrolmentId, _userId, _organisationId, _serviceKey))
                 .ReturnsAsync(Task.FromResult<DelegatedPersonNominatorResponse>(null).Result);
 
             // Act

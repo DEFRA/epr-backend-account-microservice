@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Controllers;
 using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Models.Responses;
@@ -17,24 +17,24 @@ using System.Diagnostics;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers;
 
-[TestCategory("IntegrationTest")]
-[TestClass]
-public class NotificationsControllerTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class NotificationsControllerTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
+    private readonly PerClassDbFixture _db;
+    private AccountsDbContext _context = null!;
+    private NotificationsController _controller = null!;
 
-    private static AccountsDbContext _context = null!;
-
-    private static NotificationsController _controller = null!;
-    
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public NotificationsControllerTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
+    }
 
+    public async Task InitializeAsync()
+    {
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
@@ -42,7 +42,7 @@ public class NotificationsControllerTests
         await _context.Database.MigrateAsync(default);
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
-        
+
         apiConfigOptionsMock
             .Setup(x => x.Value)
             .Returns(new ApiConfig
@@ -55,21 +55,17 @@ public class NotificationsControllerTests
             apiConfigOptionsMock.Object);
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
+    public Task DisposeAsync() => Task.CompletedTask;
 
-    [TestMethod]
-    [TestCategory("NotificationsController")]
+    [Fact]
+    [Trait("Category", "NotificationsController")]
     public async Task GetNotifications_WhenDelegatedPersonPendingApprovalExists_ThenResultContainsCorrectNotification()
     {
         var organisationId = Guid.NewGuid();
-            
+
         var pendingEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
             _context, organisationId, DbConstants.ServiceRole.Packaging.DelegatedPerson.Key, DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Pending);
- 
+
          var actionResult = await _controller.GetNotifications("Packaging", pendingEnrolment.Connection.Person.User.UserId.Value, organisationId);
 
         actionResult.Should().NotBeNull();
@@ -85,8 +81,8 @@ public class NotificationsControllerTests
     }
 
 
-    [TestMethod]
-    [TestCategory("NotificationsController")]
+    [Fact]
+    [Trait("Category", "NotificationsController")]
     public async Task GetNotifications_WhenDelegatedPersonNominationExists_ThenResultContainsCorrectNotification()
     {
         var organisationId = Guid.NewGuid();
@@ -108,8 +104,8 @@ public class NotificationsControllerTests
         notificationsResponse.Notifications[0].Type.Should().Be(NotificationTypes.Packaging.DelegatedPersonNomination);
     }
 
-    [TestMethod]
-    [TestCategory("NotificationsController")]
+    [Fact]
+    [Trait("Category", "NotificationsController")]
     public async Task GetNotifications_WhenNoNotificationExists_ThenResultIsNoContentResult()
     {
         var organisationId = Guid.NewGuid();
@@ -125,8 +121,8 @@ public class NotificationsControllerTests
         result.Should().NotBeNull();
     }
 
-    [TestMethod]
-    [TestCategory("NotificationsController")]
+    [Fact]
+    [Trait("Category", "NotificationsController")]
     public async Task GetNotifications_WhenUserNotInOrganiation_ThenResultIsNotFoundResult()
     {
         var organisationId = Guid.NewGuid();
@@ -146,8 +142,8 @@ public class NotificationsControllerTests
         result.Should().NotBeNull();
     }
 
-    [TestMethod]
-    [TestCategory("NotificationsController")]
+    [Fact]
+    [Trait("Category", "NotificationsController")]
     public async Task GetNotifications_WhenServiceNotPackaging_ThenResultIsNotFoundResult()
     {
         var organisationId = Guid.NewGuid();

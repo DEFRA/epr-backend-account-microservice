@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Controllers;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Mappings;
@@ -28,71 +28,57 @@ namespace BackendAccountService.Data.IntegrationTests.Controllers;
 /// We can't have the luxury of fully comprehensive, single check integration tests, like we can with unit tests,
 /// as the integration tests take longer to run, so we cover the important aspects and sometimes combine multiple checks into a single test.
 /// </remarks>
-[TestCategory("IntegrationTest")]
-[TestClass]
-public class ReprocessorExporterAccountsControllerTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class ReprocessorExporterAccountsControllerTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
     private const string AuditServiceName = "Integration Test";
 
-    private static AzureSqlDbContainer? _database;
-    private static AccountsDbContext _context = null!;
-    private static ReprocessorExporterAccountsController _controller = null!;
+    private readonly PerClassDbFixture _db;
+    private AccountsDbContext _context = null!;
+    private ReprocessorExporterAccountsController _controller = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public ReprocessorExporterAccountsControllerTests(PerClassDbFixture db)
     {
-        try
-        {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync();
-
-            _context = new AccountsDbContext(
-                new DbContextOptionsBuilder<AccountsDbContext>()
-                    .UseSqlServer(_database.ConnectionString)
-                    .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
-                    .EnableSensitiveDataLogging()
-                    .Options);
-
-            await _context.Database.MigrateAsync(default);
-
-            Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
-
-            apiConfigOptionsMock
-                .Setup(x => x.Value)
-                .Returns(new ApiConfig
-                {
-                    BaseProblemTypePath = "https://epr-errors/"
-                });
-
-            var tokenService = new Mock<ITokenService>();
-
-            tokenService.Setup(s => s.GenerateInviteToken())
-                .Returns("test-invite-token");
-
-            _controller = new ReprocessorExporterAccountsController(
-                new AccountService(_context, tokenService.Object, new ReExEnrolmentMaps()),
-                new PersonService(_context),
-                new PartnerService(_context),
-                new OrganisationService(_context),
-                apiConfigOptionsMock.Object);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        _db = db;
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
+    public async Task InitializeAsync()
     {
-        if (_database == null)
-        {
-            return;
-        }
-        await _database.StopAsync();
+        _context = new AccountsDbContext(
+            new DbContextOptionsBuilder<AccountsDbContext>()
+                .UseSqlServer(_db.ConnectionString)
+                .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
+                .EnableSensitiveDataLogging()
+                .Options);
+
+        await _context.Database.MigrateAsync(default);
+
+        Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
+
+        apiConfigOptionsMock
+            .Setup(x => x.Value)
+            .Returns(new ApiConfig
+            {
+                BaseProblemTypePath = "https://epr-errors/"
+            });
+
+        var tokenService = new Mock<ITokenService>();
+
+        tokenService.Setup(s => s.GenerateInviteToken())
+            .Returns("test-invite-token");
+
+        _controller = new ReprocessorExporterAccountsController(
+            new AccountService(_context, tokenService.Object, new ReExEnrolmentMaps()),
+            new PersonService(_context),
+            new PartnerService(_context),
+            new OrganisationService(_context),
+            apiConfigOptionsMock.Object);
     }
 
-    [TestMethod]
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
     public async Task CreateAccount_HappyPath_ReturnsOk()
     {
         var user = GetTestUser();
@@ -122,7 +108,7 @@ public class ReprocessorExporterAccountsControllerTests
         okResponse.Should().NotBeNull();
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_HappyPath_ReturnsOkWithReExAddOrganisationResponse()
     {
         // Arrange
@@ -200,7 +186,7 @@ public class ReprocessorExporterAccountsControllerTests
     /// but useful for documentation and initially testing non-uk support.
     /// It'll be a candidate for removal at some point, as we don't want too many integration tests
     /// </remarks>
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_NonUk_ReturnsOkWithReExAddOrganisationResponse()
     {
         // Arrange
@@ -274,7 +260,7 @@ public class ReprocessorExporterAccountsControllerTests
         dbOrganisation.ProducerType.Id.Should().Be((int)ProducerType.NonUkOrganisation);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_UserIsApprovedUserNoPartnersNoInvitedUsers_CorrectEnrolmentsAdded()
     {
         // Arrange
@@ -351,7 +337,7 @@ public class ReprocessorExporterAccountsControllerTests
         approvedPersonEnrolment!.EnrolmentStatusId.Should().Be(DbConstants.EnrolmentStatus.Enrolled);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_UserIsNotApprovedUserMultiplePartnersNoInvitedUsers_AddsCorrectEnrolment()
     {
         // Arrange
@@ -445,7 +431,7 @@ public class ReprocessorExporterAccountsControllerTests
         organisationToPartnerRoles.Should().AllSatisfy(e => e.Id.Should().BeGreaterThan(0));
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_UserIsNotApprovedUserNoPartnersMultipleInvitedUsers_CreatesCorrectEntities()
     {
         // Arrange
@@ -659,13 +645,13 @@ public class ReprocessorExporterAccountsControllerTests
         );
     }
 
-    [TestMethod]
+    [Fact]
     public async Task AddOrganisation_UserIsNotApprovedUserNoPartnersInvitedUserAlreadyExists_CreatesCorrectEntities()
     {
         // Arrange
         Guid invitedApprovedExistingUserId = Guid.NewGuid();
         string invitedApprovedExistingUserEmail = $"existing-invited-{Guid.NewGuid()}@example.com";
- 
+
         var user = GetTestUser();
 
         // add the main user
@@ -831,17 +817,17 @@ public class ReprocessorExporterAccountsControllerTests
         return (Guid.NewGuid(), $"{Guid.NewGuid()}@example.com");
     }
 
-    private static AccountsDbContext CreateAssertContext()
+    private AccountsDbContext CreateAssertContext()
     {
         return new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
     }
 
-    private static async Task<Person> AddPerson(Guid userId, string email)
+    private async Task<Person> AddPerson(Guid userId, string email)
     {
         var person = new Person
         {

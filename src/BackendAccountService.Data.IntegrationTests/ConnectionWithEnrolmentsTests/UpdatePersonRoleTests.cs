@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Models;
+using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
@@ -12,32 +12,24 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests
 {
-    [TestCategory("IntegrationTest")]
-    [TestClass]
-    public class UpdatePersonRoleTests
+    [Collection(SharedSqlCollection.Name)]
+    [Trait("Category", "IntegrationTest")]
+    public class UpdatePersonRoleTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
     {
-        private static AzureSqlDbContainer _database = null!;
-        private static DbContextOptions<AccountsDbContext> _options = null!;
+        private readonly PerClassDbFixture _db;
+        private DbContextOptions<AccountsDbContext> _options = null!;
         private AccountsDbContext _writeContext = null!;
         private RoleManagementService _connectionsService = null!;
 
-        [ClassInitialize]
-        public static async Task TestFixtureSetup(TestContext _)
+        public UpdatePersonRoleTests(PerClassDbFixture db)
         {
-            _database = await AzureSqlDbContainer.StartDockerDbAsync();
+            _db = db;
         }
 
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-        public static async Task TestFixtureTearDown()
-        {
-            await _database.StopAsync();
-        }
-
-        [TestInitialize]
-        public async Task Setup()
+        public async Task InitializeAsync()
         {
             _options = new DbContextOptionsBuilder<AccountsDbContext>()
-                    .UseSqlServer(_database.ConnectionString)
+                    .UseSqlServer(_db.ConnectionString)
                     .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                     .EnableSensitiveDataLogging()
                     .Options;
@@ -46,11 +38,13 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
 
             await _writeContext.Database.EnsureCreatedAsync();
 
-            _connectionsService = new RoleManagementService(_writeContext, 
+            _connectionsService = new RoleManagementService(_writeContext,
                 new ValidationService(_writeContext, NullLogger<ValidationService>.Instance));
         }
 
-        [TestMethod]
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        [Fact]
         public async Task WhenAdminIsUpdatedToEmployeePersonRole_ThenUpdateIsSuccessful()
         {
             Guid organisationId = Guid.NewGuid();
@@ -77,7 +71,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             updatedEnrolment.Connection.PersonRoleId.Should().Be(DbConstants.PersonRole.Employee);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenEmployeeIsUpdatedToAdminPersonRole_ThenUpdateIsSuccessful()
         {
             Guid organisationId = Guid.NewGuid();
@@ -102,9 +96,9 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             updatedEnrolment.Connection.PersonRoleId.Should().Be(DbConstants.PersonRole.Admin);
         }
 
-        [TestMethod]
-        [DataRow(DbConstants.PersonRole.Employee, PersonRole.Employee)]
-        [DataRow(DbConstants.PersonRole.Admin, PersonRole.Admin)]
+        [Theory]
+        [InlineData(DbConstants.PersonRole.Employee, PersonRole.Employee)]
+        [InlineData(DbConstants.PersonRole.Admin, PersonRole.Admin)]
         public async Task WhenDelegatedPersonIsDemotedToBasicUser_ThenThenNewEnrolmentIsIssued(int personRoleId, PersonRole personRole)
         {
             Guid organisationId = Guid.NewGuid();
@@ -143,9 +137,9 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             delegatedPersonEnrolmentNew.IsDeleted.Should().Be(false);
         }
 
-        [TestMethod]
-        [DataRow(DbConstants.PersonRole.Employee, PersonRole.Employee)]
-        [DataRow(DbConstants.PersonRole.Admin, PersonRole.Admin)]
+        [Theory]
+        [InlineData(DbConstants.PersonRole.Employee, PersonRole.Employee)]
+        [InlineData(DbConstants.PersonRole.Admin, PersonRole.Admin)]
         public async Task WhenTheUpdateIsToAlreadyPresentRole_ThenLastUpdatedOnDoesNotChange(int personRoleId, PersonRole personRole)
         {
             Guid organisationId = Guid.NewGuid();
@@ -171,7 +165,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             basicUserEnrolmentAfterUpdate.LastUpdatedOn.Should().Be(basicUserEnrolment.LastUpdatedOn);
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenIncorrectServiceIsBeingUpdated_ThenFail()
         {
             Guid organisationId = Guid.NewGuid();
@@ -193,7 +187,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Unsupported service 'Other Service - Not Packaging'");
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenConnectionFromDifferentOrganisationIsUsed_ThenFail()
         {
             var updaterEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment
@@ -213,7 +207,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("There is no matching record to update");
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenNotEnrolledUserIsEdited_ThenFail()
         {
             Guid organisationId = Guid.NewGuid();
@@ -252,7 +246,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Not enrolled user cannot be edited");
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenInvitedPersonIsEdited_ThenFail()
         {
             Guid organisationId = Guid.NewGuid();
@@ -274,7 +268,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Invited user cannot be edited");
         }
 
-         [TestMethod]
+         [Fact]
         public async Task WhenApprovedPersonsPersonRoleIsEdited_ThenFail()
         {
             Guid organisationId = Guid.NewGuid();
@@ -296,9 +290,9 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Approved person cannot be edited");
         }
 
-        [TestMethod]
-        [DataRow(DbConstants.ServiceRole.Packaging.BasicUser.Key)]
-        [DataRow(DbConstants.ServiceRole.Packaging.DelegatedPerson.Key)]
+        [Theory]
+        [InlineData(DbConstants.ServiceRole.Packaging.BasicUser.Key)]
+        [InlineData(DbConstants.ServiceRole.Packaging.DelegatedPerson.Key)]
         public async Task WhenDelegatedPersonIsEditedByNonApprovedPerson_ThenFail(string nonApprovedPersonServiceKey)
         {
             Guid organisationId = Guid.NewGuid();
@@ -309,7 +303,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             var editedEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
                 _writeContext, organisationId, DbConstants.ServiceRole.Packaging.DelegatedPerson.Key, DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Approved);
 
-            Func<Task> update = () => 
+            Func<Task> update = () =>
                 _connectionsService.UpdatePersonRoleAsync(
                     connectionId: editedEnrolment.Connection.ExternalId,
                     userId: updaterEnrolment.Connection.Person.User.UserId.Value,
@@ -320,7 +314,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Only approved person can edit delegated person enrolment");
         }
 
-        [TestMethod]
+        [Fact]
         public async Task WhenOwnEnrolmentIsEdited_ThenFail()
         {
             Guid organisationId = Guid.NewGuid();
@@ -328,7 +322,7 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             var updaterEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
                 _writeContext, organisationId, DbConstants.ServiceRole.Packaging.BasicUser.Key, DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Approved);
 
-            Func<Task> update = () => 
+            Func<Task> update = () =>
                 _connectionsService.UpdatePersonRoleAsync(
                     connectionId: updaterEnrolment.Connection.ExternalId,
                     userId: updaterEnrolment.Connection.Person.User.UserId.Value,
@@ -339,8 +333,8 @@ namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTe
             await update.Should().ThrowAsync<RoleManagementException>().WithMessage("Updating own record is not permitted");
         }
 
-        [TestMethod]
-        [TestCategory("Nominating Delegated Person")]
+        [Fact]
+        [Trait("Category", "Nominating Delegated Person")]
         public async Task WhenDelegatedPersonIsDemoted_ThenDelegatedPersonEnrolmentGetsDeleted()
         {
             using var readContext = new AccountsDbContext(_options);

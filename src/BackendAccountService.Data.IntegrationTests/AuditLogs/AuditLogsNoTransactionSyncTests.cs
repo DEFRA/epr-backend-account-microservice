@@ -7,53 +7,53 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
 
-[TestCategory("IntegrationTest")]
-[TestClass]
-public class AuditLogsNoTransactionSyncTests : AuditLogsBaseTests
+/// <summary>
+/// Per-class fixture that prepares the DB and seeds the audit-log scenario via the sync
+/// SaveChanges overload, without an explicit transaction.
+/// </summary>
+public class AuditLogsNoTransactionSyncFixture : PerClassDbFixture
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    public DbContextOptions<AccountsDbContext> Options { get; private set; } = null!;
+    public Enrolment Enrolment { get; } = AuditLogsBaseTests.CreateAuditEnrolment();
 
-    private new static readonly Enrolment Enrolment = CreateEnrolment();
+    public AuditLogsNoTransactionSyncFixture(SharedSqlFixture shared) : base(shared) { }
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public override async Task InitializeAsync()
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
-        _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString!)
+        await base.InitializeAsync();
+
+        Options = new DbContextOptionsBuilder<AccountsDbContext>()
+            .UseSqlServer(ConnectionString)
             .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
 
-        await using var context = new AccountsDbContext(_options);
+        await using var context = new AccountsDbContext(Options);
         await context.Database.EnsureCreatedAsync(default);
 
         var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, cancellationToken: default);
         Enrolment.ServiceRoleId = serviceRole.Id;
         context.Add(Enrolment);
         // ReSharper disable once MethodHasAsyncOverload
-        context.SaveChanges(UserCreatingEnrolment, OrganisationCreatingEnrolment);
+        context.SaveChanges(AuditLogsBaseTests.UserCreatingEnrolment, AuditLogsBaseTests.OrganisationCreatingEnrolment);
 
         Enrolment.EnrolmentStatusId = DbConstants.EnrolmentStatus.Rejected;
         // ReSharper disable once MethodHasAsyncOverload
-        context.SaveChanges(UserRejectingEnrolment, OrganisationRejectingEnrolment);
+        context.SaveChanges(AuditLogsBaseTests.UserRejectingEnrolment, AuditLogsBaseTests.OrganisationRejectingEnrolment);
 
         context.Remove(Enrolment);
         // ReSharper disable once MethodHasAsyncOverload
-        context.SaveChanges(UserDeletingEnrolment, OrganisationDeletingEnrolment);
+        context.SaveChanges(AuditLogsBaseTests.UserDeletingEnrolment, AuditLogsBaseTests.OrganisationDeletingEnrolment);
     }
+}
 
-    [TestInitialize]
-    public void TestSetup()
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class AuditLogsNoTransactionSyncTests : AuditLogsBaseTests, IClassFixture<AuditLogsNoTransactionSyncFixture>
+{
+    public AuditLogsNoTransactionSyncTests(AuditLogsNoTransactionSyncFixture fixture)
     {
-        Options = _options;
-        base.Enrolment = Enrolment;
-    }
-
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
+        Options = fixture.Options;
+        Enrolment = fixture.Enrolment;
     }
 }
