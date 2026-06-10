@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace BackendAccountService.IntegrationTests.Infrastructure;
 
 [Collection(AccountApiCollection.Name)]
+[Trait("Category", "IntegrationTest")]
 public abstract class IntegrationTestBase
 {
     protected AccountApiFactory Factory { get; }
