@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
@@ -9,53 +9,45 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BackendAccountService.Data.IntegrationTests.ConnectionWithEnrolmentsTests;
 
-[TestClass]
-[TestCategory("Nominating Delegated Person")]
-public class NominateToDelegatedPersonTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+[Trait("Category", "Nominating Delegated Person")]
+public class NominateToDelegatedPersonTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    private readonly PerClassDbFixture _db;
+    private DbContextOptions<AccountsDbContext> _options = null!;
     private AccountsDbContext _writeDbContext = null!;
     private RoleManagementService _connectionsService = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public NominateToDelegatedPersonTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
-        
+        _db = db;
+    }
+
+    public async Task InitializeAsync()
+    {
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString)
+            .UseSqlServer(_db.ConnectionString)
             .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
-    }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
-
-    [TestInitialize]
-    public async Task Setup()
-    {
         _writeDbContext = new AccountsDbContext(_options);
-        
+
         await _writeDbContext.Database.EnsureCreatedAsync();
-        
-        _connectionsService = new RoleManagementService(_writeDbContext, 
+
+        _connectionsService = new RoleManagementService(_writeDbContext,
             new ValidationService(_writeDbContext, NullLogger<ValidationService>.Instance));
     }
 
-    [TestCleanup]
-    public async Task TearDown()
+    public async Task DisposeAsync()
     {
         await _writeDbContext.DisposeAsync();
     }
 
-    [TestMethod]
-    [DataRow(DbConstants.PersonRole.Admin)]
-    [DataRow(DbConstants.PersonRole.Employee)]
+    [Theory]
+    [InlineData(DbConstants.PersonRole.Admin)]
+    [InlineData(DbConstants.PersonRole.Employee)]
     public async Task WhenApprovedPersonNominatesEnrolledPersonInEmployment_ThenNominationIsSuccessful(int personRole)
     {
         Guid organisationId = Guid.NewGuid();
@@ -117,9 +109,9 @@ public class NominateToDelegatedPersonTests
         nominatedPersonEnrolment.Connection.PersonRoleId.Should().Be(editedEnrolment.Connection.PersonRoleId);
     }
 
-    [TestMethod]
-    [DataRow(DbConstants.PersonRole.Admin)]
-    [DataRow(DbConstants.PersonRole.Employee)]
+    [Theory]
+    [InlineData(DbConstants.PersonRole.Admin)]
+    [InlineData(DbConstants.PersonRole.Employee)]
     public async Task WhenApprovedPersonNominatesEnrolledPersonFromConsultancy_ThenNominationIsSuccessful(int personRole)
     {
         Guid organisationId = Guid.NewGuid();
@@ -146,10 +138,10 @@ public class NominateToDelegatedPersonTests
         result.ErrorMessage.Should().BeEmpty();
 
         await using var readDbContext = new AccountsDbContext(_options);
-        
+
         var nominatedPersonEnrolment = await readDbContext
             .Enrolments
-            .Where(enrolment => 
+            .Where(enrolment =>
                 enrolment.ConnectionId == editedEnrolment.ConnectionId &&
                 enrolment.EnrolmentStatusId == DbConstants.EnrolmentStatus.Nominated)
             .FirstOrDefaultAsync(default);
@@ -180,9 +172,9 @@ public class NominateToDelegatedPersonTests
         delegatedPersonEnrolment.Enrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.DelegatedPerson.Id);
     }
 
-    [TestMethod]
-    [DataRow(DbConstants.PersonRole.Admin)]
-    [DataRow(DbConstants.PersonRole.Employee)]
+    [Theory]
+    [InlineData(DbConstants.PersonRole.Admin)]
+    [InlineData(DbConstants.PersonRole.Employee)]
     public async Task WhenApprovedPersonNominatesEnrolledPersonFromComplianceScheme_ThenNominationIsSuccessful(int personRole)
     {
         Guid organisationId = Guid.NewGuid();
@@ -243,9 +235,9 @@ public class NominateToDelegatedPersonTests
         delegatedPersonEnrolment.Enrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.DelegatedPerson.Id);
     }
 
-    [TestMethod]
-    [DataRow(DbConstants.PersonRole.Admin)]
-    [DataRow(DbConstants.PersonRole.Employee)]
+    [Theory]
+    [InlineData(DbConstants.PersonRole.Admin)]
+    [InlineData(DbConstants.PersonRole.Employee)]
     public async Task WhenApprovedPersonNominatesEnrolledPersonFromOtherOrganisation_ThenNominationIsSuccessful(int personRole)
     {
         Guid organisationId = Guid.NewGuid();
@@ -307,9 +299,9 @@ public class NominateToDelegatedPersonTests
         delegatedPersonEnrolment.Enrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.DelegatedPerson.Id);
     }
 
-    [TestMethod]
-    [DataRow(DbConstants.PersonRole.Admin)]
-    [DataRow(DbConstants.PersonRole.Employee)]
+    [Theory]
+    [InlineData(DbConstants.PersonRole.Admin)]
+    [InlineData(DbConstants.PersonRole.Employee)]
     public async Task WhenPendingApprovalApprovedPersonNominatesEnrolledPerson_ThenNominationIsSuccessful(int personRole)
     {
         Guid organisationId = Guid.NewGuid();
@@ -354,9 +346,9 @@ public class NominateToDelegatedPersonTests
     }
 
 
-    [TestMethod]
-    [DataRow(DbConstants.EnrolmentStatus.NotSet)]
-    [DataRow(DbConstants.EnrolmentStatus.Rejected)]
+    [Theory]
+    [InlineData(DbConstants.EnrolmentStatus.NotSet)]
+    [InlineData(DbConstants.EnrolmentStatus.Rejected)]
     public async Task WhenApprovedPersonTriesToNominateNonActiveEnrolmentUser_ThenNominationFails(int nonEnrolledStatus)
     {
         Guid organisationId = Guid.NewGuid();
@@ -383,7 +375,7 @@ public class NominateToDelegatedPersonTests
         result.ErrorMessage.Should().Be("Not enrolled user cannot be nominated");
 
         await using var readDbContext = new AccountsDbContext(_options);
-        
+
         var updatedEnrolment = await readDbContext.Enrolments
             .Where(enrolment => enrolment.Id == editedEnrolment.Id)
             .FirstOrDefaultAsync(default);
@@ -392,7 +384,7 @@ public class NominateToDelegatedPersonTests
         updatedEnrolment.ServiceRoleId.Should().Be(DbConstants.ServiceRole.Packaging.BasicUser.Id);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenApprovedPersonTriesToNominateInvitedPerson_ThenNominationFails()
     {
         Guid organisationId = Guid.NewGuid();

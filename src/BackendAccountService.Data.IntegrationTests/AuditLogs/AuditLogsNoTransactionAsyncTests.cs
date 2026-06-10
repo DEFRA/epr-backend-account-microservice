@@ -7,49 +7,50 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests.AuditLogs;
 
-[TestClass]
-public class AuditLogsNoTransactionAsyncTests : AuditLogsBaseTests
+/// <summary>
+/// Per-class fixture that prepares the DB and seeds the audit-log scenario via the async
+/// SaveChangesAsync overload, without an explicit transaction.
+/// </summary>
+public class AuditLogsNoTransactionAsyncFixture : PerClassDbFixture
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    public DbContextOptions<AccountsDbContext> Options { get; private set; } = null!;
+    public Enrolment Enrolment { get; } = AuditLogsBaseTests.CreateAuditEnrolment();
 
-    private new static readonly Enrolment Enrolment = CreateEnrolment();
+    public AuditLogsNoTransactionAsyncFixture(SharedSqlFixture shared) : base(shared) { }
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public override async Task InitializeAsync()
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
-        _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString!)
+        await base.InitializeAsync();
+
+        Options = new DbContextOptionsBuilder<AccountsDbContext>()
+            .UseSqlServer(ConnectionString)
             .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
 
-        await using var context = new AccountsDbContext(_options);
+        await using var context = new AccountsDbContext(Options);
         await context.Database.EnsureCreatedAsync(default);
 
         var serviceRole = await context.ServiceRoles.SingleAsync(role => role.Key == DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, default);
         Enrolment.ServiceRoleId = serviceRole.Id;
         context.Add(Enrolment);
-        await context.SaveChangesAsync(UserCreatingEnrolment, OrganisationCreatingEnrolment, default);
+        await context.SaveChangesAsync(AuditLogsBaseTests.UserCreatingEnrolment, AuditLogsBaseTests.OrganisationCreatingEnrolment, default);
 
         Enrolment.EnrolmentStatusId = DbConstants.EnrolmentStatus.Rejected;
-        await context.SaveChangesAsync(UserRejectingEnrolment, OrganisationRejectingEnrolment, default);
+        await context.SaveChangesAsync(AuditLogsBaseTests.UserRejectingEnrolment, AuditLogsBaseTests.OrganisationRejectingEnrolment, default);
 
         context.Remove(Enrolment);
-        await context.SaveChangesAsync(UserDeletingEnrolment, OrganisationDeletingEnrolment, default);
+        await context.SaveChangesAsync(AuditLogsBaseTests.UserDeletingEnrolment, AuditLogsBaseTests.OrganisationDeletingEnrolment, default);
     }
+}
 
-    [TestInitialize]
-    public void TestSetup()
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class AuditLogsNoTransactionAsyncTests : AuditLogsBaseTests, IClassFixture<AuditLogsNoTransactionAsyncFixture>
+{
+    public AuditLogsNoTransactionAsyncTests(AuditLogsNoTransactionAsyncFixture fixture)
     {
-        Options = _options;
-        base.Enrolment = Enrolment;
-    }
-
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
+        Options = fixture.Options;
+        Enrolment = fixture.Enrolment;
     }
 }

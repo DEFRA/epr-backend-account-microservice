@@ -9,18 +9,22 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
-[TestClass]
-public class DelegatedPersonEnrolmentTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class DelegatedPersonEnrolmentTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    private readonly PerClassDbFixture _db;
+    private DbContextOptions<AccountsDbContext> _options = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public DelegatedPersonEnrolmentTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
+    }
+
+    public async Task InitializeAsync()
+    {
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString!)
+            .UseSqlServer(_db.ConnectionString)
             .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
@@ -29,13 +33,9 @@ public class DelegatedPersonEnrolmentTests
         await context.Database.EnsureCreatedAsync(default);
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
+    public Task DisposeAsync() => Task.CompletedTask;
 
-    [TestMethod]
+    [Fact]
     public async Task WhenReadingSavedDelegatedPersonEnrolment_AllDelegatedPersonDetailsAreReturnedCorrectlySet()
     {
         await using var context = new AccountsDbContext(_options);

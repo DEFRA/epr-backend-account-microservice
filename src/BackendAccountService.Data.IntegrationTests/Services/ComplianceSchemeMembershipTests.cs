@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Models.Mappings;
+using BackendAccountService.Core.Models.Mappings;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
@@ -12,38 +12,31 @@ using BackendAccountService.Core.Models.Responses;
 
 namespace BackendAccountService.Data.IntegrationTests.Services;
 
-[TestClass]
-public class ComplianceSchemeMembershipTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class ComplianceSchemeMembershipTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
-    private static DbContextOptions<AccountsDbContext> _options = null!;
+    private readonly PerClassDbFixture _db;
+    private DbContextOptions<AccountsDbContext> _options = null!;
     private AccountsDbContext _writeDbContext = null!;
     private ComplianceSchemeService _complianceSchemeService = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public ComplianceSchemeMembershipTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
+    }
 
+    public async Task InitializeAsync()
+    {
         _options = new DbContextOptionsBuilder<AccountsDbContext>()
-            .UseSqlServer(_database.ConnectionString)
+            .UseSqlServer(_db.ConnectionString)
             .LogTo(message =>
             {
                 Debug.WriteLine(message);
             }, LogLevel.Information)
             .EnableSensitiveDataLogging()
             .Options;
-    }
-    
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
-    
-    [TestInitialize]
-    public async Task Setup()
-    {
+
         _writeDbContext = new AccountsDbContext(_options);
 
         // Ensure a clean database state before each test
@@ -53,14 +46,13 @@ public class ComplianceSchemeMembershipTests
         _complianceSchemeService = new ComplianceSchemeService(_writeDbContext, NullLogger<ComplianceSchemeService>.Instance);
     }
 
-    [TestCleanup]
-    public async Task TearDown()
+    public async Task DisposeAsync()
     {
         await _writeDbContext.DisposeAsync();
     }
-    
-    [TestMethod]
-    [TestCategory("ComplianceSchemeMembership")]
+
+    [Fact]
+    [Trait("Category", "ComplianceSchemeMembership")]
     public async Task WhenProducerIsDissociatedFromComplianceScheme_ThenGetInfoForSelectedSchemeRemovalContainsMultipleProducerEmails()
     {
         var producerOrganisationId = Guid.NewGuid();
@@ -68,36 +60,36 @@ public class ComplianceSchemeMembershipTests
         var producerApprovedPerson = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
+            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key,
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Approved);
 
         var producerDelegatedPerson = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
+            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key,
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Approved);
 
         var producerBasicUser = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.BasicUser.Key, 
-            DbConstants.PersonRole.Employee, 
+            DbConstants.ServiceRole.Packaging.BasicUser.Key,
+            DbConstants.PersonRole.Employee,
             DbConstants.EnrolmentStatus.Enrolled);
-        
+
         var complianceSchemeOrganisationId = Guid.NewGuid();
-        
+
         var operatorOrganisationEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
-            _writeDbContext, 
+            _writeDbContext,
             complianceSchemeOrganisationId,
             DbConstants.ServiceRole.Packaging.BasicUser.Key,
-            DbConstants.PersonRole.Admin, 
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Enrolled,
             isComplianceScheme: true);
 
         var complianceSchemeCompaniesHouseNumber = "06929701";
-        
+
         var readDbContext = new AccountsDbContext(_options);
 
         var complianceScheme = await readDbContext.ComplianceSchemes
@@ -112,7 +104,7 @@ public class ComplianceSchemeMembershipTests
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value,
             operatorOrganisationEnrolment.Connection.Organisation.ExternalId,
             default);
-        
+
         await _complianceSchemeService.SelectComplianceSchemeAsync(new SelectComplianceSchemeRequest()
         {
             ComplianceSchemeId = complianceScheme.ExternalId,
@@ -126,7 +118,7 @@ public class ComplianceSchemeMembershipTests
 
         var infoResponse = await _complianceSchemeService.GetInfoForSelectedSchemeRemoval(
             complianceSchemeOrganisationId,
-            selectedScheme.ExternalId, 
+            selectedScheme.ExternalId,
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value);
 
         infoResponse.IsSuccess.Should().BeTrue();
@@ -154,11 +146,11 @@ public class ComplianceSchemeMembershipTests
             .Select(recipient => recipient.Email)
             .Should().NotContain(producerBasicUser.Connection.Person.Email);
     }
-    
+
     //todo: this works when run individually, but failed when run as part of a full test run
     // was that it's old behaviour, or is it the new int test interfering by what it leaves in the db?
-    [TestMethod]
-    [TestCategory("ComplianceSchemeMembership")]
+    [Fact]
+    [Trait("Category", "ComplianceSchemeMembership")]
     public async Task WhenProducerIsDissociatedFromComplianceScheme_ThenPendingApprovalDelegatedPersonWillNotBeInRemovalNotificationRecipients()
     {
         var producerOrganisationId = Guid.NewGuid();
@@ -166,50 +158,50 @@ public class ComplianceSchemeMembershipTests
         var producerApprovedPersonApproved = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
-            DbConstants.EnrolmentStatus.Pending);        
-        
+            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key,
+            DbConstants.PersonRole.Admin,
+            DbConstants.EnrolmentStatus.Pending);
+
         var producerApprovedPersonPending = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
+            DbConstants.ServiceRole.Packaging.ApprovedPerson.Key,
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Pending);
 
         var producerDelegatedPersonApproved = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
+            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key,
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Approved);
 
         var producerDelegatedPersonPending = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key, 
-            DbConstants.PersonRole.Admin, 
-            DbConstants.EnrolmentStatus.Pending);        
-        
+            DbConstants.ServiceRole.Packaging.DelegatedPerson.Key,
+            DbConstants.PersonRole.Admin,
+            DbConstants.EnrolmentStatus.Pending);
+
         var producerBasicUser = await DatabaseDataGenerator.InsertRandomEnrolment(
             _writeDbContext,
             producerOrganisationId,
-            DbConstants.ServiceRole.Packaging.BasicUser.Key, 
-            DbConstants.PersonRole.Employee, 
+            DbConstants.ServiceRole.Packaging.BasicUser.Key,
+            DbConstants.PersonRole.Employee,
             DbConstants.EnrolmentStatus.Enrolled);
-        
+
         var complianceSchemeOrganisationId = Guid.NewGuid();
-        
+
         var operatorOrganisationEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
-            _writeDbContext, 
+            _writeDbContext,
             complianceSchemeOrganisationId,
             DbConstants.ServiceRole.Packaging.BasicUser.Key,
-            DbConstants.PersonRole.Admin, 
+            DbConstants.PersonRole.Admin,
             DbConstants.EnrolmentStatus.Enrolled,
             isComplianceScheme: true);
 
         var complianceSchemeCompaniesHouseNumber = "06929701";
-        
+
         var readDbContext = new AccountsDbContext(_options);
 
         var complianceScheme = await readDbContext.ComplianceSchemes
@@ -223,7 +215,7 @@ public class ComplianceSchemeMembershipTests
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value,
             operatorOrganisationEnrolment.Connection.Organisation.ExternalId,
             default);
-        
+
         await _complianceSchemeService.SelectComplianceSchemeAsync(new SelectComplianceSchemeRequest()
         {
             ComplianceSchemeId = complianceScheme.ExternalId,
@@ -237,13 +229,13 @@ public class ComplianceSchemeMembershipTests
 
         var infoResponse = await _complianceSchemeService.GetInfoForSelectedSchemeRemoval(
             complianceSchemeOrganisationId,
-            selectedScheme.ExternalId, 
+            selectedScheme.ExternalId,
             operatorOrganisationEnrolment.Connection.Person.User.UserId.Value);
 
         infoResponse.IsSuccess.Should().BeTrue();
 
         var info = infoResponse.Value;
-        info.RemovalNotificationRecipients.Count.Should().Be(3); 
+        info.RemovalNotificationRecipients.Count.Should().Be(3);
         info.RemovalNotificationRecipients.Should().ContainEquivalentOf(new EmailRecipient
         {
             Email = producerApprovedPersonApproved.Connection.Person.Email,
@@ -265,10 +257,10 @@ public class ComplianceSchemeMembershipTests
 
         info.RemovalNotificationRecipients
             .Select(recipient => recipient.Email)
-            .Should().NotContain(producerDelegatedPersonPending.Connection.Person.Email);        
-        
+            .Should().NotContain(producerDelegatedPersonPending.Connection.Person.Email);
+
         info.RemovalNotificationRecipients
             .Select(recipient => recipient.Email)
             .Should().NotContain(producerBasicUser.Connection.Person.Email);
-    }    
+    }
 }

@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Controllers;
 using BackendAccountService.Core.Models;
@@ -18,23 +18,24 @@ using Moq;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers;
 
-[TestClass]
-public class ConnectionsControllerTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class ConnectionsControllerTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
+    private readonly PerClassDbFixture _db;
+    private AccountsDbContext _context = null!;
+    private ConnectionsController _controller = null!;
 
-    private static AccountsDbContext _context = null!;
-
-    private static ConnectionsController _controller = null!;
-    
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public ConnectionsControllerTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
+    }
 
+    public async Task InitializeAsync()
+    {
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
@@ -42,7 +43,7 @@ public class ConnectionsControllerTests
         await _context.Database.MigrateAsync(default);
 
         Mock<IOptions<ApiConfig>> apiConfigOptionsMock = new();
-        
+
         apiConfigOptionsMock
             .Setup(x => x.Value)
             .Returns(new ApiConfig
@@ -52,24 +53,20 @@ public class ConnectionsControllerTests
 
         _controller = new ConnectionsController(
             new ValidationService(_context, new Mock<ILogger<ValidationService>>().Object),
-            new RoleManagementService(_context, 
+            new RoleManagementService(_context,
                 new ValidationService(_context, NullLogger<ValidationService>.Instance)),
             apiConfigOptionsMock.Object,
             new Mock<ILogger<ConnectionsController>>().Object);
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
+    public Task DisposeAsync() => Task.CompletedTask;
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
     public async Task WhenUserOfOneServiceIsAccessingNotRelatedServiceWithinTheSameOrganisation_ThenReturnedEnrolmentsAreEmpty()
     {
         Guid organisationId = Guid.NewGuid();
-            
+
         var approvedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
             _context, organisationId, DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Approved);
 
@@ -87,21 +84,21 @@ public class ConnectionsControllerTests
             Name = "Other Service Approved Person",
             ServiceId = otherService.Entity.Id
         });
-        
+
         await _context.SaveChangesAsync(approvedPersonEnrolment.Connection.Person.User.UserId.Value, organisationId, default);
-        
+
         var otherServicePersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
             _context, organisationId, "OtherService.ApprovedPerson", DbConstants.PersonRole.Admin, DbConstants.EnrolmentStatus.Approved);
 
         otherServicePersonEnrolment.Connection.OrganisationId.Should().Be(approvedPersonEnrolment.Connection.OrganisationId);
         otherServicePersonEnrolment.Connection.Organisation.ExternalId.Should().Be(approvedPersonEnrolment.Connection.Organisation.ExternalId);
-        
+
         otherServicePersonEnrolment.ConnectionId.Should().NotBe(approvedPersonEnrolment.ConnectionId);
 
         var result = await _controller.GetConnectionAndEnrolments(
-            otherServicePersonEnrolment.Connection.ExternalId, 
+            otherServicePersonEnrolment.Connection.ExternalId,
             "Packaging",
-            approvedPersonEnrolment.Connection.Person.User.UserId.Value, 
+            approvedPersonEnrolment.Connection.Person.User.UserId.Value,
             organisationId);
 
         var okResponse = result as OkObjectResult;
@@ -112,8 +109,8 @@ public class ConnectionsControllerTests
         connectionWithEnrolment.Enrolments.Should().BeEmpty();
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
     public async Task UpdatePersonRole_WhenNonAdminUpdatesPersonRole_ThenReturnAuthorisationProblem403()
     {
         Guid organisationId = Guid.NewGuid();
@@ -141,8 +138,8 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status403Forbidden);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
     public async Task UpdatePersonRole_WhenUserFromDifferentOrganisationUpdatesPersonRole_ThenReturnAuthorisationProblem403()
     {
         var updaterEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -168,9 +165,9 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status403Forbidden);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
-    [TestCategory("Nominating Delegated Person")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
+    [Trait("Category", "Nominating Delegated Person")]
     public async Task WhenApprovedPersonTriesToNominateWithinNonPackagingService_ThenNominationFails()
     {
         var nonApprovedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -200,9 +197,9 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status404NotFound);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
-    [TestCategory("Nominating Delegated Person")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
+    [Trait("Category", "Nominating Delegated Person")]
     public async Task NominateToDelegatedPerson_WhenNonApprovedPersonTriesToNominate_ThenReturnAuthorisationProblem403()
     {
         Guid organisationId = Guid.NewGuid();
@@ -234,9 +231,9 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status403Forbidden);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
-    [TestCategory("Nominating Delegated Person")]
+    [Fact]
+    [Trait("Category", "ConnectionsController")]
+    [Trait("Category", "Nominating Delegated Person")]
     public async Task NominateToDelegatedPerson_WhenApprovedPersonFromDifferentOrganisationTriesToNominate_ThenReturnAuthorisationProblem403()
     {
         var updaterEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -266,14 +263,14 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status403Forbidden);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
-    [TestCategory("Nominating Delegated Person")]
-    [DataRow(DbConstants.EnrolmentStatus.NotSet)]
-    [DataRow(DbConstants.EnrolmentStatus.Enrolled)]
-    [DataRow(DbConstants.EnrolmentStatus.Rejected)]
-    [DataRow(DbConstants.EnrolmentStatus.Invited)]
-    [DataRow(DbConstants.EnrolmentStatus.Nominated)]
+    [Theory]
+    [Trait("Category", "ConnectionsController")]
+    [Trait("Category", "Nominating Delegated Person")]
+    [InlineData(DbConstants.EnrolmentStatus.NotSet)]
+    [InlineData(DbConstants.EnrolmentStatus.Enrolled)]
+    [InlineData(DbConstants.EnrolmentStatus.Rejected)]
+    [InlineData(DbConstants.EnrolmentStatus.Invited)]
+    [InlineData(DbConstants.EnrolmentStatus.Nominated)]
     public async Task WhenNonApprovedPersonTriesToNominateEmployee_ThenNominationFails(int nonApprovedEnrolmentStatus)
     {
         var nonApprovedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
@@ -303,14 +300,14 @@ public class ConnectionsControllerTests
         problem.Status.Should().Be(StatusCodes.Status403Forbidden);
     }
 
-    [TestMethod]
-    [TestCategory("ConnectionsController")]
-    [TestCategory("Nominating Delegated Person")]
-    [DataRow(DbConstants.EnrolmentStatus.NotSet)]
-    [DataRow(DbConstants.EnrolmentStatus.Enrolled)]
-    [DataRow(DbConstants.EnrolmentStatus.Rejected)]
-    [DataRow(DbConstants.EnrolmentStatus.Invited)]
-    [DataRow(DbConstants.EnrolmentStatus.Nominated)]
+    [Theory]
+    [Trait("Category", "ConnectionsController")]
+    [Trait("Category", "Nominating Delegated Person")]
+    [InlineData(DbConstants.EnrolmentStatus.NotSet)]
+    [InlineData(DbConstants.EnrolmentStatus.Enrolled)]
+    [InlineData(DbConstants.EnrolmentStatus.Rejected)]
+    [InlineData(DbConstants.EnrolmentStatus.Invited)]
+    [InlineData(DbConstants.EnrolmentStatus.Nominated)]
     public async Task WhenNonApprovedPersonTriesToNominateAdmin_ThenNominationFails(int nonApprovedEnrolmentStatus)
     {
         var nonApprovedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(

@@ -35,6 +35,8 @@ variables:
     value: backend-account-microservice
   - name: runTests
     value: true
+  - name: runIntegrationTests
+    value: true
   - name: runNugetTasks
     value: false
   - name: NUGET_PACKAGES
@@ -60,6 +62,7 @@ extends:
     sonarQubeProjectKey: ${{ variables.sonarQubeProjectKey }}
     sonarQubeProjectName: ${{ variables.sonarQubeProjectName }}
     runTests: ${{ variables.runTests }}
+    runIntegrationTests: ${{ variables.runIntegrationTests }}
     azureSubscription: $(azureSubscription)
     acrAzureContainerRegistryName: $(acr.azureContainerRegistryName)
     acrRepositoryName: $(acr.repositoryName)

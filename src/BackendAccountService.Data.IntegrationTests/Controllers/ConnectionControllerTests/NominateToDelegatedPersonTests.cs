@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.Data.IntegrationTests.Containers;
@@ -9,31 +9,24 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace BackendAccountService.Data.IntegrationTests.Controllers.ConnectionControllerTests.ConnectionRolesTests;
 
-[TestClass]
-public class NominateToDelegatedPersonTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class NominateToDelegatedPersonTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
+    private readonly PerClassDbFixture _db;
     private AccountsDbContext _context = null!;
     private RoleManagementService _connectionsService = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public NominateToDelegatedPersonTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
-
-    [TestInitialize]
-    public async Task Setup()
+    public async Task InitializeAsync()
     {
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
@@ -43,7 +36,9 @@ public class NominateToDelegatedPersonTests
         _connectionsService = new RoleManagementService(_context, new ValidationService(_context, NullLogger<ValidationService>.Instance));
     }
 
-    [TestMethod]
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
     public async Task WhenUserTriesToAccessNonExistingConnection_ThenTheyReceiveNullResponse()
     {
         Guid organisationId = Guid.NewGuid();

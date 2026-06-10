@@ -9,31 +9,24 @@ using Microsoft.Extensions.Logging;
 
 namespace BackendAccountService.Data.IntegrationTests;
 
-[TestClass]
-public class AccountsDbContextTests
+[Collection(SharedSqlCollection.Name)]
+[Trait("Category", "IntegrationTest")]
+public class AccountsDbContextTests : IClassFixture<PerClassDbFixture>, IAsyncLifetime
 {
-    private static AzureSqlDbContainer _database = null!;
+    private readonly PerClassDbFixture _db;
 
     private AccountsDbContext _context = null!;
 
-    [ClassInitialize]
-    public static async Task TestFixtureSetup(TestContext _)
+    public AccountsDbContextTests(PerClassDbFixture db)
     {
-        _database = await AzureSqlDbContainer.StartDockerDbAsync();
+        _db = db;
     }
 
-    [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
-    public static async Task TestFixtureTearDown()
-    {
-        await _database.StopAsync();
-    }
-
-    [TestInitialize]
-    public async Task Setup()
+    public async Task InitializeAsync()
     {
         _context = new AccountsDbContext(
             new DbContextOptionsBuilder<AccountsDbContext>()
-                .UseSqlServer(_database.ConnectionString)
+                .UseSqlServer(_db.ConnectionString)
                 .LogTo(message => Debug.WriteLine(message), LogLevel.Information)
                 .EnableSensitiveDataLogging()
                 .Options);
@@ -46,7 +39,9 @@ public class AccountsDbContextTests
         await _context.Database.EnsureCreatedAsync();
     }
 
-    [TestMethod]
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    [Fact]
     public async Task WhenDatabaseDoesNotExist_ThenItGetsCreatedWithEnsureCreated()
     {
         await using var context = _context;
@@ -55,12 +50,12 @@ public class AccountsDbContextTests
 
         var isCreated = await context.Database.EnsureCreatedAsync(default);
 
-        Assert.IsTrue(didExist);
+        didExist.Should().BeTrue();
 
-        Assert.IsTrue(isCreated);
+        isCreated.Should().BeTrue();
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenSavingComplianceSchemaData_ThenComplianceSchemeAndOrganisationTablesGetPopulated()
     {
         await using var context = _context;
@@ -77,7 +72,7 @@ public class AccountsDbContextTests
             IsComplianceScheme = true,
             CompaniesHouseNumber = companiesHouseNumber
         };
-        
+
         var complianceScheme = new ComplianceScheme
         {
             Name = "Compliance-scheme-1",
@@ -89,11 +84,11 @@ public class AccountsDbContextTests
 
         await context.SaveChangesAsync(Guid.Empty, Guid.Empty, default);
 
-        Assert.IsNotNull(context.ComplianceSchemes.Single(s => s.Name == "Compliance-scheme-1"));
-        Assert.IsNotNull(context.Organisations.Single(o => o.Name == "Compliance-scheme-operator-1"));
+        context.ComplianceSchemes.Single(s => s.Name == "Compliance-scheme-1").Should().NotBeNull();
+        context.Organisations.Single(o => o.Name == "Compliance-scheme-operator-1").Should().NotBeNull();
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenSavingPersonData_ThenPersonsAndUsersTablesGetPopulated()
     {
         await using var context = _context;
@@ -117,12 +112,12 @@ public class AccountsDbContextTests
 
         await context.SaveChangesAsync(person.User.UserId.Value, Guid.Empty, default);
 
-        Assert.IsNotNull(context.Users.First(o => o.Email == "user-one").Person);
+        context.Users.First(o => o.Email == "user-one").Person.Should().NotBeNull();
 
-        Assert.IsNotNull(context.Persons.First(o => o.Email == "person-one").User);
+        context.Persons.First(o => o.Email == "person-one").User.Should().NotBeNull();
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenSavingUserData_ThenPersonsAndUsersTablesGetPopulated()
     {
         await using var context = _context;
@@ -149,7 +144,7 @@ public class AccountsDbContextTests
         var person = context.Users
             .Where(o => o.Email == "user-two").Include(user => user.Person).First()
             .Person;
-        
+
         person.Should().NotBeNull();
 
         var user = context.Persons
@@ -159,7 +154,7 @@ public class AccountsDbContextTests
         user.Should().NotBeNull();
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenSavingUserData_ShouldAllowDuplicateEmptyUserIds()
     {
         await using var context = _context;
@@ -201,7 +196,7 @@ public class AccountsDbContextTests
         context.Users.Count(u => u.UserId == Guid.Empty).Should().Be(2);
     }
 
-    [TestMethod]
+    [Fact]
     public async Task WhenSavingUserData_ShouldNotAllowDuplicateNonemptyUserIds()
     {
         await using var context = _context;
