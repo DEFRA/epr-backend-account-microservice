@@ -4,8 +4,8 @@
         <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Azure.Identity" Version="1.16.0" />
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />
+        <PackageReference Include="Azure.Identity" Version="1.21.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.11" />
         <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.1.0" />
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
         <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.6.0" />
@@ -29,6 +29,6 @@
       <ProjectReference Include="..\BackendAccountService.Data\BackendAccountService.Data.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="SonarAnalyzer.CSharp" Version="10.15.0.120848" PrivateAssets="all" />
+      <PackageReference Include="SonarAnalyzer.CSharp" Version="10.27.0.140913" PrivateAssets="all" />
     </ItemGroup>
 </Project>
