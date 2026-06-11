@@ -10,7 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
-    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="MagicMapper" Version="14.0.1" />
     <PackageReference Include="Azure.Identity" Version="1.16.0" />
     <PackageReference Include="AwesomeAssertions" Version="9.4.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.7" />
