@@ -4,13 +4,4 @@
         <CodeAnalysisRuleSet>..\SonarAnalyzer.ruleset</CodeAnalysisRuleSet>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference
-				Include="SonarAnalyzer.CSharp"
-				Version="9.30.0.95878"
-				PrivateAssets="all"
-				Condition="$(MSBuildProjectExtension) == '.csproj'"
-        />
-    </ItemGroup>
-
 </Project>
