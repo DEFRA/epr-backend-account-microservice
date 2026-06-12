@@ -1051,6 +1051,118 @@ public class UserServiceTests
     }
 
     [TestMethod]
+    public async Task GetUserOrganisationsWithEnrolmentsAsync_WhenUserHasComplianceSchemeMembershipHistory_ReturnsCurrentAndHistoricMemberships()
+    {
+        // Arrange
+        var producerOrganisation = await _dbContext.Organisations.SingleAsync(o => o.ExternalId == OrganisationId5);
+        var currentSchemeOperator = new Organisation
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Current Scheme Operator",
+            OrganisationTypeId = 1,
+            CompaniesHouseNumber = "CS000001",
+            IsComplianceScheme = true
+        };
+        var previousSchemeOperator = new Organisation
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Previous Scheme Operator",
+            OrganisationTypeId = 1,
+            CompaniesHouseNumber = "CS000002",
+            IsComplianceScheme = true
+        };
+
+        var currentComplianceScheme = new ComplianceScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Current Compliance Scheme",
+            CompaniesHouseNumber = currentSchemeOperator.CompaniesHouseNumber
+        };
+        var previousComplianceScheme = new ComplianceScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Previous Compliance Scheme",
+            CompaniesHouseNumber = previousSchemeOperator.CompaniesHouseNumber
+        };
+
+        var currentOrganisationConnection = new OrganisationsConnection
+        {
+            ExternalId = Guid.NewGuid(),
+            FromOrganisation = producerOrganisation,
+            FromOrganisationRoleId = Data.DbConstants.InterOrganisationRole.Producer,
+            ToOrganisation = currentSchemeOperator,
+            ToOrganisationRoleId = Data.DbConstants.InterOrganisationRole.ComplianceScheme
+        };
+        var previousOrganisationConnection = new OrganisationsConnection
+        {
+            ExternalId = Guid.NewGuid(),
+            FromOrganisation = producerOrganisation,
+            FromOrganisationRoleId = Data.DbConstants.InterOrganisationRole.Producer,
+            ToOrganisation = previousSchemeOperator,
+            ToOrganisationRoleId = Data.DbConstants.InterOrganisationRole.ComplianceScheme,
+            IsDeleted = true
+        };
+
+        var currentSelectedScheme = new SelectedScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            ComplianceScheme = currentComplianceScheme,
+            OrganisationConnection = currentOrganisationConnection
+        };
+        var previousSelectedScheme = new SelectedScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            ComplianceScheme = previousComplianceScheme,
+            OrganisationConnection = previousOrganisationConnection,
+            IsDeleted = true
+        };
+
+        var removalReason = await _dbContext.ComplianceSchemeMemberRemovalReasons.SingleAsync(reason => reason.Code == "C");
+
+        _dbContext.Organisations.AddRange(currentSchemeOperator, previousSchemeOperator);
+        _dbContext.ComplianceSchemes.AddRange(currentComplianceScheme, previousComplianceScheme);
+        _dbContext.OrganisationsConnections.AddRange(currentOrganisationConnection, previousOrganisationConnection);
+        _dbContext.SelectedSchemes.AddRange(currentSelectedScheme, previousSelectedScheme);
+        await _dbContext.SaveChangesAsync(User9UserId, OrganisationId5);
+
+        var removedOn = previousSelectedScheme.CreatedOn.AddDays(1);
+        _dbContext.ComplianceSchemeMemberRemovalAuditLogsReasons.Add(new ComplianceSchemeMemberRemovalAuditLogsReason
+        {
+            AuditLog = new ComplianceSchemeMemberRemovalAuditLog
+            {
+                SchemeOrganisationId = previousSchemeOperator.Id,
+                MemberOrganisationId = producerOrganisation.Id,
+                ComplianceSchemeId = previousComplianceScheme.Id,
+                RemovedBy = User9UserId,
+                RemovedOn = removedOn,
+                ReasonDescription = "Moved to a different scheme"
+            },
+            Reason = removalReason
+        });
+        await _dbContext.SaveChangesAsync(User9UserId, OrganisationId5);
+
+        // Act
+        var result = await _userService.GetUserOrganisationsWithEnrolmentsAsync(User9UserId, ServiceKeys.Packaging);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.User.ComplianceSchemeMemberships.Should().HaveCount(2);
+
+        var currentMembership = result.Value.User.ComplianceSchemeMemberships.Single(membership => membership.IsCurrent);
+        currentMembership.ComplianceSchemeName.Should().Be(currentComplianceScheme.Name);
+        currentMembership.MembershipEndDate.Should().BeNull();
+        currentMembership.ChangeType.Should().Be("Current");
+
+        var historicMembership = result.Value.User.ComplianceSchemeMemberships.Single(membership => !membership.IsCurrent);
+        historicMembership.ComplianceSchemeName.Should().Be(previousComplianceScheme.Name);
+        historicMembership.MembershipEndDate.Should().Be(removedOn);
+        historicMembership.ChangeType.Should().Be("Removed");
+        historicMembership.RemovalReasonCode.Should().Be("C");
+        historicMembership.RemovalReasonDescription.Should().Be("Moved to a different scheme");
+    }
+
+    [TestMethod]
     public async Task GetUserOrganisationsWithEnrolmentsAsync_ReturnsUserModelWithOutOrganisation_WithUserDataDefaultToFirstOrganisationEnroment()
     {
         // Arrange

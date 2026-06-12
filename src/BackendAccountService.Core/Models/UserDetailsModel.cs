@@ -31,5 +31,7 @@ public class UserDetailsModel
 
     public int NumberOfOrganisations { get; set; }
 
-	public List<OrganisationDetailModel> Organisations { get; set; }
+    public List<OrganisationDetailModel> Organisations { get; set; }
+
+    public List<ComplianceSchemeMembershipModel> ComplianceSchemeMemberships { get; set; } = [];
 }

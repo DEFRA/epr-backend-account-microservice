@@ -187,6 +187,8 @@ public class UserService : IUserService
 			.Where(conn => conn.PersonId == person.Id && !conn.IsDeleted)
 			.ToListAsync();
 
+		var complianceSchemeMemberships = await GetComplianceSchemeMembershipHistory(connections);
+
 		var organisations = connections
 			.Select(conn =>
 			{
@@ -249,6 +251,7 @@ public class UserService : IUserService
 				Telephone = person.Telephone,
 				NumberOfOrganisations = organisations.Count,
 				Organisations = organisations,
+				ComplianceSchemeMemberships = complianceSchemeMemberships,
 
 				// The below assignment is to avoid any issue for the services which access first org and its first enrolment from userdata level
 				JobTitle = firstOrganisation?.JobTitle,
@@ -263,6 +266,117 @@ public class UserService : IUserService
 
 		return Result<UserOrganisationsListModel>.SuccessResult(model);
 	}
+
+	private async Task<List<ComplianceSchemeMembershipModel>> GetComplianceSchemeMembershipHistory(
+		IReadOnlyCollection<PersonOrganisationConnection> connections)
+	{
+		var producerOrganisationIds = connections
+			.Where(connection => !connection.Organisation.IsComplianceScheme)
+			.Select(connection => connection.OrganisationId)
+			.Distinct()
+			.ToArray();
+
+		if (producerOrganisationIds.Length == 0)
+		{
+			return [];
+		}
+
+		var memberships = await _accountsDbContext.SelectedSchemes
+			.IgnoreQueryFilters()
+			.AsNoTracking()
+			.Where(selectedScheme =>
+				producerOrganisationIds.Contains(selectedScheme.OrganisationConnection.FromOrganisationId) &&
+				selectedScheme.OrganisationConnection.FromOrganisationRoleId == Data.DbConstants.InterOrganisationRole.Producer &&
+				selectedScheme.OrganisationConnection.ToOrganisationRoleId == Data.DbConstants.InterOrganisationRole.ComplianceScheme)
+			.Select(selectedScheme => new ComplianceSchemeMembershipQueryResult
+			{
+				SelectedSchemeId = selectedScheme.ExternalId,
+				SelectedSchemeIsDeleted = selectedScheme.IsDeleted,
+				SelectedSchemeCreatedOn = selectedScheme.CreatedOn,
+				SelectedSchemeLastUpdatedOn = selectedScheme.LastUpdatedOn,
+				OrganisationConnectionIsDeleted = selectedScheme.OrganisationConnection.IsDeleted,
+				OrganisationConnectionLastUpdatedOn = selectedScheme.OrganisationConnection.LastUpdatedOn,
+				ProducerOrganisationDatabaseId = selectedScheme.OrganisationConnection.FromOrganisationId,
+				ProducerOrganisationId = selectedScheme.OrganisationConnection.FromOrganisation.ExternalId,
+				ProducerOrganisationName = selectedScheme.OrganisationConnection.FromOrganisation.Name,
+				ProducerOrganisationNumber = selectedScheme.OrganisationConnection.FromOrganisation.ReferenceNumber,
+				ComplianceSchemeDatabaseId = selectedScheme.ComplianceSchemeId,
+				ComplianceSchemeId = selectedScheme.ComplianceScheme.ExternalId,
+				ComplianceSchemeName = selectedScheme.ComplianceScheme.Name,
+				SchemeOrganisationId = selectedScheme.OrganisationConnection.ToOrganisation.ExternalId,
+				SchemeOrganisationName = selectedScheme.OrganisationConnection.ToOrganisation.Name,
+				NationId = selectedScheme.ComplianceScheme.NationId
+			})
+			.ToListAsync();
+
+		var removalAudits = await _accountsDbContext.ComplianceSchemeMemberRemovalAuditLogsReasons
+			.AsNoTracking()
+			.Where(auditReason => producerOrganisationIds.Contains(auditReason.AuditLog.MemberOrganisationId))
+			.Select(auditReason => new ComplianceSchemeMembershipRemovalAudit
+			{
+				MemberOrganisationId = auditReason.AuditLog.MemberOrganisationId,
+				ComplianceSchemeId = auditReason.AuditLog.ComplianceSchemeId,
+				RemovedBy = auditReason.AuditLog.RemovedBy,
+				RemovedOn = auditReason.AuditLog.RemovedOn,
+				ReasonCode = auditReason.Reason.Code,
+				Reason = auditReason.Reason.Name,
+				ReasonDescription = auditReason.AuditLog.ReasonDescription
+			})
+			.ToListAsync();
+
+		return memberships
+			.Select(membership =>
+			{
+				var isCurrent = !membership.SelectedSchemeIsDeleted && !membership.OrganisationConnectionIsDeleted;
+				var removalAudit = !isCurrent
+					? FindRemovalAudit(membership, removalAudits)
+					: null;
+
+				return new ComplianceSchemeMembershipModel
+				{
+					SelectedSchemeId = membership.SelectedSchemeId,
+					ProducerOrganisationId = membership.ProducerOrganisationId,
+					ProducerOrganisationName = membership.ProducerOrganisationName,
+					ProducerOrganisationNumber = membership.ProducerOrganisationNumber,
+					ComplianceSchemeId = membership.ComplianceSchemeId,
+					ComplianceSchemeName = membership.ComplianceSchemeName,
+					SchemeOrganisationId = membership.SchemeOrganisationId,
+					SchemeOrganisationName = membership.SchemeOrganisationName,
+					NationId = membership.NationId,
+					MembershipStartDate = membership.SelectedSchemeCreatedOn,
+					MembershipEndDate = isCurrent ? null : removalAudit?.RemovedOn ?? GetLastMembershipUpdatedOn(membership),
+					IsCurrent = isCurrent,
+					ChangeType = isCurrent ? "Current" : "Removed",
+					RemovedBy = removalAudit?.RemovedBy,
+					RemovalReasonCode = removalAudit?.ReasonCode,
+					RemovalReason = removalAudit?.Reason,
+					RemovalReasonDescription = removalAudit?.ReasonDescription,
+					ChangeSource = removalAudit is null && !isCurrent
+						? "Soft-deleted membership without removal audit"
+						: "Compliance scheme membership"
+				};
+			})
+			.OrderByDescending(membership => membership.MembershipStartDate)
+			.ToList();
+	}
+
+	private static ComplianceSchemeMembershipRemovalAudit? FindRemovalAudit(
+		ComplianceSchemeMembershipQueryResult membership,
+		IEnumerable<ComplianceSchemeMembershipRemovalAudit> removalAudits)
+	{
+		return removalAudits
+			.Where(audit =>
+				audit.MemberOrganisationId == membership.ProducerOrganisationDatabaseId &&
+				audit.ComplianceSchemeId == membership.ComplianceSchemeDatabaseId &&
+				audit.RemovedOn >= membership.SelectedSchemeCreatedOn)
+			.OrderBy(audit => audit.RemovedOn)
+			.FirstOrDefault();
+	}
+
+	private static DateTimeOffset GetLastMembershipUpdatedOn(ComplianceSchemeMembershipQueryResult membership) =>
+		membership.SelectedSchemeLastUpdatedOn > membership.OrganisationConnectionLastUpdatedOn
+			? membership.SelectedSchemeLastUpdatedOn
+			: membership.OrganisationConnectionLastUpdatedOn;
 
 	private static string GetOrganisationServiceRole(string serviceKey, PersonOrganisationConnection conn)
 	{
@@ -625,4 +739,56 @@ public class UserService : IUserService
 			.Select(u => u.User.UserId)
 			.SingleOrDefaultAsync();
     }
+
+	private sealed class ComplianceSchemeMembershipQueryResult
+	{
+		public Guid SelectedSchemeId { get; init; }
+
+		public bool SelectedSchemeIsDeleted { get; init; }
+
+		public DateTimeOffset SelectedSchemeCreatedOn { get; init; }
+
+		public DateTimeOffset SelectedSchemeLastUpdatedOn { get; init; }
+
+		public bool OrganisationConnectionIsDeleted { get; init; }
+
+		public DateTimeOffset OrganisationConnectionLastUpdatedOn { get; init; }
+
+		public int ProducerOrganisationDatabaseId { get; init; }
+
+		public Guid ProducerOrganisationId { get; init; }
+
+		public string ProducerOrganisationName { get; init; }
+
+		public string? ProducerOrganisationNumber { get; init; }
+
+		public int ComplianceSchemeDatabaseId { get; init; }
+
+		public Guid ComplianceSchemeId { get; init; }
+
+		public string ComplianceSchemeName { get; init; }
+
+		public Guid SchemeOrganisationId { get; init; }
+
+		public string SchemeOrganisationName { get; init; }
+
+		public int? NationId { get; init; }
+	}
+
+	private sealed class ComplianceSchemeMembershipRemovalAudit
+	{
+		public int MemberOrganisationId { get; init; }
+
+		public int ComplianceSchemeId { get; init; }
+
+		public Guid RemovedBy { get; init; }
+
+		public DateTimeOffset RemovedOn { get; init; }
+
+		public string ReasonCode { get; init; }
+
+		public string Reason { get; init; }
+
+		public string? ReasonDescription { get; init; }
+	}
 }
