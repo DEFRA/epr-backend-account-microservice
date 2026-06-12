@@ -30,8 +30,28 @@ DEPLOYED_PROJECTS=(
     src/BackendAccountService.ValidationData.Api
 )
 
-echo "==> dotnet outdated --version-lock Major --upgrade"
-dotnet outdated --version-lock Major --upgrade "$SLN"
+# Packages held back from `--upgrade` because the latest within-major
+# version pulls in transitives that cross the net8 ceiling. Each entry
+# needs a one-line reason; re-evaluate when migrating off net8.
+HOLD_BACK=(
+    Azure.Identity  # 1.21+ pulls Microsoft.Extensions.* 10.x via Azure.Core 1.53
+)
+
+EXCLUDE_FLAGS=()
+for pkg in "${HOLD_BACK[@]}"; do
+    EXCLUDE_FLAGS+=(--exclude "$pkg")
+done
+
+echo "==> dotnet outdated --version-lock Major --upgrade (excluding held-back packages)"
+dotnet outdated --version-lock Major --upgrade "${EXCLUDE_FLAGS[@]}" "$SLN"
+
+echo
+echo "==> dotnet build"
+dotnet build "$SLN"
+
+echo
+echo "==> dotnet test"
+dotnet test "$SLN" --no-build
 
 echo
 echo "==> Probing deployed projects for transitive framework-bundled assemblies above net8 ceiling"
@@ -51,8 +71,8 @@ done
 echo
 if [ "$hazards" -gt 0 ]; then
     echo "FAIL: ${hazards} deployed project(s) crossed the net8 shared-framework ceiling."
-    echo "These will build/test clean but fail startup on Azure."
-    echo "Roll back the package that pulled in the 10.x family (typically Azure.Identity)."
+    echo "Identify the package that pulled in the 10.x family, add it to HOLD_BACK,"
+    echo "revert the csproj changes with \`git restore -- 'src/**/*.csproj'\`, re-run."
     exit 1
 fi
-echo "OK: no shared-framework ceiling violations."
+echo "OK: upgrade applied, build + tests green, net8 ceiling intact."
