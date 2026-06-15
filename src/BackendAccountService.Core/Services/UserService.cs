@@ -276,7 +276,13 @@ public class UserService : IUserService
 			.Distinct()
 			.ToArray();
 
-		if (producerOrganisationIds.Length == 0)
+		var complianceSchemeOrganisationIds = connections
+			.Where(connection => connection.Organisation.IsComplianceScheme)
+			.Select(connection => connection.OrganisationId)
+			.Distinct()
+			.ToArray();
+
+		if (producerOrganisationIds.Length == 0 && complianceSchemeOrganisationIds.Length == 0)
 		{
 			return [];
 		}
@@ -285,9 +291,10 @@ public class UserService : IUserService
 			.IgnoreQueryFilters()
 			.AsNoTracking()
 			.Where(selectedScheme =>
-				producerOrganisationIds.Contains(selectedScheme.OrganisationConnection.FromOrganisationId) &&
 				selectedScheme.OrganisationConnection.FromOrganisationRoleId == Data.DbConstants.InterOrganisationRole.Producer &&
-				selectedScheme.OrganisationConnection.ToOrganisationRoleId == Data.DbConstants.InterOrganisationRole.ComplianceScheme)
+				selectedScheme.OrganisationConnection.ToOrganisationRoleId == Data.DbConstants.InterOrganisationRole.ComplianceScheme &&
+				(producerOrganisationIds.Contains(selectedScheme.OrganisationConnection.FromOrganisationId) ||
+				 complianceSchemeOrganisationIds.Contains(selectedScheme.OrganisationConnection.ToOrganisationId)))
 			.Select(selectedScheme => new ComplianceSchemeMembershipQueryResult
 			{
 				SelectedSchemeId = selectedScheme.ExternalId,
@@ -309,9 +316,19 @@ public class UserService : IUserService
 			})
 			.ToListAsync();
 
+		if (memberships.Count == 0)
+		{
+			return [];
+		}
+
+		var membershipProducerOrganisationIds = memberships
+			.Select(membership => membership.ProducerOrganisationDatabaseId)
+			.Distinct()
+			.ToArray();
+
 		var removalAudits = await _accountsDbContext.ComplianceSchemeMemberRemovalAuditLogsReasons
 			.AsNoTracking()
-			.Where(auditReason => producerOrganisationIds.Contains(auditReason.AuditLog.MemberOrganisationId))
+			.Where(auditReason => membershipProducerOrganisationIds.Contains(auditReason.AuditLog.MemberOrganisationId))
 			.Select(auditReason => new ComplianceSchemeMembershipRemovalAudit
 			{
 				MemberOrganisationId = auditReason.AuditLog.MemberOrganisationId,

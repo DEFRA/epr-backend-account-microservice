@@ -1163,6 +1163,79 @@ public class UserServiceTests
     }
 
     [TestMethod]
+    public async Task GetUserOrganisationsWithEnrolmentsAsync_WhenComplianceSchemeUserHasMembershipHistory_ReturnsMemberships()
+    {
+        // Arrange
+        var user = await _dbContext.Users
+            .Include(user => user.Person)
+            .SingleAsync(user => user.UserId == User11UserId);
+
+        var producerOrganisation = new Organisation
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Producer Member",
+            OrganisationTypeId = 1,
+            CompaniesHouseNumber = "PM000001"
+        };
+        var schemeOperator = new Organisation
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Scheme Operator",
+            OrganisationTypeId = 1,
+            CompaniesHouseNumber = "SO000001",
+            IsComplianceScheme = true
+        };
+        var complianceScheme = new ComplianceScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            Name = "Operator Compliance Scheme",
+            CompaniesHouseNumber = schemeOperator.CompaniesHouseNumber
+        };
+        var personOrganisationConnection = new PersonOrganisationConnection
+        {
+            OrganisationRoleId = 1,
+            PersonRoleId = 2,
+            Organisation = schemeOperator,
+            Person = user.Person
+        };
+        var producerOperatorConnection = new OrganisationsConnection
+        {
+            ExternalId = Guid.NewGuid(),
+            FromOrganisation = producerOrganisation,
+            FromOrganisationRoleId = Data.DbConstants.InterOrganisationRole.Producer,
+            ToOrganisation = schemeOperator,
+            ToOrganisationRoleId = Data.DbConstants.InterOrganisationRole.ComplianceScheme
+        };
+        var selectedScheme = new SelectedScheme
+        {
+            ExternalId = Guid.NewGuid(),
+            ComplianceScheme = complianceScheme,
+            OrganisationConnection = producerOperatorConnection
+        };
+
+        _dbContext.Organisations.AddRange(producerOrganisation, schemeOperator);
+        _dbContext.ComplianceSchemes.Add(complianceScheme);
+        _dbContext.PersonOrganisationConnections.Add(personOrganisationConnection);
+        _dbContext.OrganisationsConnections.Add(producerOperatorConnection);
+        _dbContext.SelectedSchemes.Add(selectedScheme);
+        await _dbContext.SaveChangesAsync(User11UserId, schemeOperator.ExternalId);
+
+        // Act
+        var result = await _userService.GetUserOrganisationsWithEnrolmentsAsync(User11UserId, ServiceKeys.Packaging);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.User.ComplianceSchemeMemberships.Should().ContainSingle();
+
+        var membership = result.Value.User.ComplianceSchemeMemberships.Single();
+        membership.IsCurrent.Should().BeTrue();
+        membership.ProducerOrganisationId.Should().Be(producerOrganisation.ExternalId);
+        membership.ComplianceSchemeName.Should().Be(complianceScheme.Name);
+        membership.SchemeOrganisationId.Should().Be(schemeOperator.ExternalId);
+    }
+
+    [TestMethod]
     public async Task GetUserOrganisationsWithEnrolmentsAsync_ReturnsUserModelWithOutOrganisation_WithUserDataDefaultToFirstOrganisationEnroment()
     {
         // Arrange
