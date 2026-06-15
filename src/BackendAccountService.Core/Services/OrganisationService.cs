@@ -290,7 +290,8 @@ public class OrganisationService : ServiceBase, IOrganisationService
             .Select(org => new OrganisationLookupModel
             {
                 ExternalId = org.ExternalId,
-                Name = org.Name
+                Name = org.Name,
+                ReferenceNumber = org.ReferenceNumber
             })
             .ToListAsync();
 

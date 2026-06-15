@@ -223,8 +223,8 @@ public class OrganisationControllerTests
         {
             Organisations = new List<OrganisationLookupModel>
             {
-                new() { ExternalId = id1, Name = "Org One" },
-                new() { ExternalId = id2, Name = "Org Two" }
+                new() { ExternalId = id1, Name = "Org One", ReferenceNumber = "100001" },
+                new() { ExternalId = id2, Name = "Org Two", ReferenceNumber = "100002" }
             },
             NotFoundExternalIds = new List<Guid>()
         };
@@ -252,7 +252,7 @@ public class OrganisationControllerTests
         {
             Organisations = new List<OrganisationLookupModel>
             {
-                new() { ExternalId = foundId, Name = "Org Found" }
+                new() { ExternalId = foundId, Name = "Org Found", ReferenceNumber = "100007" }
             },
             NotFoundExternalIds = new List<Guid> { missingId }
         };
@@ -267,7 +267,7 @@ public class OrganisationControllerTests
         result.Should().NotBeNull();
         result!.StatusCode.Should().Be((int)HttpStatusCode.OK);
         var payload = result.Value as OrganisationsByExternalIdsResponse;
-        payload!.Organisations.Should().ContainSingle(o => o.ExternalId == foundId);
+        payload!.Organisations.Should().ContainSingle(o => o.ExternalId == foundId && o.ReferenceNumber == "100007");
         payload.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missingId });
     }
 

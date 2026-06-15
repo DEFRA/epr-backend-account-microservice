@@ -329,8 +329,8 @@ public class OrganisationServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Organisations.Should().HaveCount(2);
-        result.Organisations.Should().Contain(o => o.ExternalId == organisation101ExternalId && o.Name == "Name101");
-        result.Organisations.Should().Contain(o => o.ExternalId == organisation102ExternalId && o.Name == "Name102");
+        result.Organisations.Should().Contain(o => o.ExternalId == organisation101ExternalId && o.Name == "Name101" && o.ReferenceNumber == "100101");
+        result.Organisations.Should().Contain(o => o.ExternalId == organisation102ExternalId && o.Name == "Name102" && o.ReferenceNumber == "100102");
         result.NotFoundExternalIds.Should().BeEmpty();
     }
 
@@ -347,7 +347,7 @@ public class OrganisationServiceTests
         // Assert
         result.Organisations.Should().ContainSingle()
             .Which.Should().Match<Core.Models.Responses.OrganisationLookupModel>(
-                o => o.ExternalId == organisation101ExternalId && o.Name == "Name101");
+                o => o.ExternalId == organisation101ExternalId && o.Name == "Name101" && o.ReferenceNumber == "100101");
         result.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missingId });
     }
 
@@ -2033,12 +2033,14 @@ public class OrganisationServiceTests
         var organisation101 = new Organisation
         {
             Name = "Name101",
-            ExternalId = organisation101ExternalId
+            ExternalId = organisation101ExternalId,
+            ReferenceNumber = "100101"
         };
         var organisation102 = new Organisation
         {
             Name = "Name102",
-            ExternalId = organisation102ExternalId
+            ExternalId = organisation102ExternalId,
+            ReferenceNumber = "100102"
         };
         setupContext.Organisations.Add(organisation101);
         setupContext.Organisations.Add(organisation102);
