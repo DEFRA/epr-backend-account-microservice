@@ -8,4 +8,6 @@ public class OrganisationLookupModel
     public Guid ExternalId { get; init; }
 
     public string Name { get; init; }
+
+    public string ReferenceNumber { get; init; }
 }

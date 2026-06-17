@@ -14,8 +14,8 @@ public class OrganisationsByExternalIdsTests(AccountApiFactory factory) : Integr
     public async Task PostingTwoValidExternalIds_ReturnsBothNamesAndNoMisses()
     {
         var (id1, id2) = (Guid.NewGuid(), Guid.NewGuid());
-        await Builder.Organisation("Acme Widgets Ltd").WithExternalId(id1).Build();
-        await Builder.Organisation("Beta Co").WithExternalId(id2).Build();
+        await Builder.Organisation("Acme Widgets Ltd").WithExternalId(id1).WithReferenceNumber("100201").Build();
+        await Builder.Organisation("Beta Co").WithExternalId(id2).WithReferenceNumber("100202").Build();
 
         var response = await Client.PostAsJsonAsync(Endpoint, new { externalIds = new[] { id1, id2 } });
 
@@ -26,8 +26,8 @@ public class OrganisationsByExternalIdsTests(AccountApiFactory factory) : Integr
         {
             Organisations = new[]
             {
-                new { Name = "Acme Widgets Ltd", ExternalId = id1 },
-                new { Name = "Beta Co", ExternalId = id2 },
+                new { Name = "Acme Widgets Ltd", ExternalId = id1, ReferenceNumber = "100201" },
+                new { Name = "Beta Co", ExternalId = id2, ReferenceNumber = "100202" },
             },
             NotFoundExternalIds = Array.Empty<Guid>(),
         }, opts => opts.WithoutStrictOrdering());
@@ -38,7 +38,7 @@ public class OrganisationsByExternalIdsTests(AccountApiFactory factory) : Integr
     {
         var hitId = Guid.NewGuid();
         var missId = Guid.NewGuid();
-        await Builder.Organisation("Gamma Inc").WithExternalId(hitId).Build();
+        await Builder.Organisation("Gamma Inc").WithExternalId(hitId).WithReferenceNumber("100203").Build();
 
         var response = await Client.PostAsJsonAsync(Endpoint, new { externalIds = new[] { hitId, missId } });
 
@@ -47,7 +47,7 @@ public class OrganisationsByExternalIdsTests(AccountApiFactory factory) : Integr
         var payload = await response.ReadJson<OrganisationsByExternalIdsResponse>();
         payload.Should().BeEquivalentTo(new
         {
-            Organisations = new[] { new { Name = "Gamma Inc", ExternalId = hitId } },
+            Organisations = new[] { new { Name = "Gamma Inc", ExternalId = hitId, ReferenceNumber = "100203" } },
             NotFoundExternalIds = new[] { missId },
         });
     }
