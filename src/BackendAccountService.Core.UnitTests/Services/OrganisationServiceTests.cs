@@ -328,9 +328,11 @@ public class OrganisationServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Organisations.Should().HaveCount(2);
-        result.Organisations.Should().Contain(o => o.ExternalId == organisation101ExternalId && o.Name == "Name101" && o.ReferenceNumber == "100101");
-        result.Organisations.Should().Contain(o => o.ExternalId == organisation102ExternalId && o.Name == "Name102" && o.ReferenceNumber == "100102");
+        result.Organisations.Should().BeEquivalentTo(new[]
+        {
+            new { ExternalId = organisation101ExternalId, Name = "Name101", ReferenceNumber = "100101" },
+            new { ExternalId = organisation102ExternalId, Name = "Name102", ReferenceNumber = "100102" }
+        });
         result.NotFoundExternalIds.Should().BeEmpty();
     }
 
@@ -345,9 +347,10 @@ public class OrganisationServiceTests
             new List<Guid> { organisation101ExternalId, missingId });
 
         // Assert
-        result.Organisations.Should().ContainSingle()
-            .Which.Should().Match<Core.Models.Responses.OrganisationLookupModel>(
-                o => o.ExternalId == organisation101ExternalId && o.Name == "Name101" && o.ReferenceNumber == "100101");
+        result.Organisations.Should().BeEquivalentTo(new[]
+        {
+            new { ExternalId = organisation101ExternalId, Name = "Name101", ReferenceNumber = "100101" }
+        });
         result.NotFoundExternalIds.Should().BeEquivalentTo(new[] { missingId });
     }
 
