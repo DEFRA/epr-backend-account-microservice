@@ -1,0 +1,79 @@
+erDiagram
+    ORGANISATIONS {
+        int Id PK
+        uuid ExternalId
+        string ReferenceNumber
+        string CompaniesHouseNumber
+        bool IsComplianceScheme
+        bool IsDeleted
+        int NationId FK
+    }
+
+    ORGANISATIONS_CONNECTIONS {
+        int Id PK
+        int FromOrganisationId FK
+        int FromOrganisationRoleId FK
+        int ToOrganisationId FK
+        int ToOrganisationRoleId FK
+        bool IsDeleted
+    }
+
+    SELECTED_SCHEMES {
+        int Id PK
+        uuid ExternalId
+        int OrganisationConnectionId FK
+        int ComplianceSchemeId FK
+        bool IsDeleted
+    }
+
+    COMPLIANCE_SCHEMES {
+        int Id PK
+        uuid ExternalId
+        string Name
+        string CompaniesHouseNumber
+        int NationId FK
+        bool IsDeleted
+    }
+
+    INTER_ORGANISATION_ROLES {
+        int Id PK
+        string Name
+    }
+
+    NATIONS {
+        int Id PK
+        string Name
+    }
+
+    COMPANY_DETAILS {
+        string organisation_id
+        string FileName
+        string organisation_name
+        string organisation_size
+        string subsidiary_id
+        string address_fields
+    }
+
+    COSMOS_FILE_METADATA {
+        string FileName
+        uuid ComplianceSchemeId
+        string SubmissionPeriod
+        string FileType
+        string Created
+    }
+
+    ORGANISATIONS ||--o{ ORGANISATIONS_CONNECTIONS : "producer: FromOrganisationId"
+    ORGANISATIONS ||--o{ ORGANISATIONS_CONNECTIONS : "scheme operator: ToOrganisationId"
+
+    INTER_ORGANISATION_ROLES ||--o{ ORGANISATIONS_CONNECTIONS : "From role = Producer"
+    INTER_ORGANISATION_ROLES ||--o{ ORGANISATIONS_CONNECTIONS : "To role = Compliance Scheme"
+
+    ORGANISATIONS_CONNECTIONS ||--o{ SELECTED_SCHEMES : "OrganisationConnectionId"
+    COMPLIANCE_SCHEMES ||--o{ SELECTED_SCHEMES : "ComplianceSchemeId"
+
+    ORGANISATIONS ||--o{ COMPANY_DETAILS : "ReferenceNumber = organisation_id"
+    COMPANY_DETAILS }o--|| COSMOS_FILE_METADATA : "FileName"
+    COSMOS_FILE_METADATA }o--o| COMPLIANCE_SCHEMES : "ComplianceSchemeId = ExternalId"
+
+    NATIONS ||--o{ ORGANISATIONS : "NationId"
+    NATIONS ||--o{ COMPLIANCE_SCHEMES : "NationId"

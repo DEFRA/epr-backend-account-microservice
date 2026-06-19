@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph StoredProcedure["Stored procedure output"]
+        A["DP + Registered<br/>pEPRID = Organisation.ExternalId"]
+        B["DP + Deleted<br/>pEPRID = Organisation.ExternalId"]
+        C["CS + Registered<br/>pEPRID = ComplianceScheme.ExternalId"]
+        D["CS + Deleted<br/>pEPRID = ComplianceScheme.ExternalId"]
+    end
+
+    subgraph Mapper["Azure Function mapping"]
+        E["LARGE_PRODUCER<br/>REGISTERED"]
+        F["LARGE_PRODUCER<br/>CANCELLED"]
+        G["COMPLIANCE_SCHEME<br/>REGISTERED"]
+        H["COMPLIANCE_SCHEME<br/>CANCELLED"]
+    end
+
+    subgraph WasteAPI["Waste Organisations API"]
+        I["PUT /organisations/{organisation ExternalId}"]
+        J["PUT /organisations/{scheme ExternalId}"]
+    end
+
+    A --> E --> I
+    B --> F --> I
+    C --> G --> J
+    D --> H --> J
