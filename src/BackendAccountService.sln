@@ -70,7 +70,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "pipelines", "pipelines", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vars", "vars", "{06C87F45-B080-4EF3-8C7F-950887593194}"
 	ProjectSection(SolutionItems) = preProject
-		../pipelines\vars\DEV10-development.yaml = ../pipelines\vars\DEV10-development.yaml
 		../pipelines\vars\Team-Laps-tst.yaml = ../pipelines\vars\Team-Laps-tst.yaml
 		../pipelines\vars\DEV6-development.yaml = ../pipelines\vars\DEV6-development.yaml
 		../pipelines\vars\preprod2.yaml = ../pipelines\vars\preprod2.yaml
