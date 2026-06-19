@@ -1,0 +1,11 @@
+flowchart LR
+    P["Producer Organisation<br/>Organisations.ExternalId"]
+    OC["OrganisationsConnections<br/>From = Producer<br/>To = Scheme Operator"]
+    O["Scheme Operator Organisation<br/>IsComplianceScheme = 1"]
+    SS["SelectedSchemes<br/>Membership/selection record"]
+    CS["ComplianceSchemes<br/>Scheme registration<br/>ComplianceSchemes.ExternalId"]
+
+    P -->|"FromOrganisationId"| OC
+    OC -->|"ToOrganisationId"| O
+    OC -->|"OrganisationConnectionId"| SS
+    SS -->|"ComplianceSchemeId"| CS

@@ -1,0 +1,55 @@
+flowchart TD
+    TIMER["Azure timer trigger<br/>UpdateWasteOrganisations"]
+
+    LAST["Read last successful<br/>update timestamp"]
+    NOW["Capture current UTC time"]
+
+    API["Common Data API<br/>GET updated-producers<br/>from=lastUpdate&amp;to=utcNow"]
+
+    SP["sp_Organisations_Delta_Extract<br/>@From_Date, @To_Date"]
+
+    LR["latest_record CTE<br/>Latest parent CompanyDetails record<br/>per organisation, year and period"]
+    ACS["Active_ComplianceScheme CTE<br/>Latest CompanyDetails submission<br/>per scheme and period"]
+
+    DPR["DP Registered<br/>pEPRID = Organisations.ExternalId"]
+    DPD["DP Deleted<br/>pEPRID = Organisations.ExternalId"]
+    CSR["CS Registered<br/>pEPRID = ComplianceSchemes.ExternalId"]
+    CSD["CS Deleted<br/>pEPRID = ComplianceSchemes.ExternalId"]
+
+    DTO["UpdatedProducersResponseV2"]
+
+    MAP["WasteOrganisationsApiUpdateRequestMapper"]
+
+    BODY["Request body<br/>name and tradingName<br/>businessCountry<br/>companiesHouseNumber<br/>address<br/>registration"]
+
+    PUT["PUT /organisations/{pEPRID}"]
+
+    WO["Waste Organisations Service"]
+
+    SAVE["Save current UTC time<br/>as last successful update"]
+
+    TIMER --> LAST
+    TIMER --> NOW
+    LAST --> API
+    NOW --> API
+    API --> SP
+
+    SP --> LR
+    SP --> ACS
+
+    LR --> DPR
+    LR --> DPD
+    ACS --> CSR
+    ACS --> CSD
+
+    DPR --> DTO
+    DPD --> DTO
+    CSR --> DTO
+    CSD --> DTO
+
+    DTO --> MAP
+    MAP --> BODY
+    DTO -->|"pEPRID used as URL identifier"| PUT
+    BODY --> PUT
+    PUT --> WO
+    WO --> SAVE
