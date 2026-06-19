@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace BackendAccountService.ValidationData.Api.Models;
 
 public class CompanyDetailResponse
 {
-    [JsonProperty("RN")]
+    [JsonPropertyName("RN")]
     public string ReferenceNumber { get; set; }
 
-    [JsonProperty("CHN")]
+    [JsonPropertyName("CHN")]
     public string CompaniesHouseNumber { get; set; }
 }

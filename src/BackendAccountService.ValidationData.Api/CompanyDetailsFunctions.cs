@@ -3,8 +3,7 @@ using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -28,7 +27,7 @@ public class CompanyDetailsFunctions : FunctionsBase
         _logger = logger;
     }
 
-    [FunctionName("GetCompanyDetails")]
+    [Function("GetCompanyDetails")]
     public async Task<IActionResult> GetCompanyDetailsAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -61,7 +60,7 @@ public class CompanyDetailsFunctions : FunctionsBase
         }
     }
 
-    [FunctionName("GetCompanyDetailsByProducer")]
+    [Function("GetCompanyDetailsByProducer")]
     public async Task<IActionResult> GetCompanyDetailsByProducerAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -99,7 +98,7 @@ public class CompanyDetailsFunctions : FunctionsBase
         }
     }
 
-    [FunctionName("GetCompanyDetailsByComplianceSchemeId")]
+    [Function("GetCompanyDetailsByComplianceSchemeId")]
     public async Task<IActionResult> GetCompanyDetailsByComplianceSchemeIdAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -133,7 +132,7 @@ public class CompanyDetailsFunctions : FunctionsBase
         }
     }
 
-    [FunctionName("GetAllProducersCompanyDetails")]
+    [Function("GetAllProducersCompanyDetails")]
     public async Task<IActionResult> GetAllProducersCompanyDetailsAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
