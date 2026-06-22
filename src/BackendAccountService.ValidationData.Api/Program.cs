@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BackendAccountService.Data.Infrastructure;
 using BackendAccountService.ValidationData.Api.Config;
 using BackendAccountService.ValidationData.Api.Extensions;
@@ -9,24 +10,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-var builder = FunctionsApplication.CreateBuilder(args);
+namespace BackendAccountService.ValidationData.Api;
 
-builder.ConfigureFunctionsWebApplication();
-
-builder.Services
-    .AddApplicationInsightsTelemetryWorkerService()
-    .ConfigureFunctionsApplicationInsights();
-
-builder.Services.ConfigureOptions();
-
-builder.Services.AddScoped<IOrganisationDataService, OrganisationDataService>();
-builder.Services.AddScoped<ICompanyDetailsDataService, CompanyDetailsDataService>();
-builder.Services.AddScoped<ISubsidiaryDataService, SubsidiaryDataService>();
-
-builder.Services.AddDbContext<AccountsDbContext>((sp, options) =>
+[ExcludeFromCodeCoverage]
+public static class Program
 {
-    var dbConfig = sp.GetRequiredService<IOptions<AccountsDatabaseConfig>>().Value;
-    options.UseSqlServer(dbConfig.ConnectionString);
-});
+    public static void Main(string[] args)
+    {
+        var builder = FunctionsApplication.CreateBuilder(args);
 
-await builder.Build().RunAsync();
+        builder.ConfigureFunctionsWebApplication();
+
+        builder.Services
+            .AddApplicationInsightsTelemetryWorkerService()
+            .ConfigureFunctionsApplicationInsights();
+
+        builder.Services.ConfigureOptions();
+
+        builder.Services.AddScoped<IOrganisationDataService, OrganisationDataService>();
+        builder.Services.AddScoped<ICompanyDetailsDataService, CompanyDetailsDataService>();
+        builder.Services.AddScoped<ISubsidiaryDataService, SubsidiaryDataService>();
+
+        builder.Services.AddDbContext<AccountsDbContext>((sp, options) =>
+        {
+            var dbConfig = sp.GetRequiredService<IOptions<AccountsDatabaseConfig>>().Value;
+            options.UseSqlServer(dbConfig.ConnectionString);
+        });
+
+        builder.Build().Run();
+    }
+}
