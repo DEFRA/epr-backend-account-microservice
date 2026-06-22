@@ -1,5 +1,4 @@
 using BackendAccountService.ValidationData.Api.Extensions;
-using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

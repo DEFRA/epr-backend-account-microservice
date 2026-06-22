@@ -52,7 +52,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -88,7 +88,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -124,7 +124,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex,"{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
