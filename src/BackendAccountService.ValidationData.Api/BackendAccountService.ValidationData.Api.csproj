@@ -6,7 +6,13 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="Azure.Identity" Version="1.17.1" />
-        <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="3.1.2" />
+        <!-- Do NOT upgrade Microsoft.ApplicationInsights.WorkerService to 3.x: it migrated
+             internally to OpenTelemetry and dropped ITelemetryInitializer / ITelemetryProcessor,
+             which Microsoft.Azure.Functions.Worker.ApplicationInsights still depends on.
+             Symptom is a runtime TypeLoadException for ITelemetryInitializer at Functions host
+             startup; build + tests stay green. Microsoft has stated no v3-compatible Functions
+             worker AI package is planned — migrate to OpenTelemetry when ready to leave 2.x. -->
+        <PackageReference Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.52.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.51.0" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.1.0" />
