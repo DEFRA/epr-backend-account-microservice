@@ -2,8 +2,7 @@ using BackendAccountService.ValidationData.Api.Extensions;
 using BackendAccountService.ValidationData.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -27,7 +26,7 @@ public class OrganisationFunctions : FunctionsBase
         _logger = logger;
     }
 
-    [FunctionName("GetOrganisation")]
+    [Function("GetOrganisation")]
     public async Task<IActionResult> GetOrganisationAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -53,7 +52,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -62,7 +61,7 @@ public class OrganisationFunctions : FunctionsBase
         }
     }
 
-    [FunctionName("GetOrganisationMembers")]
+    [Function("GetOrganisationMembers")]
     public async Task<IActionResult> GetOrganisationMembersAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -89,7 +88,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex, "{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally
@@ -98,7 +97,7 @@ public class OrganisationFunctions : FunctionsBase
         }
     }
 
-    [FunctionName("GetExistingOrganisations")]
+    [Function("GetExistingOrganisations")]
     public async Task<IActionResult> GetExistingOrganisationsAsync(
         [HttpTrigger(
             AuthorizationLevel.Anonymous,
@@ -125,7 +124,7 @@ public class OrganisationFunctions : FunctionsBase
         }
         catch (Exception ex)
         {
-            _logger.LogError("{ExceptionMessage}", ex.Message);
+            _logger.LogError(ex,"{ExceptionMessage}", ex.Message);
             return Problem("Unhandled exception", ex.GetType().Name, ex.Message);
         }
         finally

@@ -3,8 +3,7 @@ using BackendAccountService.ValidationData.Api.Models;
 using BackendAccountService.ValidationData.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -25,7 +24,7 @@ public class SubsidiaryFunctions : FunctionsBase
         _logger = logger;
     }
 
-    [FunctionName("GetSubsidiaryDetails")]
+    [Function("GetSubsidiaryDetails")]
     public async Task<IActionResult> GetSubsidiaryDetailsAsync(
         [HttpTrigger(AuthorizationLevel.Anonymous, nameof(HttpMethod.Post), Route = "subsidiary-details")] HttpRequest req)
     {
