@@ -1,5 +1,8 @@
 # Organisation / Compliance Scheme
 
+For the agent-facing end-to-end integration guide and API-first assessment playbook, see
+[Common Data to Waste Organisations: Agent Guide](common-data-to-waste-organisations-agent-guide.md).
+
 The data model for organisation and compliance schemes is as follows:
 
 ![organisation compliance scheme data model](organisation-diagrams/01-organisation-compliance-scheme-data-model.png)
