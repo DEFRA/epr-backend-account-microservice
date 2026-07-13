@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -42,7 +42,7 @@ public class AccountsController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(account.Connection.ServiceRole),
                 $"Service role '{account.Connection.ServiceRole}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "Service role does not exist",
                 type: "create-account/invalid-service-role");
@@ -56,7 +56,7 @@ public class AccountsController : ApiControllerBase
                 ModelState.AddModelError(nameof(account.Organisation.CompaniesHouseNumber),
                     $"Organisation with the same Companies House number '{account.Organisation.CompaniesHouseNumber}' already exists");
 
-                return ValidationProblem(
+                return TypedValidationProblem(
                     statusCode: StatusCodes.Status409Conflict,
                     detail: "Organisation already exists",
                     type: "create-account/organisation-exists");
@@ -69,7 +69,7 @@ public class AccountsController : ApiControllerBase
             ModelState.AddModelError(nameof(account.User.UserId),
                 $"User '{account.User.UserId}' already exists");
 
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status409Conflict, 
                 detail: "User already exists", 
                 type: "create-account/user-exists");
@@ -96,7 +96,7 @@ public class AccountsController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(account.Connection.ServiceRole),
                 $"Service role '{account.Connection.ServiceRole}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "Service role does not exist",
                 type: "create-account/invalid-service-role");
@@ -107,7 +107,7 @@ public class AccountsController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(account.Person.ContactEmail),
                 $"email '{account.Person.ContactEmail}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "email does not exist",
                 type: "create-account/invalid-service-role");

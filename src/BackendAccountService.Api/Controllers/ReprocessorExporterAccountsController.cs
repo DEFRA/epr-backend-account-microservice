@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -40,7 +40,7 @@ public class ReprocessorExporterAccountsController(
             ModelState.AddModelError(nameof(account.User.UserId),
                 $"User '{account.User.UserId}' already exists");
 
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status409Conflict,
                 detail: "User already exists",
                 type: "create-reprocessor-exporter-account/user-exists");
@@ -103,7 +103,7 @@ public class ReprocessorExporterAccountsController(
         ModelState.AddModelError(nameof(organisation.User.UserId),
             $"UserId '{organisation.User.UserId}' doesn't match audit UserId '{auditUserId}'");
 
-        return ValidationProblem(
+        return TypedValidationProblem(
             statusCode: StatusCodes.Status400BadRequest,
             detail: "UserId doesn't match audit UserId",
             type: "add-organisation/user-id-mismatch");
@@ -125,7 +125,7 @@ public class ReprocessorExporterAccountsController(
         ModelState.AddModelError(nameof(organisation.Organisation.CompaniesHouseNumber),
             $"Organisation with the same Companies House number '{organisation.Organisation.CompaniesHouseNumber}' already exists");
 
-        return ValidationProblem(
+        return TypedValidationProblem(
             statusCode: StatusCodes.Status409Conflict,
             detail: "Organisation already exists",
             type: "add-organisation/organisation-exists");
@@ -141,7 +141,7 @@ public class ReprocessorExporterAccountsController(
         ModelState.AddModelError(nameof(organisation.User.UserId),
             $"Person with UserId '{organisation.User.UserId}' does not exist");
 
-        return ValidationProblem(
+        return TypedValidationProblem(
             statusCode: StatusCodes.Status409Conflict,
             detail: "Person does not exist",
             type: "add-organisation/person-does-not-exist");
@@ -165,7 +165,7 @@ public class ReprocessorExporterAccountsController(
             return null;
         }
 
-        return ValidationProblem(
+        return TypedValidationProblem(
             statusCode: StatusCodes.Status400BadRequest,
             detail: "Partner role(s) does not exist",
             type: "add-organisation/invalid-partner-role");
@@ -181,7 +181,7 @@ public class ReprocessorExporterAccountsController(
 
         ModelState.AddModelError(nameof(organisation.InvitedApprovedUsers), "Can't invite user multiple times");
 
-        return ValidationProblem(
+        return TypedValidationProblem(
             statusCode: StatusCodes.Status400BadRequest,
             detail: "Can't invite user multiple times",
             type: "add-organisation/duplicate-invited-users");

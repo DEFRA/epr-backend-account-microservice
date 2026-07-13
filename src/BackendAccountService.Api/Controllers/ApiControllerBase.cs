@@ -15,7 +15,13 @@ public class ApiControllerBase : ControllerBase
     {
         _baseProblemTypePath= baseApiConfigOptions.Value.BaseProblemTypePath;
     }
-    
+
+    // ASP.NET Core 10 added a 6-arg ControllerBase.Problem (and 7-arg ValidationProblem)
+    // overload with an IDictionary<string, object?>? extensions parameter. The new overload
+    // has all-optional args, so calls that omit `extensions` are ambiguous with the older
+    // overload — and C# has no tiebreaker for "fewer omitted optionals". Custom methods
+    // named TypedProblem/TypedValidationProblem sidestep the ambiguity entirely.
+
     [NonAction]
     public override ActionResult ValidationProblem()
     {
@@ -23,7 +29,7 @@ public class ApiControllerBase : ControllerBase
     }
 
     [NonAction]
-    public override ActionResult ValidationProblem(
+    protected ActionResult TypedValidationProblem(
         string? detail = null,
         string? instance = null,
         int? statusCode = null,
@@ -72,7 +78,7 @@ public class ApiControllerBase : ControllerBase
     }
 
     [NonAction]
-    public override ObjectResult Problem(
+    protected ObjectResult TypedProblem(
         string? detail = null,
         string? instance = null,
         int? statusCode = null,
@@ -83,7 +89,7 @@ public class ApiControllerBase : ControllerBase
     }
 
     [NonAction]
-    public ObjectResult Problem(
+    protected ObjectResult TypedProblem(
         Exception type,
         string? detail = null,
         string? instance = null,
@@ -94,9 +100,9 @@ public class ApiControllerBase : ControllerBase
         title = title ?? exceptionName;
 
         return base.Problem(
-            detail, 
-            instance, 
-            statusCode, 
+            detail,
+            instance,
+            statusCode,
             title,
             $"{_baseProblemTypePath}{exceptionName}".ToLower());
     }

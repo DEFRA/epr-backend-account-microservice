@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Services;
 using BackendAccountService.Data.Entities;
@@ -51,7 +51,7 @@ namespace BackendAccountService.Api.Controllers
             if (string.IsNullOrWhiteSpace(result))
             {
                 _logger.LogError("Failed to add the invited user {UserId}", request.InvitedUser.UserId);
-                return Problem(statusCode: StatusCodes.Status500InternalServerError, type: "Token not generated");
+                return TypedProblem(statusCode: StatusCodes.Status500InternalServerError, type: "Token not generated");
             }
 
             return new OkObjectResult(result);

@@ -318,7 +318,7 @@ public class ComplianceSchemesController : ApiControllerBase
         if (!isUserAuthorised)
         {
             _logger.LogError("User {UserId} unauthorised to perform an action on behalf of organisation {OrganisationId}.", userId, organisationId);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();
@@ -331,7 +331,7 @@ public class ComplianceSchemesController : ApiControllerBase
         if (!isUserAuthorised)
         {
             _logger.LogError("User {UserId} unauthorised to perform an action on behalf of compliance scheme organisation {OrganisationId}.", userId, organisationId);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();

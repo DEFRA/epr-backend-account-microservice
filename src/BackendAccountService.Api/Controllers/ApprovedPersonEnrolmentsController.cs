@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Core.Models.Request;
+using BackendAccountService.Core.Models.Request;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc;
 using BackendAccountService.Api.Configuration;
@@ -38,7 +38,7 @@ namespace BackendAccountService.Api.Controllers
         {
             if (serviceKey != "Packaging")
             {
-                return Problem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
+                return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
             }
 
             var result = await _roleManagementService.AcceptNominationForApprovedPerson(enrolmentId, userId, organisationId, serviceKey, acceptNominationRequest);
@@ -52,7 +52,7 @@ namespace BackendAccountService.Api.Controllers
                 "User {UserId} from organisation {OrganisationId} and service '{ServiceKey}' failed to accept nomination to become an Approved Person (enrolment: {EnrolmentId}. Error: {ErrorMessage}",
                 userId, organisationId, serviceKey, enrolmentId, result.ErrorMessage);
 
-            return Problem(
+            return TypedProblem(
                 title: "Failed to accept the nomination to Approved Person",
                 statusCode: StatusCodes.Status400BadRequest,
                 type: "approved-person-nomination",

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Constants;
@@ -194,7 +194,7 @@ public partial class BulkUploadController : ApiControllerBase
 
             if (childOrganisation is null)
             {
-                return ValidationProblem(
+                return TypedValidationProblem(
                     statusCode: StatusCodes.Status400BadRequest,
                     detail: "child organisation does not exist",
                     type: "child organisation/invalid-childOrganisationId");
@@ -271,7 +271,7 @@ public partial class BulkUploadController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(organisationExternalId),
                 $"organisation '{organisationExternalId}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "organisation does not exist",
                 type: "organisation/invalid-externalId");
@@ -283,7 +283,7 @@ public partial class BulkUploadController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(userId),
                $"user '{userId}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "user does not exist",
                 type: "user/invalid-userId");
