@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -20,13 +20,13 @@ namespace BackendAccountService.Api.Controllers
 
             if (exceptionHandlerFeature == null)
             {
-                return Problem(
+                return TypedProblem(
                     type: "internalservererror",
                     title: "Unhandled exception",
                     statusCode: StatusCodes.Status500InternalServerError);
             }
 
-            return Problem(
+            return TypedProblem(
                 exceptionHandlerFeature.Error,
                 statusCode: StatusCodes.Status500InternalServerError,
                 detail: exceptionHandlerFeature.Error.Message);

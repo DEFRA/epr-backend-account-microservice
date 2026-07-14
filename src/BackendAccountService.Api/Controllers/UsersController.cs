@@ -149,7 +149,7 @@ public class UsersController : ApiControllerBase
             return result.BuildErrorResponse();
         }
 
-        return Problem(
+        return TypedProblem(
             type: "internalservererror",
             title: "Unhandled exception",
             statusCode: StatusCodes.Status500InternalServerError);
@@ -198,12 +198,12 @@ public class UsersController : ApiControllerBase
     {
         if (serviceKey != "Packaging")
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Unsupported service '{serviceKey}'", type: "service-not-supported");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, title: $"Unsupported service '{serviceKey}'", type: "service-not-supported");
         }
 
         if (updateUserDetailsRequest == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"user change details cannot be null", type: "user-change-details-empty");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, title: $"user change details cannot be null", type: "user-change-details-empty");
         }
 
         var result = await _userService.UpdateUserDetailsRequest(userId, organisationId, serviceKey, updateUserDetailsRequest);

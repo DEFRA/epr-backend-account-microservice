@@ -79,6 +79,73 @@ public class ConnectionsControllerTests
     }
 
     [TestMethod]
+    public async Task GetConnectionAndPerson_WhenUserIsNotAuthorised_ThenReturnStatus403ForbiddenProblem()
+    {
+        _validationServiceMock
+            .Setup(x => x.IsAuthorisedToManageUsersFromOrganisationForService(
+                _userId, _organisationId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+            .ReturnsAsync(false);
+
+        var result = await _connectionsController.GetConnectionAndPerson(_connectionExternalId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, _userId, _organisationId);
+
+        var objectResult = result.Result as ObjectResult;
+        objectResult.Should().NotBeNull();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status403Forbidden);
+        (objectResult.Value as ProblemDetails).Type.Should().Be("https://epr-errors/authorisation");
+    }
+
+    [TestMethod]
+    public async Task GetConnectionAndPerson_WhenAuthorisedUserHasNoConnection_ThenReturnStatus404NotFound()
+    {
+        _validationServiceMock
+            .Setup(x => x.IsAuthorisedToManageUsersFromOrganisationForService(
+                _userId, _organisationId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+            .ReturnsAsync(true);
+
+        _roleManagementServiceMock
+            .Setup(x => x.GetConnectionWithPersonForServiceAsync(
+                _connectionExternalId, _organisationId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+            .ReturnsAsync(null as ConnectionWithPersonResponse);
+
+        var result = await _connectionsController.GetConnectionAndPerson(_connectionExternalId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, _userId, _organisationId);
+
+        var objectResult = result.Result as ObjectResult;
+        objectResult.Should().NotBeNull();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        (objectResult.Value as ProblemDetails).Type.Should().Be("https://epr-errors/connection-not-found");
+    }
+
+    [TestMethod]
+    public async Task GetConnectionAndPerson_WhenAuthorisedUserHasConnection_ThenReturnsStatusOkAndData()
+    {
+        var response = new ConnectionWithPersonResponse
+        {
+            FirstName = "Ada",
+            LastName = "Lovelace",
+            Email = "ada@example.com",
+            OrganisationName = "Analytical Engines Ltd",
+            OrganisationReferenceNumber = "AE-001"
+        };
+
+        _validationServiceMock
+            .Setup(x => x.IsAuthorisedToManageUsersFromOrganisationForService(
+                _userId, _organisationId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+            .ReturnsAsync(true);
+
+        _roleManagementServiceMock
+            .Setup(x => x.GetConnectionWithPersonForServiceAsync(
+                _connectionExternalId, _organisationId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key))
+            .ReturnsAsync(response);
+
+        var result = await _connectionsController.GetConnectionAndPerson(_connectionExternalId, Data.DbConstants.ServiceRole.Packaging.ApprovedPerson.Key, _userId, _organisationId);
+
+        var objectResult = result.Result as ObjectResult;
+        objectResult.Should().NotBeNull();
+        objectResult.StatusCode.Should().Be(StatusCodes.Status200OK);
+        (objectResult.Value as ConnectionWithPersonResponse).Should().BeEquivalentTo(response);
+    }
+
+    [TestMethod]
     public async Task WhenAuthorisedUserHasConnection_ThenReturnsStatusOkAndData()
     {
         _validationServiceMock

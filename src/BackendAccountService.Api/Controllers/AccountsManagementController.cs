@@ -66,7 +66,7 @@ public class AccountsManagementController : ApiControllerBase
                 if (string.IsNullOrWhiteSpace(inviteToken))
                 {
                     _logger.LogError("Failed to add the invited user {InvitedUserUserId}", request.InvitedUser.UserId);
-                    return Problem(statusCode: StatusCodes.Status500InternalServerError,
+                    return TypedProblem(statusCode: StatusCodes.Status500InternalServerError,
                         type: "Token not generated");
                 }
 
@@ -120,7 +120,7 @@ public class AccountsManagementController : ApiControllerBase
         if (user == null)
         {
             _logger.LogError("Invite not found for user {UserId}", request.UserId);
-            return Problem("Invite not found", statusCode: (int)HttpStatusCode.NoContent);
+            return TypedProblem("Invite not found", statusCode: (int)HttpStatusCode.NoContent);
         }
 
         var success = await _accountManagementService.EnrolInvitedUserAsync(user, request);
@@ -128,7 +128,7 @@ public class AccountsManagementController : ApiControllerBase
         if (!success)
         {
             _logger.LogError("No pending enrolments to update for user {UserId}", request.UserId);
-            return Problem("No pending enrolments to update", statusCode: (int)HttpStatusCode.NoContent);
+            return TypedProblem("No pending enrolments to update", statusCode: (int)HttpStatusCode.NoContent);
         }
 
         return NoContent();
@@ -141,7 +141,7 @@ public class AccountsManagementController : ApiControllerBase
         if (!isUserAuthorised)
         {
             _logger.LogError("User {UserId} unauthorised to perform an action on behalf of organisation {OrganisationId}.", userId, organisationId);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();

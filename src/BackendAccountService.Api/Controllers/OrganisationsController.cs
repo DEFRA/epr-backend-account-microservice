@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Constants;
@@ -144,7 +144,7 @@ public class OrganisationsController : ApiControllerBase
     {
         if (request?.ExternalIds is null || request.ExternalIds.Count == 0)
         {
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "At least one external id must be supplied.",
                 type: "externalIds/empty");
@@ -232,7 +232,7 @@ public class OrganisationsController : ApiControllerBase
 
             if (childOrganisation is null)
             {
-                return ValidationProblem(
+                return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "child organisation does not exist",
                 type: "child organisation/invalid-childOrganisationId");
@@ -259,7 +259,7 @@ public class OrganisationsController : ApiControllerBase
             var childOrganisation = await _organisationService.GetOrganisationResponseByExternalId(request.ChildOrganisationId);
             if (childOrganisation is null)
             {
-                return ValidationProblem(
+                return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "child organisation does not exist",
                 type: "child organisation/invalid-childOrganisationId");
@@ -353,7 +353,7 @@ public class OrganisationsController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(organisationId),
                 $"organisation '{organisationId}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "organisation does not exist",
                 type: "organisation/invalid-externalId");
@@ -365,7 +365,7 @@ public class OrganisationsController : ApiControllerBase
         {
             ModelState.AddModelError(nameof(userId),
                $"user '{userId}' does not exist");
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "user does not exist",
                 type: "user/invalid-userId");
@@ -399,7 +399,7 @@ public class OrganisationsController : ApiControllerBase
         if (!isUserAuthorised)
         {
             _logger.LogError("User {UserId} unauthorised to perform an action on behalf of organisation {OrganisationId}", userId, organisationId);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         return await action.Invoke();

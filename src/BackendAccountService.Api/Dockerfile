@@ -1,5 +1,5 @@
-﻿# FROM defradigital/dotnetcore-development:dotnet8.0 AS base
-FROM defradigital/dotnetcore:dotnet8.0 AS base
+﻿# FROM defradigital/dotnetcore-development:dotnet10.0 AS base
+FROM defradigital/dotnetcore:dotnet10.0 AS base
 USER root
 ENV ASPNETCORE_URLS=http://*:8080
 EXPOSE 8080
@@ -7,8 +7,8 @@ EXPOSE 8080
 RUN apk update && apk --no-cache add icu-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
 
-# FROM defradigital/dotnetcore:dotnet8.0
-FROM defradigital/dotnetcore-development:dotnet8.0 AS build
+# FROM defradigital/dotnetcore:dotnet10.0
+FROM defradigital/dotnetcore-development:dotnet10.0 AS build
 USER root
 WORKDIR /src
 COPY ["BackendAccountService.Api/BackendAccountService.Api.csproj", "BackendAccountService.Api/"]

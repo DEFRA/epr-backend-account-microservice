@@ -41,7 +41,7 @@ public class EnrolmentsController : ApiControllerBase
             _logger.LogError(
                 "User {userId} unauthorised to remove person {personExternalId} on behalf of organisation {organisationId} in service {serviceRoleId}.",
                 userId, personExternalId, organisationId, serviceRoleId);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var succeeded =
@@ -50,7 +50,7 @@ public class EnrolmentsController : ApiControllerBase
         
         return succeeded
             ? NoContent()
-            : Problem(statusCode: StatusCodes.Status500InternalServerError, type: "failed to remove person");
+            : TypedProblem(statusCode: StatusCodes.Status500InternalServerError, type: "failed to remove person");
     }
     
     [HttpDelete("v1/{personExternalId}")]
@@ -69,6 +69,6 @@ public class EnrolmentsController : ApiControllerBase
 
         return succeeded
             ? NoContent()
-            : Problem(statusCode: StatusCodes.Status500InternalServerError, type: "failed-to-remove-enrolment");
+            : TypedProblem(statusCode: StatusCodes.Status500InternalServerError, type: "failed-to-remove-enrolment");
     }
 }

@@ -48,7 +48,7 @@ public class ConnectionsController : ApiControllerBase
             _logger.LogError(
                 "User {UserId} from organisation {OrganisationId} is not authorised to access enrolments for connection {ConnectionId} to service {ServiceKey}",
                 userId, organisationId, connectionId, serviceKey);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var response = await _roleManagementService.GetConnectionWithEnrolmentsFromOrganisationForServiceAsync(connectionId, organisationId, serviceKey);
@@ -57,7 +57,7 @@ public class ConnectionsController : ApiControllerBase
             _logger.LogError(
                 "Connection {ConnectionId} from organisation {OrganisationId} could not be found",
                 connectionId, organisationId);
-            return Problem(statusCode: StatusCodes.Status404NotFound, type: "connection-not-found");
+            return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "connection-not-found");
         }
 
         return new OkObjectResult(response);
@@ -79,7 +79,7 @@ public class ConnectionsController : ApiControllerBase
         if (!isAuthorised)
         {
             _logger.LogError("User {UserId} from organisation {OrganisationId} is not authorised to access enrolments for connection {ConnectionId} to service {ServiceKey}", userId, organisationId, connectionId, serviceKey);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var response = await _roleManagementService.GetConnectionWithPersonForServiceAsync(connectionId, organisationId, serviceKey);
@@ -87,7 +87,7 @@ public class ConnectionsController : ApiControllerBase
         if (response == null)
         {
             _logger.LogError("Connection {ConnectionId} from organisation {OrganisationId} could not be found", connectionId, organisationId);
-            return Problem(statusCode: StatusCodes.Status404NotFound, type: "connection-not-found");
+            return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "connection-not-found");
         }
 
         return new OkObjectResult(response);
@@ -109,7 +109,7 @@ public class ConnectionsController : ApiControllerBase
     {
         if (serviceKey != "Packaging")
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, type: "service not supported");
+            return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "service not supported");
         }
 
         var isAuthorised = await _validateDataService.IsAuthorisedToManageUsersFromOrganisationForService(userId, organisationId, serviceKey);
@@ -118,7 +118,7 @@ public class ConnectionsController : ApiControllerBase
             _logger.LogError(
                 "User {UserId} from organisation {OrganisationId} is not authorised to access enrolments for connection {ConnectionId} to service {ServiceKey}",
                 userId, organisationId, connectionId, serviceKey);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         try
@@ -139,7 +139,7 @@ public class ConnectionsController : ApiControllerBase
                 serviceKey,
                 ex.Message);
 
-            return Problem(
+            return TypedProblem(
                 title: "Failed to update Person Role",
                 statusCode: StatusCodes.Status400BadRequest,
                 type: "person-role",
@@ -163,7 +163,7 @@ public class ConnectionsController : ApiControllerBase
     {
         if (serviceKey != "Packaging")
         {
-            return Problem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
+            return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
         }
 
         var isAuthorised = await _validateDataService.IsAuthorisedToManageDelegatedUsersFromOrganisationForService(userId, organisationId, serviceKey);
@@ -172,7 +172,7 @@ public class ConnectionsController : ApiControllerBase
             _logger.LogError(
                 "User {UserId} from organisation {OrganisationId} is not authorised to access enrolments for connection {ConnectionId} to service {ServiceKey}",
                 userId, organisationId, connectionId, serviceKey);
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var result = await _roleManagementService.NominateToDelegatedPerson(connectionId, userId, organisationId, serviceKey, nominationRequest);
@@ -186,7 +186,7 @@ public class ConnectionsController : ApiControllerBase
             "User {UserId} from organisation {OrganisationId}, service '{ServiceKey}' failed to nominate person of connection {ConnectionId} to Delegated Person. Error: {ErrorMessage}", 
             userId, organisationId, serviceKey, connectionId,  result.ErrorMessage);
             
-        return Problem(
+        return TypedProblem(
             title: "Failed to nominate user to Delegated Person",
             statusCode: StatusCodes.Status400BadRequest, 
             type: "delegated-person-invitation",
