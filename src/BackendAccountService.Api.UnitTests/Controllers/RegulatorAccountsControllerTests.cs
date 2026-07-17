@@ -93,6 +93,26 @@ public class RegulatorAccountsControllerTests
     }
 
     [TestMethod]
+    public async Task InviteUser_WhenTokenNotGenerated_ThenReturn500()
+    {
+        // Arrange
+        var request = CreateInviteUserRequest();
+
+        _accountManagementServiceMock.Setup(service => service.CreateInviteeAccountAsync(request))
+            .ReturnsAsync(string.Empty);
+
+        _validateDataService.Setup(service => service.IsUserInvitedAsync(request.InvitedUser.Email))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _regulatorAccountsController.InviteUser(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result?.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+
+    [TestMethod]
     public async Task InviteUser_WhenExceptionOccurs_ThenReturnError()
     {
         // Arrange

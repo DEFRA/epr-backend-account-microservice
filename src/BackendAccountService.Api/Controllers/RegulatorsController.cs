@@ -49,12 +49,12 @@ public class RegulatorsController : ApiControllerBase
 
         if (!isUserAuthorised)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
         int nationId = _regulatorService.GetRegulatorNationId(userId);
         if (nationId == 0 || currentPage < 1 || pageSize < 1)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest);
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest);
         }
 
         var result = await _regulatorService.GetPendingApplicationsAsync(nationId, currentPage, pageSize,
@@ -63,7 +63,7 @@ public class RegulatorsController : ApiControllerBase
         var lastPage = (int)Math.Ceiling((double)result.TotalItems / result.PageSize);
         if (currentPage > lastPage && lastPage > 0)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest);
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest);
         }
         return Ok(result);
     }
@@ -123,7 +123,7 @@ public class RegulatorsController : ApiControllerBase
                     "regulator user {UserId} failed to update enrolment '{enrolmentId}: {Message}'",
                     request.UserId, request.EnrolmentId, result.ErrorMessage);
 
-                return Problem(
+                return TypedProblem(
                     title: "Failed to update enrolment",
                     statusCode: StatusCodes.Status400BadRequest,
                     type: "enrolment-status",
@@ -145,7 +145,7 @@ public class RegulatorsController : ApiControllerBase
         {
             if (request.TransferNationId == 0)
             {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Nation");
+                return TypedProblem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Nation");
             }
 
             var result = await _regulatorService.TransferOrganisationNation(request);
@@ -156,7 +156,7 @@ public class RegulatorsController : ApiControllerBase
                     "regulator user {UserId} failed to transfer organisation '{organisation}: {Message}'",
                     request.UserId, request.OrganisationId, result.ErrorMessage);
 
-                return Problem(
+                return TypedProblem(
                     title: "Failed to update enrolment",
                     statusCode: StatusCodes.Status400BadRequest,
                     type: "enrolment-status",
@@ -178,13 +178,13 @@ public class RegulatorsController : ApiControllerBase
         var isUserAuthorised = _regulatorService.IsRegulator(userId);
         if (!isUserAuthorised)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var nationId = _regulatorService.GetRegulatorNationId(userId);
         if (nationId == 0 || currentPage < 1 || pageSize < 1)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest);
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest);
         }
 
         var results = await _organisationService.GetOrganisationsBySearchTerm(query, nationId, pageSize, currentPage);
@@ -242,7 +242,7 @@ public class RegulatorsController : ApiControllerBase
         {
             if (request.RemovedConnectionExternalId == Guid.Empty && request.PromotedPersonExternalId == Guid.Empty)
             {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
+                return TypedProblem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
             }
 
             var associatedPerson = await _regulatorService.RemoveApprovedPerson(request);
@@ -265,7 +265,7 @@ public class RegulatorsController : ApiControllerBase
             if (string.IsNullOrWhiteSpace(request.AddingOrRemovingUserEmail)
                 || string.IsNullOrWhiteSpace(request.InvitedPersonEmail))
             {
-                return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
+                return TypedProblem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
             }
 
             var isUserInvited = await _validationService.IsUserInvitedAsync(request.InvitedPersonEmail);
@@ -294,14 +294,14 @@ public class RegulatorsController : ApiControllerBase
     {
         if (request == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"accept or reject user details change request cannot be null", type: "accept-or-reject-user-change-details-empty");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, title: $"accept or reject user details change request cannot be null", type: "accept-or-reject-user-change-details-empty");
         }
 
         var isUserAuthorised = _regulatorService.IsRegulator(userId);
 
         if (!isUserAuthorised)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
 
         var approvalRequest = new ManageUserDetailsChangeModel
@@ -337,12 +337,12 @@ public class RegulatorsController : ApiControllerBase
 
         if (!isUserAuthorised)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
         int nationId = _regulatorService.GetRegulatorNationId(userId);
         if (nationId == 0 || currentPage < 1 || pageSize < 1)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest);
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest);
         }
 
         var result = await _regulatorService.GetPendingUserDetailChangeRequestsAsync(nationId, currentPage, pageSize, organisationName, applicationType ?? "All");
@@ -350,7 +350,7 @@ public class RegulatorsController : ApiControllerBase
         var lastPage = (int)Math.Ceiling((double)result.TotalItems / result.PageSize);
         if (currentPage > lastPage && lastPage > 0)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest);
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest);
         }
         return Ok(result);
     }
@@ -379,7 +379,7 @@ public class RegulatorsController : ApiControllerBase
     {
         if (request == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"accept or reject user details change request cannot be null", type: "accept-or-reject-user-change-details-empty");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, title: $"accept or reject user details change request cannot be null", type: "accept-or-reject-user-change-details-empty");
         }
         var result = await _regulatorService.AcceptOrRejectUserDetailsChangeRequestByServiceAsync(request);
 
@@ -404,7 +404,7 @@ public class RegulatorsController : ApiControllerBase
     {
         if (request == null)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Manage Non Companies House Company By Service request cannot be null", type: "manage-organisation-request-empty");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, title: $"Manage Non Companies House Company By Service request cannot be null", type: "manage-organisation-request-empty");
         }
         var result = await _regulatorService.UpdateNonCompaniesHouseCompanyByServiceAsync(request);
 
@@ -423,13 +423,13 @@ public class RegulatorsController : ApiControllerBase
     {
         if (userId == Guid.Empty || organisationId == Guid.Empty)
         {
-            return Problem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
+            return TypedProblem(statusCode: StatusCodes.Status400BadRequest, type: "Invalid Data");
         }
 
         var isUserAuthorised = _regulatorService.DoesRegulatorNationMatchOrganisationNation(userId, organisationId);
         if (!isUserAuthorised)
         {
-            return Problem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
+            return TypedProblem(statusCode: StatusCodes.Status403Forbidden, type: "authorisation");
         }
         return await action.Invoke();
     }

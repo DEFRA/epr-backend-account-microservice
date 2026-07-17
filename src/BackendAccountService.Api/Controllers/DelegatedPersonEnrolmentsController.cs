@@ -1,4 +1,4 @@
-﻿using BackendAccountService.Api.Configuration;
+using BackendAccountService.Api.Configuration;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.Core.Services;
@@ -39,7 +39,7 @@ namespace BackendAccountService.Api.Controllers
         {
             if (serviceKey != "Packaging")
             {
-                return Problem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
+                return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "service-not-supported");
             }
 
             var result = await _roleManagementService.AcceptNominationToDelegatedPerson(enrolmentId, userId, organisationId, serviceKey, acceptNominationRequest);
@@ -53,7 +53,7 @@ namespace BackendAccountService.Api.Controllers
                 "User {UserId} from organisation {OrganisationId} and service '{ServiceKey}' failed to accept nomination to Delegated Person (enrolment: {EnrolmentId}. Error: {ErrorMessage}",
                 userId, organisationId, serviceKey, enrolmentId, result.ErrorMessage);
 
-            return Problem(
+            return TypedProblem(
                 title: "Failed to accept the nomination to Delegated Person",
                 statusCode: StatusCodes.Status400BadRequest,
                 type: "delegated-person-nomination",
@@ -75,7 +75,7 @@ namespace BackendAccountService.Api.Controllers
             if (response == null)
             {
                 _logger.LogError("Delegated person nominator for enrolment {enrolmentId} could not be found", enrolmentId);
-                return Problem(statusCode: StatusCodes.Status404NotFound, type: "delegated-person-nominator-not-found");
+                return TypedProblem(statusCode: StatusCodes.Status404NotFound, type: "delegated-person-nominator-not-found");
             }
         
             return new OkObjectResult(response);

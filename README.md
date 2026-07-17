@@ -1,6 +1,6 @@
 # epr-backend-account-microservice
 
-Two .NET 8 services in one repo:
+Two .NET 10 services in one repo:
 
 - **BackendAccountService.Api** (WA 407) — account/organisation/enrolment CRUD against `accountsDB` (SQL Server).
 - **BackendAccountService.ValidationData.Api** (FA 407) — read-only org lookups for validation functions, hosted on Azure Functions.
@@ -9,7 +9,7 @@ Both deploy independently. Shared code lives in `BackendAccountService.Core` and
 
 ## Prerequisites
 
-- .NET 8 SDK
+- .NET 10 SDK
 - Docker
 
 ## Run locally in docker

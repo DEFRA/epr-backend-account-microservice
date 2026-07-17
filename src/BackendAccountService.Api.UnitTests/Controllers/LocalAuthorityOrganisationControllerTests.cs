@@ -41,6 +41,66 @@ namespace BackendAccountService.Api.UnitTests.Controllers
         }
 
         [TestMethod]
+        public async Task GetLocalAuthorityOrganisation_WhenNoResults_ReturnsNotFound()
+        {
+            // Arrange
+            _localAuthorityServiceMock
+                .Setup(service => service.GetLocalAuthorityOrganisationAsync())
+                .ReturnsAsync(new List<LocalAuthorityResponseModel>());
+
+            // Act
+            var result = await _laOrganisationsController.GetLocalAuthorityOrganisation() as NotFoundObjectResult;
+
+            // Assert
+            result.Should().NotBeNull();
+            result?.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        }
+
+        [TestMethod]
+        public async Task GetLocalAuthorityOrganisationByDistrictCode_WhenBlankInput_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _laOrganisationsController.GetLocalAuthorityOrganisationByDistrictCode(" ") as StatusCodeResult;
+
+            // Assert
+            result.Should().NotBeNull();
+            result?.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        }
+
+        [TestMethod]
+        public async Task GetLocalAuthorityOrganisationByOrganisationName_WhenBlankInput_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _laOrganisationsController.GetLocalAuthorityOrganisationByOrganisationName(" ") as StatusCodeResult;
+
+            // Assert
+            result.Should().NotBeNull();
+            result?.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        }
+
+        [TestMethod]
+        public async Task GetLocalAuthorityOrganisationByOrganisationTypeId_WhenNegativeId_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _laOrganisationsController.GetLocalAuthorityOrganisationByOrganisationTypeId(-1) as StatusCodeResult;
+
+            // Assert
+            result.Should().NotBeNull();
+            result?.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        }
+
+        [TestMethod]
+        public async Task GetLocalAuthorityOrganisationByExternalId_WhenBlankInput_ReturnsBadRequest()
+        {
+            // Act
+            var result = await _laOrganisationsController.GetLocalAuthorityOrganisationByExternalId(" ") as StatusCodeResult;
+
+            // Assert
+            result.Should().NotBeNull();
+            result?.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        }
+
+        [TestMethod]
         public async Task
             CreateNewLocalAuthorityOrganisation_WhenInvalidRequest_ReturnsException()
         {

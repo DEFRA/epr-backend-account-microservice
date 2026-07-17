@@ -6,6 +6,7 @@ using BackendAccountService.Data.Entities;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Options;
 
 namespace BackendAccountService.Api.UnitTests.Controllers.ReprocessorExporterAccountsControllerTests;
@@ -148,6 +149,51 @@ public class CreateAccountTests
         validationProblemDetails!.Errors.Count.Should().Be(1);
         validationProblemDetails!.Errors.First().Key.Should().Be("UserId");
         validationProblemDetails!.Errors.First().Value.Should().Contain($"User '{_userGuid}' already exists");
+    }
+
+    [TestMethod]
+    public async Task CreateAccount_WhenProblemDetailsFactoryIsWiredUp_UsesFactoryToBuildProblem()
+    {
+        // Arrange
+        // This test exercises the ApiControllerBase.TypedValidationProblem `else` branch —
+        // ProblemDetailsFactory is null in the other tests (DefaultHttpContext), so the
+        // fallback "improvise for testability" path runs. Here we supply a factory and
+        // verify it's used instead.
+        var account = GetReprocessorExporterAccount();
+        _personServiceMock!
+            .Setup(service => service.GetPersonResponseByUserId(account.User.UserId!.Value))
+            .ReturnsAsync(new PersonResponseModel());
+
+        var factoryMock = new Mock<ProblemDetailsFactory>();
+        factoryMock
+            .Setup(f => f.CreateValidationProblemDetails(
+                It.IsAny<HttpContext>(),
+                It.IsAny<Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary>(),
+                It.IsAny<int?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>()))
+            .Returns(new ValidationProblemDetails { Status = 409, Detail = "from-factory" });
+
+        _reprocessorExporterAccountsController!.ProblemDetailsFactory = factoryMock.Object;
+
+        // Act
+        var result = await _reprocessorExporterAccountsController.CreateAccount(account, ServiceName, _userId);
+
+        // Assert
+        var objectResult = result as ObjectResult;
+        objectResult.Should().NotBeNull();
+        objectResult!.StatusCode.Should().Be(409);
+        (objectResult.Value as ValidationProblemDetails)!.Detail.Should().Be("from-factory");
+        factoryMock.Verify(f => f.CreateValidationProblemDetails(
+            It.IsAny<HttpContext>(),
+            It.IsAny<Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary>(),
+            It.IsAny<int?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>()), Times.Once);
     }
 
     private ReprocessorExporterAccount GetReprocessorExporterAccount()

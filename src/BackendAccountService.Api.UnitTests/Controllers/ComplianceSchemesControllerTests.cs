@@ -856,6 +856,28 @@ public class ComplianceSchemesControllerTests
     }
 
     [TestMethod]
+    public async Task GetComplianceSchemesSummaries_WhenServiceReturnsNull_ThenReturnNotFound()
+    {
+        //Arrange
+        var organisationId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var complianceSchemeId = Guid.NewGuid();
+
+        _validationService.Setup(service => service.IsAuthorisedToViewComplianceSchemeMembers(userId, organisationId)).ReturnsAsync(true);
+
+        _complianceSchemeServiceMock
+            .Setup(service => service.GetComplianceSchemeSummary(organisationId, complianceSchemeId))
+            .ReturnsAsync(null as ComplianceSchemeSummary);
+
+        //Act
+        var controllerResponse = await _complianceSchemeController.GetComplianceSchemesSummary(userId, organisationId, complianceSchemeId) as NotFoundResult;
+
+        //Assert
+        controllerResponse.Should().NotBeNull();
+        controllerResponse.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+    }
+
+    [TestMethod]
     public async Task GetComplianceSchemesSummaries_WhenExceptionThrownInService_ThenThrowInController()
     {
         //Arrange
