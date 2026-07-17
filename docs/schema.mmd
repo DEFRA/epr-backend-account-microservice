@@ -1,0 +1,536 @@
+erDiagram
+
+    %% ═══════════════════════════════════════════
+    %% CORE IDENTITY
+    %% ═══════════════════════════════════════════
+
+    Users {
+        int Id PK
+        uniqueidentifier UserId UK "B2C Object ID"
+        nvarchar200 ExternalIdpId "External Provider ID"
+        nvarchar200 ExternalIdpUserId "External Provider User ID"
+        nvarchar254 Email
+        nvarchar100 InviteToken
+        nvarchar254 InvitedBy
+        bit IsDeleted
+    }
+
+    Persons {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar50 FirstName
+        nvarchar50 LastName
+        nvarchar100 Email
+        nvarchar50 Telephone
+        int UserId FK
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    %% ═══════════════════════════════════════════
+    %% ORGANISATIONS
+    %% ═══════════════════════════════════════════
+
+    Organisations {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int OrganisationTypeId FK
+        int ProducerTypeId FK "nullable"
+        nvarchar30 CompaniesHouseNumber IX
+        nvarchar160 Name
+        nvarchar170 TradingName
+        nvarchar10 ReferenceNumber IX "sequence"
+        nvarchar100 SubBuildingName
+        nvarchar100 BuildingName
+        nvarchar50 BuildingNumber
+        nvarchar100 Street
+        nvarchar100 Locality
+        nvarchar100 DependentLocality
+        nvarchar70 Town
+        nvarchar50 County
+        nvarchar54 Country
+        nvarchar15 Postcode
+        bit ValidatedWithCompaniesHouse
+        bit IsComplianceScheme
+        int NationId FK "nullable"
+        int TransferNationId FK "nullable"
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    LaOrganisations {
+        int Id PK
+        int OrganisationId FK
+        nvarchar10 DistrictCode
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    SubsidiaryOrganisations {
+        int Id PK
+        int OrganisationId FK
+        nvarchar4000 SubsidiaryId
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+    }
+
+    %% ═══════════════════════════════════════════
+    %% PERSON-ORGANISATION CONNECTIONS
+    %% ═══════════════════════════════════════════
+
+    PersonOrganisationConnections {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar450 JobTitle
+        int OrganisationId FK
+        int OrganisationRoleId FK
+        int PersonId FK
+        int PersonRoleId FK
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    PersonOrganisationConnectionInvites {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int InviteePersonId FK
+        int OrganisationId FK
+        int InvitedByUserId FK
+        int ServiceId FK
+        nvarchar InviteToken
+        bit IsUsed
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    PersonsConnections {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int FromPersonId FK
+        int FromPersonRoleId FK
+        int ToPersonId FK
+        int ToPersonRoleId FK
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    %% ═══════════════════════════════════════════
+    %% ORGANISATION-ORGANISATION CONNECTIONS
+    %% ═══════════════════════════════════════════
+
+    OrganisationsConnections {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int FromOrganisationId FK
+        int FromOrganisationRoleId FK
+        int ToOrganisationId FK
+        int ToOrganisationRoleId FK
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    OrganisationRelationships {
+        int Id PK
+        int FirstOrganisationId FK "parent"
+        int SecondOrganisationId FK "child"
+        int OrganisationRelationshipTypeId FK
+        int OrganisationRegistrationTypeId FK "nullable"
+        int LeaverCodeId FK "nullable"
+        int CodeStatusConfigId FK "nullable"
+        datetime RelationFromDate
+        datetime RelationToDate "nullable - null means active"
+        nvarchar RelationExpiryReason
+        datetimeoffset JoinerDate "nullable"
+        datetimeoffset LeaverDate "nullable"
+        nvarchar OrganisationChangeReason
+        int LastUpdatedById FK
+        int LastUpdatedByOrganisationId
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+    }
+
+    %% ═══════════════════════════════════════════
+    %% ENROLMENTS & SERVICE ROLES
+    %% ═══════════════════════════════════════════
+
+    Enrolments {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int ConnectionId FK
+        int ServiceRoleId FK
+        int EnrolmentStatusId FK
+        datetimeoffset ValidFrom "nullable"
+        datetimeoffset ValidTo "nullable"
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    DelegatedPersonEnrolments {
+        int Id PK
+        int EnrolmentId FK UK
+        int NominatorEnrolmentId FK
+        nvarchar50 RelationshipType
+        nvarchar160 ConsultancyName
+        nvarchar160 ComplianceSchemeName
+        nvarchar160 OtherOrganisationName
+        nvarchar160 OtherRelationshipDescription
+        nvarchar450 NominatorDeclaration
+        datetimeoffset NominatorDeclarationTime
+        nvarchar450 NomineeDeclaration
+        datetimeoffset NomineeDeclarationTime
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    ApprovedPersonEnrolments {
+        int Id PK
+        int EnrolmentId FK UK
+        nvarchar450 NomineeDeclaration
+        datetimeoffset NomineeDeclarationTime
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    Services {
+        int Id PK
+        nvarchar100 Key
+        nvarchar100 Name
+        nvarchar2000 Description
+    }
+
+    ServiceRoles {
+        int Id PK
+        int ServiceId FK
+        nvarchar100 Key
+        nvarchar100 Name
+        nvarchar2000 Description
+    }
+
+    %% ═══════════════════════════════════════════
+    %% COMPLIANCE SCHEMES
+    %% ═══════════════════════════════════════════
+
+    ComplianceSchemes {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar Name
+        nvarchar CompaniesHouseNumber
+        int NationId FK "nullable"
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    SelectedSchemes {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int OrganisationConnectionId FK
+        int ComplianceSchemeId FK
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    %% ═══════════════════════════════════════════
+    %% COMPLIANCE SCHEME MEMBER REMOVAL
+    %% ═══════════════════════════════════════════
+
+    ComplianceSchemeMemberRemovalReasons {
+        int Id PK
+        nvarchar100 Code UK
+        nvarchar2000 Name
+        bit RequiresReason
+        int DisplayOrder
+        bit IsActive
+    }
+
+    ComplianceSchemeMemberRemovalAuditLogs {
+        int Id PK
+        int SchemeOrganisationId FK
+        int MemberOrganisationId FK
+        int ComplianceSchemeId FK
+        uniqueidentifier RemovedBy
+        datetimeoffset RemovedOn
+        nvarchar2000 ReasonDescription
+    }
+
+    ComplianceSchemeMemberRemovalAuditLogsReasons {
+        int Id PK
+        int AuditLogId FK
+        int ReasonId FK
+    }
+
+    %% ═══════════════════════════════════════════
+    %% REGULATOR & AUDIT
+    %% ═══════════════════════════════════════════
+
+    RegulatorComments {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int PersonId FK
+        int EnrolmentId FK
+        nvarchar200 RejectedComments
+        nvarchar200 TransferComments
+        nvarchar200 OnHoldComments
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    ChangeHistory {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int PersonId FK
+        int OrganisationId FK
+        nvarchar OldValues "JSON"
+        nvarchar NewValues "JSON"
+        bit IsActive
+        nvarchar180 ApproverComments
+        int ApprovedById FK "nullable"
+        datetimeoffset DecisionDate "nullable"
+        datetimeoffset DeclarationDate
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    AuditLogs {
+        bigint Id PK
+        uniqueidentifier UserId
+        uniqueidentifier OrganisationId
+        nvarchar100 ServiceId
+        datetimeoffset Timestamp
+        nvarchar100 Entity
+        nvarchar100 Operation
+        int InternalId
+        uniqueidentifier ExternalId
+        nvarchar OldValues "JSON"
+        nvarchar NewValues "JSON"
+        nvarchar Changes "JSON"
+    }
+
+    %% ═══════════════════════════════════════════
+    %% LOOKUP / REFERENCE TABLES
+    %% ═══════════════════════════════════════════
+
+    Nations {
+        int Id PK
+        nvarchar54 Name
+        nvarchar10 NationCode
+    }
+
+    OrganisationTypes {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    ProducerTypes {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    OrganisationToPersonRoles {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    PersonInOrganisationRoles {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    InterOrganisationRoles {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    InterPersonRoles {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    EnrolmentStatuses {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    OrganisationRelationshipTypes {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    OrganisationRegistrationTypes {
+        int Id PK
+        nvarchar Key
+        nvarchar Name
+    }
+
+    LeaverCodes {
+        int Id PK
+        nvarchar1 Key
+        nvarchar200 ReasonsForLeaving
+    }
+
+    PartnerRoles {
+        int Id PK
+        nvarchar100 Name
+    }
+
+    OrganisationToPartnerRoles {
+        int Id PK
+        int OrganisationId FK
+        int PartnerRoleId FK
+        nvarchar100 Name
+    }
+
+    %% ═══════════════════════════════════════════
+    %% CODE STATUS / SCENARIO TABLES
+    %% ═══════════════════════════════════════════
+
+    CodeClassificationLookups {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar20 CodeClass
+        nvarchar100 Description
+        nvarchar50 GroupType
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    CodeStatusConfigs {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar2 Code
+        nvarchar1 LegacyCode
+        nvarchar255 Description
+        int ClassificationId FK "nullable"
+        bit RequiresJoinerDate
+        bit RequiresLeaverDate
+        bit RequiresRegType
+        nvarchar50 MatchType
+        nvarchar50 MappedOldCodes
+        bit Enabled
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    ScenarioReferences {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        nvarchar20 ScenarioCode
+        nvarchar255 Description
+        nvarchar50 ObligationFlag
+        bit Active
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    CodeScenarioMappings {
+        int Id PK
+        uniqueidentifier ExternalId UK
+        int CodeStatusConfigId FK
+        int ScenarioReferenceId FK
+        bit Active
+        datetimeoffset CreatedOn
+        datetimeoffset LastUpdatedOn
+        bit IsDeleted
+    }
+
+    %% ═══════════════════════════════════════════
+    %% RELATIONSHIPS
+    %% ═══════════════════════════════════════════
+
+    %% Identity
+    Users ||--|| Persons : "has one"
+
+    %% Person to Organisation
+    Persons ||--o{ PersonOrganisationConnections : "connects via"
+    Organisations ||--o{ PersonOrganisationConnections : "connects via"
+    OrganisationToPersonRoles ||--o{ PersonOrganisationConnections : "org role"
+    PersonInOrganisationRoles ||--o{ PersonOrganisationConnections : "person role"
+
+    %% Enrolments
+    PersonOrganisationConnections ||--o{ Enrolments : "has"
+    ServiceRoles ||--o{ Enrolments : "role"
+    EnrolmentStatuses ||--o{ Enrolments : "status"
+    Enrolments ||--o| DelegatedPersonEnrolments : "extended by"
+    Enrolments ||--o| ApprovedPersonEnrolments : "extended by"
+    Enrolments ||--o{ DelegatedPersonEnrolments : "nominator"
+
+    %% Services
+    Services ||--o{ ServiceRoles : "has"
+
+    %% Organisation lookups
+    OrganisationTypes ||--o{ Organisations : "type"
+    ProducerTypes |o--o{ Organisations : "producer type"
+    Nations |o--o{ Organisations : "nation"
+
+    %% Organisation connections (CS <-> Producer)
+    Organisations ||--o{ OrganisationsConnections : "from"
+    Organisations ||--o{ OrganisationsConnections : "to"
+    InterOrganisationRoles ||--o{ OrganisationsConnections : "from role"
+    InterOrganisationRoles ||--o{ OrganisationsConnections : "to role"
+
+    %% Organisation relationships (Parent <-> Subsidiary)
+    Organisations ||--o{ OrganisationRelationships : "parent"
+    OrganisationRelationshipTypes ||--o{ OrganisationRelationships : "type"
+    OrganisationRegistrationTypes |o--o{ OrganisationRelationships : "reg type"
+    LeaverCodes |o--o{ OrganisationRelationships : "leaver"
+    CodeStatusConfigs |o--o{ OrganisationRelationships : "status code"
+
+    %% Subsidiary tracking
+    Organisations ||--o{ SubsidiaryOrganisations : "has"
+
+    %% LA Organisations
+    Organisations ||--o| LaOrganisations : "LA detail"
+
+    %% Compliance Schemes
+    Nations |o--o{ ComplianceSchemes : "nation"
+    ComplianceSchemes ||--o{ SelectedSchemes : "selected as"
+    OrganisationsConnections ||--o{ SelectedSchemes : "via connection"
+
+    %% Compliance Scheme Member Removal
+    ComplianceSchemeMemberRemovalAuditLogs ||--o{ ComplianceSchemeMemberRemovalAuditLogsReasons : "has"
+    ComplianceSchemeMemberRemovalReasons ||--o{ ComplianceSchemeMemberRemovalAuditLogsReasons : "reason"
+
+    %% Person connections
+    Persons ||--o{ PersonsConnections : "from"
+    Persons ||--o{ PersonsConnections : "to"
+    InterPersonRoles ||--o{ PersonsConnections : "from role"
+    InterPersonRoles ||--o{ PersonsConnections : "to role"
+
+    %% Invites
+    Persons ||--o{ PersonOrganisationConnectionInvites : "invitee"
+    Organisations ||--o{ PersonOrganisationConnectionInvites : "org"
+    Users ||--o{ PersonOrganisationConnectionInvites : "invited by"
+    Services ||--o{ PersonOrganisationConnectionInvites : "service"
+
+    %% Regulator
+    Persons ||--o{ RegulatorComments : "by"
+    Enrolments ||--o{ RegulatorComments : "on"
+
+    %% Change History
+    Persons ||--o{ ChangeHistory : "for"
+    Organisations ||--o{ ChangeHistory : "org"
+
+    %% Partner Roles
+    Organisations ||--o{ OrganisationToPartnerRoles : "has"
+    PartnerRoles ||--o{ OrganisationToPartnerRoles : "role"
+
+    %% Code Status / Scenario
+    CodeClassificationLookups |o--o{ CodeStatusConfigs : "classification"
+    CodeStatusConfigs ||--o{ CodeScenarioMappings : "config"
+    ScenarioReferences ||--o{ CodeScenarioMappings : "scenario"

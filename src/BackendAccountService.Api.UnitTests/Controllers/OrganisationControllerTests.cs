@@ -313,6 +313,48 @@ public class OrganisationControllerTests
     }
 
     [TestMethod]
+    public async Task GetOrganisationsByCompaniesHouseNumbers_WhenNumbersSupplied_ReturnsServiceResultAsOk()
+    {
+        // Arrange
+        var request = new OrganisationsByCompaniesHouseNumbersRequestModel
+        {
+            CompaniesHouseNumbers = new List<string> { "11110001", "11110002" }
+        };
+        var serviceResponse = new List<OrganisationResponseModel>
+        {
+            new() { ExternalId = Guid.NewGuid(), Name = "Scheme One", ReferenceNumber = "530001", CompaniesHouseNumber = "11110001", IsComplianceScheme = true }
+        };
+        _organisationServiceMock
+            .Setup(s => s.GetOrganisationsByCompaniesHouseNumbersAsync(request.CompaniesHouseNumbers))
+            .ReturnsAsync(serviceResponse);
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByCompaniesHouseNumbersAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.OK);
+        result.Value.Should().BeSameAs(serviceResponse);
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByCompaniesHouseNumbers_WhenEmptyList_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new OrganisationsByCompaniesHouseNumbersRequestModel { CompaniesHouseNumbers = new List<string>() };
+
+        // Act
+        var result = await _organisationController.GetOrganisationsByCompaniesHouseNumbersAsync(request) as ObjectResult;
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        _organisationServiceMock.Verify(
+            s => s.GetOrganisationsByCompaniesHouseNumbersAsync(It.IsAny<IList<string>>()),
+            Times.Never);
+    }
+
+    [TestMethod]
     public async Task GetOrganisationByInviteTokenAsync_returns_nocontent_if_no_org()
     {
         var token = "sometokenstring";

@@ -63,6 +63,8 @@ namespace BackendAccountService.Core.Services
 
         Task<IReadOnlyCollection<OrganisationResponseModel>> GetOrganisationsByCompaniesHouseNameAsync(string companiesHouseName);
 
+        Task<IReadOnlyCollection<OrganisationResponseModel>> GetOrganisationsByCompaniesHouseNumbersAsync(IList<string> companiesHouseNumbers);
+
         Task<IReadOnlyCollection<OrganisationResponseModel>> GetOrganisationByReferenceNumber(string referenceNumber);
 
         Task<OrganisationResponseModel> GetByCompaniesHouseNumberAsync(string companiesHouseNumber);

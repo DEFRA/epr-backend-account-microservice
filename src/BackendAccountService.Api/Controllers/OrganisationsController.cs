@@ -155,6 +155,27 @@ public class OrganisationsController : ApiControllerBase
         return Ok(result);
     }
 
+    [HttpPost]
+    [Route("organisations-by-companies-house-numbers")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<OrganisationResponseModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrganisationsByCompaniesHouseNumbersAsync(
+        [BindRequired, FromBody] OrganisationsByCompaniesHouseNumbersRequestModel request)
+    {
+        if (request?.CompaniesHouseNumbers is null || request.CompaniesHouseNumbers.Count == 0)
+        {
+            return ValidationProblem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "At least one companies house number must be supplied.",
+                type: "companiesHouseNumbers/empty");
+        }
+
+        var result = await _organisationService.GetOrganisationsByCompaniesHouseNumbersAsync(request.CompaniesHouseNumbers);
+
+        return Ok(result);
+    }
+
     [HttpGet]
     [Route("organisation-by-invite-token")]
     [ProducesResponseType(typeof(ApprovedPersonOrganisationModel), StatusCodes.Status200OK)]
