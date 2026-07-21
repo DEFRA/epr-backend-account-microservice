@@ -1,7 +1,6 @@
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Constants;
-using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;

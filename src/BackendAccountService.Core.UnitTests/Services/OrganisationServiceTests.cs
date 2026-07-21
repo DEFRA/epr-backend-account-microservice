@@ -419,7 +419,7 @@ public class OrganisationServiceTests
             .Including(o => o.IsComplianceScheme));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(new[] { complianceSchemeChn1, "NOPE1234" }, new[] { complianceSchemeChn1 })]              // unmatched number omitted
     [DataRow(new[] { complianceSchemeChnDeleted }, new string[0])]                                     // soft-deleted excluded
     [DataRow(new[] { complianceSchemeChn1, complianceSchemeChn1 }, new[] { complianceSchemeChn1 })]    // duplicates collapsed
@@ -436,7 +436,7 @@ public class OrganisationServiceTests
         result.Select(o => o.CompaniesHouseNumber).Should().BeEquivalentTo(expectedFound);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(true)]   // null list
     [DataRow(false)]  // empty list
     public async Task GetOrganisationsByCompaniesHouseNumbersAsync_WhenNullOrEmpty_ThrowsArgumentException(bool useNull)
