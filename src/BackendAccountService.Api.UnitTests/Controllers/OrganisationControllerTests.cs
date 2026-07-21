@@ -338,10 +338,15 @@ public class OrganisationControllerTests
     }
 
     [TestMethod]
-    public async Task GetOrganisationsByCompaniesHouseNumbers_WhenEmptyList_ReturnsBadRequest()
+    [DataRow(new string[0])]              // empty list
+    [DataRow(new[] { "", "  " })]         // only blank/whitespace numbers
+    public async Task GetOrganisationsByCompaniesHouseNumbers_WhenNoUsableNumbers_ReturnsBadRequest(string[] companiesHouseNumbers)
     {
         // Arrange
-        var request = new OrganisationsByCompaniesHouseNumbersRequestModel { CompaniesHouseNumbers = new List<string>() };
+        var request = new OrganisationsByCompaniesHouseNumbersRequestModel
+        {
+            CompaniesHouseNumbers = companiesHouseNumbers
+        };
 
         // Act
         var result = await _organisationController.GetOrganisationsByCompaniesHouseNumbersAsync(request) as ObjectResult;

@@ -162,9 +162,10 @@ public class OrganisationsController : ApiControllerBase
     public async Task<IActionResult> GetOrganisationsByCompaniesHouseNumbersAsync(
         [BindRequired, FromBody] OrganisationsByCompaniesHouseNumbersRequestModel request)
     {
-        if (request?.CompaniesHouseNumbers is null || request.CompaniesHouseNumbers.Count == 0)
+        if (request?.CompaniesHouseNumbers is null
+            || !request.CompaniesHouseNumbers.Any(companiesHouseNumber => !string.IsNullOrWhiteSpace(companiesHouseNumber)))
         {
-            return ValidationProblem(
+            return TypedValidationProblem(
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: "At least one companies house number must be supplied.",
                 type: "companiesHouseNumbers/empty");
