@@ -1,7 +1,6 @@
 using BackendAccountService.Api.Configuration;
 using BackendAccountService.Api.Helpers;
 using BackendAccountService.Core.Constants;
-using BackendAccountService.Core.Constants;
 using BackendAccountService.Core.Models;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
@@ -151,6 +150,28 @@ public class OrganisationsController : ApiControllerBase
         }
 
         var result = await _organisationService.GetOrganisationsByExternalIdsAsync(request.ExternalIds);
+
+        return Ok(result);
+    }
+
+    [HttpPost]
+    [Route("organisations-by-companies-house-numbers")]
+    [Consumes("application/json")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<OrganisationResponseModel>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrganisationsByCompaniesHouseNumbersAsync(
+        [BindRequired, FromBody] OrganisationsByCompaniesHouseNumbersRequestModel request)
+    {
+        if (request?.CompaniesHouseNumbers is null
+            || !request.CompaniesHouseNumbers.Any(companiesHouseNumber => !string.IsNullOrWhiteSpace(companiesHouseNumber)))
+        {
+            return TypedValidationProblem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "At least one companies house number must be supplied.",
+                type: "companiesHouseNumbers/empty");
+        }
+
+        var result = await _organisationService.GetOrganisationsByCompaniesHouseNumbersAsync(request.CompaniesHouseNumbers);
 
         return Ok(result);
     }

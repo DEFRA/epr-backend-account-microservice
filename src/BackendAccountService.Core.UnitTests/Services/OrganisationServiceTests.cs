@@ -69,6 +69,10 @@ public class OrganisationServiceTests
     private readonly Guid user105Guid = Guid.NewGuid();
     private readonly Guid organisation101ExternalId = Guid.NewGuid();
     private readonly Guid organisation102ExternalId = Guid.NewGuid();
+
+    private const string complianceSchemeChn1 = "CS111001";
+    private const string complianceSchemeChn2 = "CS111002";
+    private const string complianceSchemeChnDeleted = "CS111099";
     private readonly int adminServiceRoleId = 101;
     private readonly int approvedPersonServiceRoleId = 102;
     private readonly int basicUserServiceRoleId = 103;
@@ -381,6 +385,68 @@ public class OrganisationServiceTests
         result.Organisations.Should().ContainSingle()
             .Which.ExternalId.Should().Be(organisation101ExternalId);
         result.NotFoundExternalIds.Should().BeEmpty();
+    }
+
+    // Seeded per-test (not in the shared fixture) to avoid skewing count-based sibling tests.
+    private void SeedComplianceSchemeOrganisations()
+    {
+        _accountContext.Organisations.AddRange(
+            new Organisation { Name = "Scheme Org 1", ExternalId = Guid.NewGuid(), ReferenceNumber = "530001", CompaniesHouseNumber = complianceSchemeChn1, IsComplianceScheme = true },
+            new Organisation { Name = "Scheme Org 2", ExternalId = Guid.NewGuid(), ReferenceNumber = "530002", CompaniesHouseNumber = complianceSchemeChn2, IsComplianceScheme = true },
+            new Organisation { Name = "Scheme Org Deleted", ExternalId = Guid.NewGuid(), ReferenceNumber = "530099", CompaniesHouseNumber = complianceSchemeChnDeleted, IsComplianceScheme = true, IsDeleted = true });
+        _accountContext.SaveChanges();
+    }
+
+    [TestMethod]
+    public async Task GetOrganisationsByCompaniesHouseNumbersAsync_WhenAllFound_ReturnsMatchingOrganisations()
+    {
+        // Arrange
+        SeedComplianceSchemeOrganisations();
+
+        // Act
+        var result = await _organisationService.GetOrganisationsByCompaniesHouseNumbersAsync(
+            new List<string> { complianceSchemeChn1, complianceSchemeChn2 });
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new[]
+        {
+            new { CompaniesHouseNumber = complianceSchemeChn1, ReferenceNumber = "530001", Name = "Scheme Org 1", IsComplianceScheme = true },
+            new { CompaniesHouseNumber = complianceSchemeChn2, ReferenceNumber = "530002", Name = "Scheme Org 2", IsComplianceScheme = true }
+        }, opts => opts.Including(o => o.CompaniesHouseNumber)
+            .Including(o => o.ReferenceNumber)
+            .Including(o => o.Name)
+            .Including(o => o.IsComplianceScheme));
+    }
+
+    [TestMethod]
+    [DataRow(new[] { complianceSchemeChn1, "NOPE1234" }, new[] { complianceSchemeChn1 })]              // unmatched number omitted
+    [DataRow(new[] { complianceSchemeChnDeleted }, new string[0])]                                     // soft-deleted excluded
+    [DataRow(new[] { complianceSchemeChn1, complianceSchemeChn1 }, new[] { complianceSchemeChn1 })]    // duplicates collapsed
+    public async Task GetOrganisationsByCompaniesHouseNumbersAsync_ReturnsOnlyActiveMatches(
+        string[] requested, string[] expectedFound)
+    {
+        // Arrange
+        SeedComplianceSchemeOrganisations();
+
+        // Act
+        var result = await _organisationService.GetOrganisationsByCompaniesHouseNumbersAsync(requested);
+
+        // Assert
+        result.Select(o => o.CompaniesHouseNumber).Should().BeEquivalentTo(expectedFound);
+    }
+
+    [TestMethod]
+    [DataRow(true)]   // null list
+    [DataRow(false)]  // empty list
+    public async Task GetOrganisationsByCompaniesHouseNumbersAsync_WhenNullOrEmpty_ThrowsArgumentException(bool useNull)
+    {
+        // Arrange
+        IList<string> companiesHouseNumbers = useNull ? null : new List<string>();
+
+        // Act + Assert
+        await Assert.ThrowsExactlyAsync<ArgumentException>(async () =>
+            _ = await _organisationService.GetOrganisationsByCompaniesHouseNumbersAsync(companiesHouseNumbers));
     }
 
     [TestMethod]

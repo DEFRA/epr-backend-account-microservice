@@ -89,6 +89,31 @@ public class OrganisationService : ServiceBase, IOrganisationService
         return OrganisationMappings.GetOrganisationModelFromOrganisation(organisation, parentOrganisation);
     }
 
+    public async Task<IReadOnlyCollection<OrganisationResponseModel>> GetOrganisationsByCompaniesHouseNumbersAsync(IList<string> companiesHouseNumbers)
+    {
+        if (companiesHouseNumbers is null || companiesHouseNumbers.Count == 0)
+        {
+            throw new ArgumentException($"{nameof(companiesHouseNumbers)} cannot be null or empty", nameof(companiesHouseNumbers));
+        }
+
+        var distinctCompaniesHouseNumbers = companiesHouseNumbers
+            .Where(companiesHouseNumber => !string.IsNullOrWhiteSpace(companiesHouseNumber))
+            .Distinct()
+            .ToList();
+
+        // Soft-deleted rows are excluded because a Companies House number can be
+        // re-used across delete-and-replace organisation rows.
+        var organisations = await _accountsDbContext.Organisations
+            .Where(org => !org.IsDeleted
+                && org.CompaniesHouseNumber != null
+                && distinctCompaniesHouseNumbers.Contains(org.CompaniesHouseNumber))
+            .ToListAsync();
+
+        return organisations
+            .Select(OrganisationMappings.GetOrganisationModelFromOrganisation)
+            .ToList();
+    }
+
     public async Task<IReadOnlyCollection<OrganisationResponseModel>> GetOrganisationByReferenceNumber(string referenceNumber)
     {
         var organisations = await _accountsDbContext.Organisations
