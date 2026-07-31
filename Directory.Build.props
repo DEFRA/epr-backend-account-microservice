@@ -1,6 +1,7 @@
 <Project>
 
     <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <CodeAnalysisRuleSet>..\SonarAnalyzer.ruleset</CodeAnalysisRuleSet>
     </PropertyGroup>
 
