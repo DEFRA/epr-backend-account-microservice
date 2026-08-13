@@ -10,4 +10,6 @@ public class OrganisationLookupModel
     public string Name { get; init; }
 
     public string ReferenceNumber { get; init; }
+
+    public IList<OrganisationPersonDto> People { get; init; } = new List<OrganisationPersonDto>();
 }

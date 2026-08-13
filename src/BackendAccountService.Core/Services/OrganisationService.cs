@@ -316,7 +316,21 @@ public class OrganisationService : ServiceBase, IOrganisationService
             {
                 ExternalId = org.ExternalId,
                 Name = org.Name,
-                ReferenceNumber = org.ReferenceNumber
+                ReferenceNumber = org.ReferenceNumber,
+                People = org.PersonOrganisationConnections
+                    .Select(poc => new OrganisationPersonDto
+                    {
+                        UserId = poc.Person.User != null ? poc.Person.User.UserId ?? Guid.Empty : Guid.Empty,
+                        FirstName = poc.Person.FirstName,
+                        LastName = poc.Person.LastName,
+                        JobTitle = poc.JobTitle,
+                        Email = poc.Person.Email,
+                        TelephoneNumber = poc.Person.Telephone,
+                        ServiceRole = poc.Enrolments
+                            .Select(e => e.ServiceRole.Name)
+                            .FirstOrDefault()
+                    })
+                    .ToList()
             })
             .ToListAsync();
 

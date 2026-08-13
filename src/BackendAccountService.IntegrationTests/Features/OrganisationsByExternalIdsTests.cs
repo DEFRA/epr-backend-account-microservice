@@ -1,8 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 using BackendAccountService.Core.Models.Responses;
+using BackendAccountService.Data.Entities;
 using BackendAccountService.IntegrationTests.Infrastructure;
+using BackendAccountService.IntegrationTests.Infrastructure.Builders;
 using AwesomeAssertions;
+using ServiceRoleConst = BackendAccountService.Data.DbConstants.ServiceRole;
+using PersonRoleConst = BackendAccountService.Data.DbConstants.PersonRole;
+using EnrolmentStatusConst = BackendAccountService.Data.DbConstants.EnrolmentStatus;
 
 namespace BackendAccountService.IntegrationTests.Features;
 
@@ -121,4 +126,90 @@ public class OrganisationsByExternalIdsTests(AccountApiFactory factory) : Integr
         payload.NotFoundExternalIds.Should().ContainSingle().Which.Should().Be(missId);
     }
 
+    [Fact]
+    public async Task PostingExternalId_ForOrgWithMultipleRoles_ReturnsConnectedPersonsAndRoles_AndExcludesDeleted()
+    {
+        var builtEnrolment = await Builder.Producer().Build();
+
+        Enrolment delegatedPersonEnrolment = null!;
+        Enrolment secondDelegatedPersonEnrolment = null!;
+        Enrolment basicUserEnrolment = null!;
+
+        await SeedAsync(async ctx =>
+        {
+            delegatedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
+                ctx, builtEnrolment.OrgExternalId,
+                ServiceRoleConst.Packaging.DelegatedPerson.Key,
+                PersonRoleConst.Employee, EnrolmentStatusConst.Enrolled);
+
+            secondDelegatedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
+                ctx, builtEnrolment.OrgExternalId,
+                ServiceRoleConst.Packaging.DelegatedPerson.Key,
+                PersonRoleConst.Employee, EnrolmentStatusConst.Enrolled);
+
+            basicUserEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
+                ctx, builtEnrolment.OrgExternalId,
+                ServiceRoleConst.Packaging.BasicUser.Key,
+                PersonRoleConst.Employee, EnrolmentStatusConst.Enrolled);
+
+            var deletedPersonEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
+                ctx, builtEnrolment.OrgExternalId,
+                ServiceRoleConst.Packaging.BasicUser.Key,
+                PersonRoleConst.Employee, EnrolmentStatusConst.Enrolled);
+            deletedPersonEnrolment.Connection.Person.IsDeleted = true;
+
+            var deletedConnectionEnrolment = await DatabaseDataGenerator.InsertRandomEnrolment(
+                ctx, builtEnrolment.OrgExternalId,
+                ServiceRoleConst.Packaging.DelegatedPerson.Key,
+                PersonRoleConst.Employee, EnrolmentStatusConst.Enrolled);
+            deletedConnectionEnrolment.Connection.IsDeleted = true;
+        });
+
+        var response = await Client.PostAsJsonAsync(
+            Endpoint,
+            new { externalIds = new[] { builtEnrolment.OrgExternalId } });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var payload = await response.ReadJson<OrganisationsByExternalIdsResponse>();
+
+        var organisation = payload.Organisations
+            .Should().ContainSingle(o => o.ExternalId == builtEnrolment.OrgExternalId)
+            .Subject;
+
+        organisation.People.Should().BeEquivalentTo(new[]
+        {
+            new
+            {
+                builtEnrolment.Person.FirstName,
+                builtEnrolment.Person.LastName,
+                builtEnrolment.Person.Email,
+                TelephoneNumber = builtEnrolment.Person.Telephone,
+                ServiceRole = "Approved Person",
+            },
+            new
+            {
+                delegatedPersonEnrolment.Connection.Person.FirstName,
+                delegatedPersonEnrolment.Connection.Person.LastName,
+                delegatedPersonEnrolment.Connection.Person.Email,
+                TelephoneNumber = delegatedPersonEnrolment.Connection.Person.Telephone,
+                ServiceRole = "Delegated Person",
+            },
+            new
+            {
+                secondDelegatedPersonEnrolment.Connection.Person.FirstName,
+                secondDelegatedPersonEnrolment.Connection.Person.LastName,
+                secondDelegatedPersonEnrolment.Connection.Person.Email,
+                TelephoneNumber = secondDelegatedPersonEnrolment.Connection.Person.Telephone,
+                ServiceRole = "Delegated Person",
+            },
+            new
+            {
+                basicUserEnrolment.Connection.Person.FirstName,
+                basicUserEnrolment.Connection.Person.LastName,
+                basicUserEnrolment.Connection.Person.Email,
+                TelephoneNumber = basicUserEnrolment.Connection.Person.Telephone,
+                ServiceRole = "Basic User",
+            },
+        });
+    }
 }
