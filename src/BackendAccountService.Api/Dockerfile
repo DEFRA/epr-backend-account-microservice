@@ -1,4 +1,4 @@
-﻿# FROM defradigital/dotnetcore-development:dotnet10.0 AS base
+# Runtime image: keep the final image minimal.
 FROM defradigital/dotnetcore:dotnet10.0 AS base
 USER root
 ENV ASPNETCORE_URLS=http://*:8080
@@ -7,7 +7,6 @@ EXPOSE 8080
 RUN apk update && apk --no-cache add icu-libs
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=0
 
-# FROM defradigital/dotnetcore:dotnet10.0
 FROM defradigital/dotnetcore-development:dotnet10.0 AS build
 USER root
 WORKDIR /src
@@ -33,5 +32,4 @@ USER dotnet
 
 WORKDIR /app
 COPY --from=publish /app/publish .
-USER dotnet
 ENTRYPOINT ["dotnet", "BackendAccountService.Api.dll"]
