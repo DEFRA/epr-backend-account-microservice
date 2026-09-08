@@ -910,18 +910,18 @@ public class RegulatorControllerTests
     }
 
     [TestMethod]
-    public async Task When_AddRemoveApprovedUser_Is_Called_And_UserIsAlreadyInvited_ShouldReturnBadRequest()
+    public async Task When_AddRemoveApprovedUser_Is_Called_And_UserIsAlreadyInvited_ShouldReturnValidationProblem()
     {
         var invitedUserEmail = "test2@email.com";
         // Arrange
         _regulatorServiceMock
             .Setup(service => service.DoesRegulatorNationMatchOrganisationNation(It.IsAny<Guid>(), It.IsAny<Guid>()))
             .Returns(true);
-
+    
         _validationService
             .Setup(x => x.IsUserInvitedAsync(invitedUserEmail))
             .ReturnsAsync(true);
-
+    
         var request = new AddRemoveApprovedUserRequest
         {
             OrganisationId = Guid.NewGuid(),
@@ -930,14 +930,16 @@ public class RegulatorControllerTests
             AddingOrRemovingUserEmail = "test1@email.com",
             InvitedPersonEmail = invitedUserEmail
         };
-
+    
         // Act
         var result =
             await _regulatorsController.AddRemoveApprovedUser(request) as ObjectResult;
-
+    
         // Assert
-        result.Should().NotBeNull();
-        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        var validationProblemDetails = result?.Value as ValidationProblemDetails;
+        validationProblemDetails.Should().NotBeNull();
+        validationProblemDetails?.Type.Should().Contain("validation");
+        validationProblemDetails?.Errors.FirstOrDefault().Key.Should().Contain(nameof(request.InvitedPersonEmail));
     }
 
     [TestMethod]
