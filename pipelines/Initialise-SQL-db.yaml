@@ -17,7 +17,6 @@ parameters:
       - DEV8
       - DEV9
       - DEV14
-      - DEV16
       - Team-Laps
   - name: envToDeploy
     displayName: 'Target env to deploy:    (select "development" for dev 1-14)'
