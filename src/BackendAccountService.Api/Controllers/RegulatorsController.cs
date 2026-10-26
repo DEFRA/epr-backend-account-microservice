@@ -272,9 +272,8 @@ public class RegulatorsController : ApiControllerBase
 
             if (isUserInvited)
             {
-                var userAlreadyInvitedError = $"User '{request.InvitedPersonEmail}' is already invited";
-                ModelState.AddModelError(nameof(request.InvitedPersonEmail), userAlreadyInvitedError);
-                return BadRequest(userAlreadyInvitedError);
+                ModelState.AddModelError(nameof(request.InvitedPersonEmail), $"User '{request.InvitedPersonEmail}' is already invited");
+                return ValidationProblem();
             }
 
             var response = await _regulatorService.AddRemoveApprovedPerson(request);
