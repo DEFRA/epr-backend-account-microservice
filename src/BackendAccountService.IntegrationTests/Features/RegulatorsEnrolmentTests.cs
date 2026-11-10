@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using BackendAccountService.Core.Models.Request;
 using BackendAccountService.Core.Models.Responses;
 using BackendAccountService.IntegrationTests.Infrastructure;
@@ -125,5 +127,32 @@ public class RegulatorsEnrolmentTests(AccountApiFactory factory) : IntegrationTe
         var payload = await response.ReadJson<AddRemoveApprovedPersonResponseModel>();
         payload.OrganisationReferenceNumber.Should().Be(producer.Organisation.ReferenceNumber);
         payload.InviteToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task AddRemoveApprovedUser_WhenInvitedEmailAlreadyExists_Returns409AndCreatesNothing()
+    {
+        var regulator = await Builder.Regulator().Build();
+        var producer = await Builder.Producer().Build();
+        var existingUser = await Builder.Producer().Build();
+        var existingEmail = existingUser.Person.User!.Email!;
+
+        var request = new AddRemoveApprovedUserRequest
+        {
+            OrganisationId = producer.OrgExternalId,
+            AddingOrRemovingUserId = regulator.UserId,
+            AddingOrRemovingUserEmail = regulator.Person.User!.Email!,
+            InvitedPersonEmail = existingEmail,
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/regulators/add-remove-approved-users", request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var problem = await response.ReadJson<JsonElement>();
+        problem.GetProperty("status").GetInt32().Should().Be(409);
+        problem.GetProperty("title").GetString().Should().Be("USER_ALREADY_INVITED");
+
+        await WithDbContext(async ctx =>
+            (await ctx.Users.CountAsync(u => u.Email == existingEmail)).Should().Be(1));
     }
 }
