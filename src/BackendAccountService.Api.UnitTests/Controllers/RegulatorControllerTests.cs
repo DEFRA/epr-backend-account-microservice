@@ -910,7 +910,7 @@ public class RegulatorControllerTests
     }
 
     [TestMethod]
-    public async Task When_AddRemoveApprovedUser_Is_Called_And_UserIsAlreadyInvited_ShouldReturnBadRequest()
+    public async Task When_AddRemoveApprovedUser_Is_Called_And_UserIsAlreadyInvited_ShouldReturnConflict()
     {
         var invitedUserEmail = "test2@email.com";
         // Arrange
@@ -932,12 +932,18 @@ public class RegulatorControllerTests
         };
 
         // Act
-        var result =
-            await _regulatorsController.AddRemoveApprovedUser(request) as ObjectResult;
+        var result = await _regulatorsController.AddRemoveApprovedUser(request);
 
         // Assert
-        result.Should().NotBeNull();
-        result.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        var conflictResult = result.Should().BeOfType<ConflictObjectResult>().Subject;
+        conflictResult.StatusCode.Should().Be(StatusCodes.Status409Conflict);
+
+        var problemDetails = conflictResult.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problemDetails.Status.Should().Be(StatusCodes.Status409Conflict);
+
+        _regulatorServiceMock.Verify(
+            s => s.AddRemoveApprovedPerson(It.IsAny<AddRemoveApprovedUserRequest>()),
+            Times.Never);
     }
 
     [TestMethod]

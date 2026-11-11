@@ -258,6 +258,7 @@ public class RegulatorsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status304NotModified)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<IActionResult> AddRemoveApprovedUser(AddRemoveApprovedUserRequest request)
     {
         return await ExecuteProtectedAction(request.AddingOrRemovingUserId, request.OrganisationId, async () =>
@@ -272,9 +273,12 @@ public class RegulatorsController : ApiControllerBase
 
             if (isUserInvited)
             {
-                var userAlreadyInvitedError = $"User '{request.InvitedPersonEmail}' is already invited";
-                ModelState.AddModelError(nameof(request.InvitedPersonEmail), userAlreadyInvitedError);
-                return BadRequest(userAlreadyInvitedError);
+                return Conflict(new ProblemDetails
+                {
+                    Status = StatusCodes.Status409Conflict,
+                    Title = "USER_ALREADY_INVITED",
+                    Detail = $"User with the supplied email is already invited"
+                });
             }
 
             var response = await _regulatorService.AddRemoveApprovedPerson(request);
